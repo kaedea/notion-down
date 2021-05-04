@@ -15,6 +15,10 @@ class Utils:
         return os.getcwd()
 
     @staticmethod
+    def get_workspace():
+        return os.path.dirname(os.path.realpath(__file__))
+
+    @staticmethod
     def get_temp_dir():
         return tempfile.gettempdir()
 

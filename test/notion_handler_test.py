@@ -2,7 +2,7 @@ import os
 import unittest
 
 from config import Config
-from notion_handler import NotionHandler
+from notion_reader import NotionHandler
 from utils.utils import Utils
 
 

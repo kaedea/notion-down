@@ -10,7 +10,7 @@ from notion_page import NotionPage
 NOTION_CLIENT = None
 
 
-class NotionHandler:
+class NotionReader:
 
     @staticmethod
     def get_client() -> NotionClient:
@@ -21,23 +21,23 @@ class NotionHandler:
 
     @staticmethod
     def handle_post():
-        main_page = NotionHandler.get_client().get_block(Config.blog_url())
+        main_page = NotionReader.get_client().get_block(Config.blog_url())
         notion_pages = []
-        NotionHandler.recurse_handle_page(notion_pages, main_page)
-        NotionHandler.on_handle_notion_pages(notion_pages)
+        NotionReader.recurse_handle_page(notion_pages, main_page)
+        NotionReader.on_handle_notion_pages(notion_pages)
         return notion_pages
 
     @staticmethod
     def recurse_handle_page(notion_pages, page):
         notion_page = NotionPage()
         notion_page.parse(page)
-        NotionHandler.on_handle_notion_page(notion_page)
+        NotionReader.on_handle_notion_page(notion_page)
         notion_pages.append(notion_page)
 
         if page.children:
             for subpage in page.children:
                 if subpage.type == 'page':
-                    NotionHandler.recurse_handle_page(notion_pages, subpage)
+                    NotionReader.recurse_handle_page(notion_pages, subpage)
 
         pass
 

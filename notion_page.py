@@ -46,6 +46,9 @@ class NotionPage:
     def is_output_able(self):
         return self.get_file_name() is not None
 
+    def get_identify(self):
+        return "[{}]{}".format(self.id, self.get_title())
+
     def get_title(self):
         if 'Title' in self.properties:
             try:

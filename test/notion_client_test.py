@@ -153,21 +153,19 @@ class NotionClientMarkDownPageTest(unittest.TestCase):
         md_page = Utils.find_one(page.children, lambda it: it and str(it.title) == "MarkDown Test Page")
         self.assertIsNotNone(md_page)
 
-
         for block in md_page.children:
             if block.type == 'collection_view':
                 self.__dump_collection(block.collection)
 
-
-
-    def __dump_collection(self, block: Collection):
-        columns = block.get_schema_properties()
+    def __dump_collection(self, collection: Collection):
+        columns = collection.get_schema_properties()
+        columns.reverse()
         keys = [it['slug'] for it in columns]
 
         print("{}".format(" | ".join([it['name'] for it in columns])))
         print("{}".format(" | ".join([':---:' for it in columns])))
 
-        for row in block.get_rows():
+        for row in collection.get_rows():
             print("{}".format(" | ".join([str(getattr(row, it)) for it in keys])))
         pass
 

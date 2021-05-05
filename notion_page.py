@@ -48,6 +48,29 @@ class PageTocBlock(PageBaseBlock):
         return ("# Table of Contents\n" + "\n".join(block_lines)) if len(block_lines) > 0 else ""
 
 
+class PageTableBlock(PageBaseBlock):
+    def __init__(self):
+        super().__init__()
+        self.type = 'collection_view'
+        self.collection = None
+
+    def write_block(self):
+        if not self.collection:
+            return ''
+        block_lines = []
+        columns = self.collection.get_schema_properties()
+        columns.reverse()
+        keys = [it['slug'] for it in columns]
+
+        block_lines.append(" | ".join([it['name'] for it in columns]))
+        block_lines.append(" | ".join([':---:' for it in columns]))
+
+        for row in self.collection.get_rows():
+            block_lines.append(" | ".join([str(getattr(row, it)) for it in keys]))
+
+        return "\n".join(block_lines)
+
+
 class PageTextBlock(PageBaseBlock):
     def __init__(self):
         super().__init__()
@@ -204,6 +227,7 @@ class NotionPage:
             "sub_sub_header": self._parse_sub_sub_header,
             "code": self._parse_code,
             "table_of_contents": self._parse_toc,
+            "collection_view": self._parse_collection,
             "page": self._parse_sub_page,
         }
 
@@ -431,12 +455,19 @@ class NotionPage:
         page_block.page_blocks = self.blocks
         self.blocks.append(page_block)
 
+    def _parse_sub_page(self, block):
+        print("Ignore subpage block within page")
+
+    def _parse_collection(self, block):
+        page_block = PageTableBlock()
+        page_block.id = block.id
+        page_block.type = block.type
+        page_block.collection = block.collection
+        self.blocks.append(page_block)
+
     def _parse_stub(self, block):
         page_block = PageBaseBlock()
         page_block.id = block.id
         page_block.type = block.type
-        page_block.text = block.title
         self.blocks.append(page_block)
-
-    def _parse_sub_page(self, block):
-        print("Ignore subpage block within page")
+        raise Exception('Stub!')

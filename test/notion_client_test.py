@@ -2,8 +2,9 @@ import os
 import unittest
 
 from urllib.request import quote
-from notion.block import CodeBlock, ImageBlock
+from notion.block import CodeBlock, ImageBlock, CollectionViewBlock
 from notion.client import NotionClient
+from notion.collection import Collection
 from notion.settings import BASE_URL
 
 from utils.utils import Utils
@@ -137,4 +138,36 @@ class NotionClientMarkDownPageTest(unittest.TestCase):
         with open(path, "wb") as fp:
             for chunk in resp.iter_content(chunk_size=1024):
                 fp.write(chunk)
+
+    def test_test_get_md_page_table(self):
+        token = os.environ['NOTION_TOKEN_V2']
+        post_url = 'https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34'
+
+        client = NotionClient(token_v2=token)
+        page = client.get_block(post_url)
+        self.assertIsNotNone(page)
+
+        print("The title is:", page.title)
+        print("SubPage count = {}", len(page.children))
+
+        md_page = Utils.find_one(page.children, lambda it: it and str(it.title) == "MarkDown Test Page")
+        self.assertIsNotNone(md_page)
+
+
+        for block in md_page.children:
+            if block.type == 'collection_view':
+                self.__dump_collection(block.collection)
+
+
+
+    def __dump_collection(self, block: Collection):
+        columns = block.get_schema_properties()
+        keys = [it['slug'] for it in columns]
+
+        print("{}".format(" | ".join([it['name'] for it in columns])))
+        print("{}".format(" | ".join([':---:' for it in columns])))
+
+        for row in block.get_rows():
+            print("{}".format(" | ".join([str(getattr(row, it)) for it in keys])))
+        pass
 

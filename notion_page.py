@@ -204,6 +204,7 @@ class NotionPage:
             "sub_sub_header": self._parse_sub_sub_header,
             "code": self._parse_code,
             "table_of_contents": self._parse_toc,
+            "page": self._parse_sub_page,
         }
 
     def is_markdown_able(self):
@@ -436,4 +437,6 @@ class NotionPage:
         page_block.type = block.type
         page_block.text = block.title
         self.blocks.append(page_block)
-        raise Exception('Stub!')
+
+    def _parse_sub_page(self, block):
+        print("Ignore subpage block within page")

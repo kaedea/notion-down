@@ -28,14 +28,17 @@ class NotionReader:
 
     @staticmethod
     def handle_post() -> List[NotionPage]:
+        print("#handle_post")
         main_page = NotionReader.read_main_page()
         notion_pages = []
-        NotionReader.recurse_handle_page(notion_pages, main_page)
+        NotionReader._recurse_handle_page(notion_pages, main_page)
         NotionReader.on_handle_notion_pages(notion_pages)
+        print("Done\n\n")
         return notion_pages
 
     @staticmethod
-    def recurse_handle_page(notion_pages, page: PageBlock):
+    def _recurse_handle_page(notion_pages, page: PageBlock):
+        print("parse page, id = " + page.id)
         notion_page = NotionPage()
         notion_page.parse(page)
         NotionReader.on_handle_notion_page(notion_page)
@@ -44,15 +47,18 @@ class NotionReader:
         if page.children:
             for subpage in page.children:
                 if subpage.type == 'page':
-                    NotionReader.recurse_handle_page(notion_pages, subpage)
+                    NotionReader._recurse_handle_page(notion_pages, subpage)
 
         pass
 
     @staticmethod
     def handle_single_page(page) -> NotionPage:
+        print("#handle_single_page")
+        print("parse page, id = " + page.id)
         notion_page = NotionPage()
         notion_page.parse(page)
         NotionReader.on_handle_notion_page(notion_page)
+        print("Done\n\n")
         return notion_page
 
     @staticmethod

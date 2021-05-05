@@ -34,7 +34,9 @@ class NotionWriter:
         file_path = os.path.join(base_dir, target_path + ".md")
 
         if os.path.exists(file_path):
-            raise Exception("file already exists: " + file_path)
+            if not Config.debuggable():
+                raise Exception("file already exists: " + file_path)
+            pass
         else:
             Path(file_path).parent.mkdir(parents=True, exist_ok=True)
 

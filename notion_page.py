@@ -41,7 +41,7 @@ class NotionPage:
         self.properties = {}
 
     def is_markdown_able(self):
-        return self.get_title() is not None and self.get_date() is not None
+        return self.get_title() is not None  # and self.get_date() is not None
 
     def is_output_able(self):
         return self.get_file_name() is not None

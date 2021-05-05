@@ -5,20 +5,24 @@ from notion.block import CodeBlock, ImageBlock
 from config import Config
 
 
-class PageBlock:
+class PageBaseBlock:
     def __init__(self):
-        self.type = ''
+        self.type = 'base'
+
+    def write_block(self):
+        return self.type
 
 
-class PageTextBlock(PageBlock):
-    def __init__(self):
-        super().__init__()
-        self.text = ''
-
-
-class PageImageBlock(PageBlock):
+class PageTextBlock(PageBaseBlock):
     def __init__(self):
         super().__init__()
+        self.text = 'text'
+
+
+class PageImageBlock(PageBaseBlock):
+    def __init__(self):
+        super().__init__()
+        self.text = 'image'
         self.image_caption = ''
         self.image_url = ''
         self.image_file = ''
@@ -149,7 +153,7 @@ class NotionPage:
 
     def parse_basic(self, block):
         block_type = block.type
-        page_block = PageBlock()
+        page_block = PageBaseBlock()
         page_block.type = block_type
         self.blocks.append(page_block)
 

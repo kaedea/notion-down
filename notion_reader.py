@@ -1,3 +1,6 @@
+from typing import List
+
+from notion.block import PageBlock
 from notion.client import NotionClient
 
 from config import Config
@@ -20,15 +23,19 @@ class NotionReader:
         return NOTION_CLIENT
 
     @staticmethod
-    def handle_post():
-        main_page = NotionReader.get_client().get_block(Config.blog_url())
+    def read_main_page() -> PageBlock:
+        return NotionReader.get_client().get_block(Config.blog_url())
+
+    @staticmethod
+    def handle_post() -> List[NotionPage]:
+        main_page = NotionReader.read_main_page()
         notion_pages = []
         NotionReader.recurse_handle_page(notion_pages, main_page)
         NotionReader.on_handle_notion_pages(notion_pages)
         return notion_pages
 
     @staticmethod
-    def recurse_handle_page(notion_pages, page):
+    def recurse_handle_page(notion_pages, page: PageBlock):
         notion_page = NotionPage()
         notion_page.parse(page)
         NotionReader.on_handle_notion_page(notion_page)

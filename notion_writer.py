@@ -2,8 +2,9 @@ import json
 import os
 import shutil
 import typing
-import urllib
 from pathlib import Path
+
+from notion.utils import slugify
 
 from config import Config
 from notion_page import NotionPage, PageBaseBlock
@@ -101,7 +102,7 @@ class NotionPageWriter:
 
         target_path = os.path.join(
             notion_page.get_file_dir() if notion_page.get_file_dir() else "",
-            urllib.parse.quote_plus(notion_page.get_file_name())
+            slugify(notion_page.get_file_name())
         )
 
         file_path = os.path.join(base_dir, target_path + ".md")

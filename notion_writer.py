@@ -8,15 +8,14 @@ from notion.utils import slugify
 
 from config import Config
 from notion_page import NotionPage, PageBaseBlock
+from utils.utils import FileUtils
 
 
 class NotionWriter:
 
     @staticmethod
     def clean_output():
-        output_dir = Path(Config.output())
-        shutil.rmtree(output_dir)
-        output_dir.mkdir()
+        FileUtils.clean_dir(Config.output())
 
     # noinspection SpellCheckingInspection
     @staticmethod
@@ -94,29 +93,26 @@ class NotionPageWriter:
     def _configure_file_path(self, notion_page: NotionPage) -> typing.Text:
         print("#_configure_file_path")
 
-        base_dir = os.path.join(
+        base_dir = FileUtils.new_file(
             Config.output(),
             self.root_dir + "/" + (self.post_dir if notion_page.is_published() else self.draft_dir)
         )
-        Path(base_dir).mkdir(parents=True, exist_ok=True)
 
-        target_path = os.path.join(
+        page_path = FileUtils.new_file(
             notion_page.get_file_dir() if notion_page.get_file_dir() else "",
             slugify(notion_page.get_file_name())
         )
 
-        file_path = os.path.join(base_dir, target_path + ".md")
+        file_path = FileUtils.new_file(base_dir, page_path + ".md")
         print("file_path = " + file_path)
         return file_path
 
     def _prepare_file(self, file_path):
-        if os.path.exists(file_path):
+        if FileUtils.exists(file_path):
             if not Config.debuggable():
                 raise Exception("file already exists: " + file_path)
-        else:
-            Path(file_path).parent.mkdir(parents=True, exist_ok=True)
-        pass
+
+        FileUtils.create_file(file_path)
 
     def _write_file(self, content, file_path):
-        with open(file_path, "w+") as f:
-            f.write(content)
+        FileUtils.write_text(content, file_path)

@@ -2,6 +2,7 @@
 
 import json
 import os
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -106,3 +107,54 @@ class Utils:
                 print('\'{}\' is not given: {}'.format(key, item))
                 result = False
         return result
+
+
+class FileUtils:
+    @staticmethod
+    def new_file(file_dir, file_name):
+        return os.path.join(file_dir, file_name)
+
+    @staticmethod
+    def exists(file_path):
+        return Path(file_path).exists()
+
+    @staticmethod
+    def create_file(file_path, fore=False):
+        path = Path(file_path)
+        if not path.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.touch(exist_ok=True)
+
+        if path.is_dir():
+            if not fore:
+                raise Exception("{} is dir".format(file_path))
+            shutil.rmtree(path.absolute())
+            path.touch(exist_ok=True)
+
+    @staticmethod
+    def create_dir(file_path, fore=False):
+        path = Path(file_path)
+        if not path.exists():
+            path.mkdir(parents=True, exist_ok=True)
+            return
+        if path.is_file():
+            if not fore:
+                raise Exception("{} is file".format(file_path))
+            os.remove(path.absolute())
+            path.mkdir(parents=True, exist_ok=True)
+
+    @staticmethod
+    def clean_dir(file_path, fore=False):
+        path = Path(file_path)
+        if path.is_file():
+            if not fore:
+                raise Exception("{} is file".format(file_path))
+            os.remove(path.absolute())
+        shutil.rmtree(file_path)
+        FileUtils.create_dir(file_path, fore)
+
+    @staticmethod
+    def write_text(text, file_path, mode="w+"):
+        with open(file_path, mode) as f:
+            f.write(text)
+

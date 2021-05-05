@@ -3,6 +3,7 @@ import os
 from notion.block import CodeBlock, ImageBlock, TextBlock, DividerBlock
 
 from config import Config
+from utils.utils import Utils
 
 
 class PageBaseBlock:
@@ -18,6 +19,33 @@ type: {}
 
     def _wip_msg(self):
         return "notion id: " + self.id
+
+
+class PageTocBlock(PageBaseBlock):
+    def __init__(self):
+        super().__init__()
+        self.type = 'table_of_contents'
+        self.page_blocks = []
+
+    def write_block(self):
+        '''
+        # Table of Contents
+        -. [Example](#example)
+        -. [Example2](#example2)
+        -.   [Third Example](#third-example)
+        -.   [Fourth Example](#fourth-examplehttpwwwfourthexamplecom)
+        '''
+
+        block_lines = []
+        for block in self.page_blocks:
+            if block.type == "header":
+                block_lines.append(" - [{}](#{})".format(block.text, block.text))
+            if block.type == "sub_header":
+                block_lines.append(" - {}[{}](#{})".format('&nbsp;' * 4, block.text, block.text))
+            if block.type == "sub_sub_header":
+                block_lines.append(" - {}[{}](#{})".format('&nbsp;' * 8, block.text, block.text))
+
+        return ("# Table of Contents\n" + "\n".join(block_lines)) if len(block_lines) > 0 else ""
 
 
 class PageTextBlock(PageBaseBlock):
@@ -175,6 +203,7 @@ class NotionPage:
             "sub_header": self._parse_sub_header,
             "sub_sub_header": self._parse_sub_sub_header,
             "code": self._parse_code,
+            "table_of_contents": self._parse_toc,
         }
 
     def is_markdown_able(self):
@@ -392,6 +421,13 @@ class NotionPage:
         page_block.id = block.id
         page_block.type = block.type
         page_block.text = block.title
+        self.blocks.append(page_block)
+
+    def _parse_toc(self, block):
+        page_block = PageTocBlock()
+        page_block.id = block.id
+        page_block.type = block.type
+        page_block.page_blocks = self.blocks
         self.blocks.append(page_block)
 
     def _parse_stub(self, block):

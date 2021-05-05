@@ -71,6 +71,8 @@ class NotionPageWriter:
     def _write_blocks(self, page_lines: typing.List[typing.Text], blocks: typing.List[PageBaseBlock]):
         for block in blocks:
             self._write_block(page_lines, block)
+            if block.type == 'enter':
+                continue
             page_lines.append("")
         pass
 

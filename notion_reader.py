@@ -49,6 +49,13 @@ class NotionReader:
         pass
 
     @staticmethod
+    def handle_single_page(page) -> NotionPage:
+        notion_page = NotionPage()
+        notion_page.parse(page)
+        NotionReader.on_handle_notion_page(notion_page)
+        return notion_page
+
+    @staticmethod
     def on_handle_notion_page(notion_page):
         pass
 

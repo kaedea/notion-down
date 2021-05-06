@@ -155,17 +155,25 @@ class NotionClientMarkDownPageTest(unittest.TestCase):
 
         for block in md_page.children:
             if block.type == 'collection_view':
-                self.__dump_collection(block.collection)
+                self.__dump_collection(block)
 
-    def __dump_collection(self, collection: Collection):
-        columns = collection.get_schema_properties()
-        columns.reverse()
-        keys = [it['slug'] for it in columns]
+    def __dump_collection(self, block: CollectionViewBlock):
+        column_properties = block.collection.get_schema_properties()
+        ordered_column_ids = block.views[0].get("format.table_properties")
 
-        print("{}".format(" | ".join([it['name'] for it in columns])))
-        print("{}".format(" | ".join([':---:' for it in columns])))
+        ordered_column_properties = []
+        for id in ordered_column_ids:
+            ordered_column_properties.append(Utils.find_one(
+                column_properties,
+                lambda it: it['id'] == id['property']
+            ))
 
-        for row in collection.get_rows():
+        keys = [it['slug'] for it in ordered_column_properties]
+
+        print("{}".format(" | ".join([it['name'] for it in ordered_column_properties])))
+        print("{}".format(" | ".join([':---:' for it in ordered_column_properties])))
+
+        for row in block.collection.get_rows():
             print("{}".format(" | ".join([str(getattr(row, it)) for it in keys])))
         pass
 

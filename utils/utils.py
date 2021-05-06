@@ -150,7 +150,10 @@ class FileUtils:
             if not fore:
                 raise Exception("{} is file".format(file_path))
             os.remove(path.absolute())
-        shutil.rmtree(file_path)
+
+        if path.exists():
+            shutil.rmtree(file_path)
+
         FileUtils.create_dir(file_path, fore)
 
     @staticmethod

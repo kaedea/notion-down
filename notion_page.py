@@ -52,20 +52,29 @@ class PageTableBlock(PageBaseBlock):
     def __init__(self):
         super().__init__()
         self.type = 'collection_view'
-        self.collection = None
+        self.block = None
 
     def write_block(self):
-        if not self.collection:
+        if not self.block:
             return ''
         block_lines = []
-        columns = self.collection.get_schema_properties()
-        columns.reverse()
-        keys = [it['slug'] for it in columns]
 
-        block_lines.append(" | ".join([it['name'] for it in columns]))
-        block_lines.append(" | ".join([':---:' for it in columns]))
+        column_properties = self.block.collection.get_schema_properties()
+        ordered_column_ids = self.block.views[0].get("format.table_properties")
 
-        for row in self.collection.get_rows():
+        ordered_column_properties = []
+        for id in ordered_column_ids:
+            ordered_column_properties.append(Utils.find_one(
+                column_properties,
+                lambda it: it['id'] == id['property']
+            ))
+
+        keys = [it['slug'] for it in ordered_column_properties]
+
+        block_lines.append(" | ".join([it['name'] for it in ordered_column_properties]))
+        block_lines.append(" | ".join([':---:' for it in ordered_column_properties]))
+
+        for row in self.block.collection.get_rows():
             block_lines.append(" | ".join([str(getattr(row, it)) for it in keys]))
 
         return "\n".join(block_lines)
@@ -462,7 +471,7 @@ class NotionPage:
         page_block = PageTableBlock()
         page_block.id = block.id
         page_block.type = block.type
-        page_block.collection = block.collection
+        page_block.block = block
         self.blocks.append(page_block)
 
     def _parse_stub(self, block):

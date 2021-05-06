@@ -1,15 +1,15 @@
-
-# Table of Contents
- - [Notion Down](#Notion Down)
- - &nbsp;&nbsp;&nbsp;&nbsp;[Hot It Works](#Hot It Works)
- - &nbsp;&nbsp;&nbsp;&nbsp;[Getting Started](#Getting Started)
- - &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[UnitTest Examples](#UnitTest Examples)
- - &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[CI Build Script](#CI Build Script)
-
 # Notion Down
 
 Python tools that convert Notion blog pages into Markdown files, along with intergation to build static webpages such as Hexo.
 
+
+Table of Contents
+
+  * [Notion Down](#Notion+Down)
+  * &nbsp;&nbsp;&nbsp;&nbsp;[Hot It Works](#Hot+It+Works)
+  * &nbsp;&nbsp;&nbsp;&nbsp;[Getting Started](#Getting+Started)
+  * &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[UnitTest Examples](#UnitTest+Examples)
+  * &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[CI Build Script](#CI+Build+Script)
 
 
 ## Hot It Works

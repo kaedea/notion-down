@@ -168,12 +168,57 @@ class NotionClientMarkDownPageTest(unittest.TestCase):
                 lambda it: it['id'] == id['property']
             ))
 
-        keys = [it['slug'] for it in ordered_column_properties]
+        slugs = [it['slug'] for it in ordered_column_properties]
+        types = [it['type'] for it in ordered_column_properties]
 
         print("{}".format(" | ".join([it['name'] for it in ordered_column_properties])))
         print("{}".format(" | ".join([':---:' for it in ordered_column_properties])))
 
         for row in block.collection.get_rows():
-            print("{}".format(" | ".join([str(getattr(row, it)) for it in keys])))
+            contents = []
+            for idx, slug in enumerate(slugs):
+                item_type = types[idx]
+                item_value = getattr(row, slug)
+                contents.append(self.__parse_collection_item(item_type, item_value))
+            print("{}".format(" | ".join(contents)))
         pass
+
+    def __parse_collection_item(self, collection_type, item):
+        if not item:
+            return str(item)
+
+        if collection_type == "date":
+            if item.end:
+                return "{} - {}".format(item.start, item.end)
+            return "{}".format(item.start)
+
+        if collection_type == 'person':
+            users = []
+            for user in item:
+                if user.email:
+                    users.append("{} <{}>".format(user.full_name, user.email))
+                else:
+                    users.append("{}".format(user.full_name))
+            return ", ".join(users)
+
+        if collection_type == "file":
+            # https://s3.us-west-2.amazonaws.com/secure.notion-static.com/a88e9b90-8865-4cfb-bdf9-c614f5a05ce0/AptioFix-R24-RELEASE.zip?\
+            # X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAT73L2G45O3KS52Y5%2F20210506%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20210506T172606Z&\
+            # X-Amz-\Expires=86400&X-Amz-Signature=a2a9c71829809cf224762400de378d277715f76b910d806573806c7881ba9b4b&X-Amz-SignedHeaders=host
+            urls = []
+            for url in item:
+                file_name = None
+                if '/' in url:
+                    file_name = url[url.rfind('/') + len('/'):]
+                    if '?' in file_name:
+                        file_name = file_name[:file_name.find('?')]
+                if file_name:
+                    urls.append("[{}]({})".format(file_name, url))
+                else:
+                    urls.append(url)
+            return ", ".join(urls)
+
+        return str(item)
+
+
 

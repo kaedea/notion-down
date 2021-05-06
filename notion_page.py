@@ -48,6 +48,7 @@ class PageTocBlock(PageBaseBlock):
         return ("\n".join(block_lines)) if len(block_lines) > 0 else ""
 
 
+# noinspection DuplicatedCode,PyMethodMayBeStatic
 class PageTableBlock(PageBaseBlock):
     def __init__(self):
         super().__init__()
@@ -69,15 +70,55 @@ class PageTableBlock(PageBaseBlock):
                 lambda it: it['id'] == id['property']
             ))
 
-        keys = [it['slug'] for it in ordered_column_properties]
+        slugs = [it['slug'] for it in ordered_column_properties]
+        types = [it['type'] for it in ordered_column_properties]
 
-        block_lines.append(" | ".join([it['name'] for it in ordered_column_properties]))
-        block_lines.append(" | ".join([':---:' for it in ordered_column_properties]))
+        block_lines.append("{}".format(" | ".join([it['name'] for it in ordered_column_properties])))
+        block_lines.append("{}".format(" | ".join([':---:' for it in ordered_column_properties])))
 
         for row in self.block.collection.get_rows():
-            block_lines.append(" | ".join([str(getattr(row, it)) for it in keys]))
+            contents = []
+            for idx, slug in enumerate(slugs):
+                item_type = types[idx]
+                item_value = getattr(row, slug)
+                contents.append(self.__parse_collection_item(item_type, item_value))
+            block_lines.append("{}".format(" | ".join(contents)))
 
         return "\n".join(block_lines)
+
+    def __parse_collection_item(self, collection_type, item):
+        if item is None:
+            return str(item)
+
+        if collection_type == "date":
+            if item.end:
+                return "{} - {}".format(item.start, item.end)
+            return "{}".format(item.start)
+
+        if collection_type == 'person':
+            users = []
+            for user in item:
+                if user.email:
+                    users.append("{} <{}>".format(user.full_name, user.email))
+                else:
+                    users.append("{}".format(user.full_name))
+            return ", ".join(users)
+
+        if collection_type == "file":
+            urls = []
+            for url in item:
+                file_name = None
+                if '/' in url:
+                    file_name = url[url.rfind('/') + len('/'):]
+                    if '?' in file_name:
+                        file_name = file_name[:file_name.find('?')]
+                if file_name:
+                    urls.append("[{}]({})".format(file_name, url))
+                else:
+                    urls.append(url)
+            return ", ".join(urls)
+
+        return str(item)
 
 
 class PageTextBlock(PageBaseBlock):

@@ -39,13 +39,13 @@ class PageTocBlock(PageBaseBlock):
         block_lines = []
         for block in self.page_blocks:
             if block.type == "header":
-                block_lines.append(" - [{}](#{})".format(block.text, block.text))
+                block_lines.append(" * [{}](#{})".format(block.text, str(block.text).lower().replace(" ", "-")))
             if block.type == "sub_header":
-                block_lines.append(" - {}[{}](#{})".format('&nbsp;' * 4, block.text, block.text))
+                block_lines.append(" * {}[{}](#{})".format('&nbsp;' * 4, block.text, str(block.text).lower().replace(" ", "-")))
             if block.type == "sub_sub_header":
-                block_lines.append(" - {}[{}](#{})".format('&nbsp;' * 8, block.text, block.text))
+                block_lines.append(" * {}[{}](#{})".format('&nbsp;' * 8, block.text, str(block.text).lower().replace(" ", "-")))
 
-        return ("# Table of Contents\n" + "\n".join(block_lines)) if len(block_lines) > 0 else ""
+        return ("\n".join(block_lines)) if len(block_lines) > 0 else ""
 
 
 class PageTableBlock(PageBaseBlock):

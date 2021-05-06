@@ -16,6 +16,8 @@
 
 ## Features
 
+What can notion-down do now:
+
  - Notion pages to basic MD files
 
  - Notion images downloading

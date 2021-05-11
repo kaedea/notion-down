@@ -8,8 +8,10 @@ workflows:
     # Inside the workflow, you define the jobs you want to run. 
     # For more details on extending your workflow, see the configuration docs: https://circleci.com/docs/2.0/configuration-reference/#workflows 
     jobs:
-      - build-and-test
-
+      - build-and-test:
+          filters:
+            branches:
+              only: master
 
 jobs:
   build-and-test: 
@@ -23,4 +25,5 @@ jobs:
               pip install notion
       - run:
           name: Run tests
-          command: pytest
+          command: |
+              python -m unittest test.notion_ci_test.NotionCiTest.test_generate_markdown_showcase 

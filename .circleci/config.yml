@@ -27,3 +27,9 @@ jobs:
           name: Run tests
           command: |
               python -m unittest test.notion_ci_test.NotionCiTest.test_generate_markdown_showcase 
+              build/NotionDown/draft/markdown_test_page.md
+      - run:
+          name: Dump outputs
+          command: |
+              echo "Generated MD file:\n"
+              cat build/NotionDown/*/markdown_test_page.md

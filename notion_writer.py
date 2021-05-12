@@ -69,15 +69,44 @@ class NotionPageWriter:
         pass
 
     def _write_blocks(self, page_lines: typing.List[typing.Text], blocks: typing.List[PageBaseBlock]):
-        for block in blocks:
-            self._write_block(page_lines, block)
-            if block.type == 'enter':
-                continue
-            page_lines.append("")
+        for idx in range(len(blocks)):
+            block = blocks[idx]
+            block_pre = None if idx <= 0 else blocks[idx - 1]
+            block_nxt = None if idx >= len(blocks) - 1 else blocks[idx + 1]
+            self._write_block(page_lines, block, block_pre, block_nxt)
         pass
 
-    def _write_block(self, page_lines: typing.List[typing.Text], block: PageBaseBlock):
+    def _write_block(
+            self,
+            page_lines: typing.List[typing.Text],
+            block: PageBaseBlock,
+            block_pre: PageBaseBlock = None,
+            block_nxt: PageBaseBlock = None):
+
+        # Check prefix-separator
+        if block.type in ['enter']:
+            pass
+        else:
+            if not block_pre:
+                pass
+            else:
+                if block_pre.type in ['enter']:
+                    pass
+                else:
+                    if block_pre.type in ['bulleted_list', 'numbered_list']:
+                        if block.type in ['bulleted_list', 'numbered_list']:
+                            pass
+                        else:
+                            page_lines.append("")
+                    else:
+                        page_lines.append("")
+
+        # Curr block
         page_lines.append(block.write_block())
+
+        # Check suffix-separator
+        if block_nxt is None:
+            page_lines.append("")
         pass
 
     def _write_tail(self, page_lines: typing.List[typing.Text], notion_page: NotionPage):

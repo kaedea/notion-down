@@ -135,7 +135,7 @@ class PageEnterBlock(PageTextBlock):
     def __init__(self):
         super().__init__()
         self.type = 'enter'
-        self.text = '\n'
+        self.text = ''
 
     def write_block(self):
         return self.text

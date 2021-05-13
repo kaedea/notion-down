@@ -24,6 +24,8 @@ jobs:
     docker:
       - image: cimg/python:3.8
     steps:
+      - attach_workspace:
+            at: ~/
       - checkout
       - run:
           name: pip install
@@ -39,17 +41,17 @@ jobs:
               echo "Generated MD file:\n"
               cat build/NotionDown/*/markdown_test_page.md
       - persist_to_workspace:
-          root: ./
+          root: ~/build
           paths:
-            - build
+            - .
 
   publish-github-push:
       docker:
         - image: cibuilds/github:0.10
       steps:
         - attach_workspace:
-            at: ./build/NotionDown
+            at: ~/
         - run:
             name: "Dump files"
             command: |
-              find . -name ".md" | xargs echo
+              find ./build -name ".md" | xargs echo

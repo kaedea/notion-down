@@ -12,7 +12,7 @@ workflows:
           filters:
             branches:
               only: master
-      - build-and-test:
+      - publish-github-push:
           requires:
             - build-and-test
           filters:
@@ -43,7 +43,7 @@ jobs:
           paths:
             - build
 
-publish-github-push:
+  publish-github-push:
       docker:
         - image: cibuilds/github:0.10
       steps:

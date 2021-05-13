@@ -59,6 +59,6 @@ jobs:
             name: "Dump files"
             command: |
               pwd && ls -l
-              find ./build -name "*.md" | xargs echo
-              find ./build -name "*.md" | head -1 | xargs -n 1 sh -c "echo $0 ~/project/README.md"
+              find ./build -name "*.md" -type f | xargs echo
+              find ./build -name "*.md" -type f | head -1 | xargs -n 1 sh -c "echo mv $0 ~/project/README.md"
               cat ~/project/README.md

@@ -49,7 +49,7 @@ jobs:
             - ./build
 
   publish-github-push:
-      working_directory: ~/project
+      working_directory: ~/dist
       docker:
         - image: cibuilds/github:0.10
       steps:
@@ -60,9 +60,9 @@ jobs:
             name: "Dump files"
             command: |
               pwd && ls -l
-              # find ~/project/build -name "*.md" -type f | head -1 | xargs -n1 sh -c "echo mv $0 $1 ~/project/README.md"
-              echo "mv $(find ~/project/build -name "*.md" -type f | head -1) ~/project/README.md"
-              cat ~/project/README.md
+              # find ~/project/build -name "*.md" -type f | head -1 | xargs -n1 sh -c "echo mv $0 $1 ~/dist/README.md"
+              echo "mv $(find ~/project/build -name "*.md" -type f | head -1) ~/dist/README.md"
+              # cat ~/dist/README.md
         - run:
             name: "Push"
             command: |

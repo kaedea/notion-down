@@ -39,9 +39,9 @@ jobs:
               echo "Generated MD file:\n"
               cat build/NotionDown/*/markdown_test_page.md
       - persist_to_workspace:
-          root: ~/
+          root: ./
           paths:
-            - build/NotionDown
+            - build
 
 publish-github-push:
       docker:

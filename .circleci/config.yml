@@ -40,8 +40,11 @@ jobs:
           command: |
               echo "Generated MD file:\n"
               cat build/NotionDown/*/markdown_test_page.md
+              echo "\n---\n"
+              pwd
+              ls -l
       - persist_to_workspace:
-          root: ~/build
+          root: ~/
           paths:
             - .
 

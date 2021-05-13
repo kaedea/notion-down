@@ -55,10 +55,22 @@ jobs:
       steps:
         - attach_workspace:
             at: ~/project
+        - checkout
         - run:
             name: "Dump files"
             command: |
               pwd && ls -l
               # find ~/project/build -name "*.md" -type f | head -1 | xargs -n1 sh -c "echo mv $0 $1 ~/project/README.md"
-              mv $(find ~/project/build -name "*.md" -type f | head -1) ~/project/README.md
+              echo "mv $(find ~/project/build -name "*.md" -type f | head -1) ~/project/README.md"
               cat ~/project/README.md
+        - run:
+            name: "Push"
+            command: |
+              pwd && ls -l
+              has_modified=$(git ls-files -m)
+              echo "modified: $has_modified"
+              if [ -n $has_modified ]; then
+                  echo "has modified"
+              else
+                  echo "not modified"
+              fi

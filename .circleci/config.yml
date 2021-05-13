@@ -12,6 +12,12 @@ workflows:
           filters:
             branches:
               only: master
+      - build-and-test:
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              only: master
 
 jobs:
   build-and-test: 
@@ -32,3 +38,18 @@ jobs:
           command: |
               echo "Generated MD file:\n"
               cat build/NotionDown/*/markdown_test_page.md
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - build/NotionDown
+
+publish-github-push:
+      docker:
+        - image: cibuilds/github:0.10
+      steps:
+        - attach_workspace:
+            at: ./build/NotionDown
+        - run:
+            name: "Dump files"
+            command: |
+              find . -name ".md" | xargs echo

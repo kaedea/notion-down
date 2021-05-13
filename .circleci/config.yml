@@ -60,5 +60,5 @@ jobs:
             command: |
               pwd && ls -l
               find ./build -name "*.md" | xargs echo
-              find ./build -name "*.md" | mv ~/project/README.md
+              find ./build -name "*.md" | xargs -n 1 bash -c "mv $0 ~/project/README.md"
               cat ~/project/README.md

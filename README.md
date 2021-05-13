@@ -1,7 +1,9 @@
 
 # Notion Down
 
-[notion-down](https://github.com/kaedea/notion-down), python tools that convert Notion blog pages into Markdown files, along with intergation to build static webpages such as Hexo.
+![](https://circleci.com/gh/kaedea/notion-down.svg?style=shield&circle-token=9f4dc656e94d8deccd362e52400c96e709c7e8b3)
+
+[Notion Down](https://github.com/kaedea/notion-down), python tools that convert Notion blog pages into Markdown files, along with intergation to build static webpages such as Hexo.
 
  * [Notion Down](#notion-down)
  * &nbsp;&nbsp;&nbsp;&nbsp;[Features](#features)
@@ -16,6 +18,7 @@ What can notion-down do now:
 
  - Notion pages to basic MarkDown files
  - Notion images downloading
+ - Advanced Notion pageblocks support (WIP)
  - Hexo Integration (WIP)
  - Advanced MarkDown embed feature (WIP)
 

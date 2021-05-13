@@ -59,18 +59,19 @@ jobs:
         - run:
             name: "Dump files"
             command: |
-              pwd && ls -l
+              pwd && ls -l ~/project
               # find ~/project/build -name "*.md" -type f | head -1 | xargs -n1 sh -c "echo mv $0 $1 ~/dist/README.md"
               echo "mv $(find ~/project/build -name "*.md" -type f | head -1) ~/dist/README.md"
-              # cat ~/dist/README.md
+              mv $(find ~/project/build -name "*.md" -type f | head -1) ~/dist/README.md
+              cat ~/dist/README.md
         - run:
             name: "Push"
             command: |
-              pwd && ls -l
+              pwd
               has_modified=$(git ls-files -m)
               echo "modified: $has_modified"
-              if [ -n $has_modified ]; then
-                  echo "has modified"
-              else
+              if [ -z "$(echo $1 | xargs)" ] ; then
                   echo "not modified"
+              else
+                  echo "has modified"
               fi

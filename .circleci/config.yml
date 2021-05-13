@@ -21,11 +21,12 @@ workflows:
 
 jobs:
   build-and-test: 
+    working_directory: ~/project
     docker:
       - image: cimg/python:3.8
     steps:
       - attach_workspace:
-            at: ~/
+            at: ~/project
       - checkout
       - run:
           name: pip install
@@ -44,17 +45,19 @@ jobs:
               pwd
               ls -l
       - persist_to_workspace:
-          root: ~/
+          root: ~/project
           paths:
-            - .
+            - ./build
 
   publish-github-push:
+      working_directory: ~/project
       docker:
         - image: cibuilds/github:0.10
       steps:
         - attach_workspace:
-            at: ~/
+            at: ~/project
         - run:
             name: "Dump files"
             command: |
+              pwd && ls -l
               find ./build -name ".md" | xargs echo

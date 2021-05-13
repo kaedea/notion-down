@@ -73,9 +73,9 @@ jobs:
               echo "n--n"
 
               git ls-files -m
+              git diff --ignore-blank-lines --ignore-all-space --ignore-cr-at-eol HEAD
               # has_modified=$(git ls-files -m)
-              git diff HEAD
-              has_modified=$(git diff HEAD --ignore-blank-lines --ignore-all-space --ignore-cr-at-eol)
+              has_modified=$(git diff --ignore-blank-lines --ignore-all-space --ignore-cr-at-eol HEAD)
               
               if [ -z "$(echo $has_modified | xargs)" ] ; then
                   echo "not modified"

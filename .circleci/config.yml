@@ -9,18 +9,24 @@ workflows:
     # For more details on extending your workflow, see the configuration docs: https://circleci.com/docs/2.0/configuration-reference/#workflows 
     jobs:
       - build-and-test:
+          branch_name: master
           filters:
             branches:
-              only: ${BRANCH_FILTER}
+              only: master
       - publish-github-push:
+          branch_name: master
           requires:
             - build-and-test
           filters:
             branches:
-              only: ${BRANCH_FILTER}
+              only: master
 
 jobs:
   build-and-test: 
+    parameters:
+      branch_name:
+        type: string
+        default: master
     working_directory: ~/project
     docker:
       - image: cimg/python:3.8
@@ -49,6 +55,10 @@ jobs:
             - ./build
 
   publish-github-push:
+      parameters:
+        branch_name:
+          type: string
+          default: master
       working_directory: ~/dist
       docker:
         - image: cibuilds/github:0.10
@@ -84,12 +94,12 @@ jobs:
                   echo "has modified, try git push"
                   git config user.name "Kaede"
                   git config user.email "kidhaibara@gmail.com"
-                  # git pull origin ${BRANCH_FILTER}
+                  # git pull origin << parameters.branch_name >>
                   git add *
                   git status
                   git commit -a -m "Update README via CircleciBot - ${CIRCLE_BUILD_NUM}"
                   git status
-                  git push --quiet "https://${GH_TOKEN}@github.com/kaedea/notion-down.git" ${BRANCH_FILTER}:${BRANCH_FILTER}
+                  git push --quiet "https://${GH_TOKEN}@github.com/kaedea/notion-down.git" << parameters.branch_name >>:<< parameters.branch_name >>
               fi
 
               

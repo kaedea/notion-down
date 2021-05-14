@@ -9,22 +9,22 @@ workflows:
     # For more details on extending your workflow, see the configuration docs: https://circleci.com/docs/2.0/configuration-reference/#workflows 
     jobs:
       - build-and-test:
-          branch_name: master
+          branch_build: ci/build-readme
           filters:
             branches:
-              only: master
+              only: ci/build-readme
       - publish-github-push:
-          branch_name: master
+          branch_deploy: deploy/readme
           requires:
             - build-and-test
           filters:
             branches:
-              only: master
+              only: deploy/readme
 
 jobs:
   build-and-test: 
     parameters:
-      branch_name:
+      branch_build:
         type: string
         default: master
     working_directory: ~/project
@@ -56,7 +56,7 @@ jobs:
 
   publish-github-push:
       parameters:
-        branch_name:
+        branch_deploy:
           type: string
           default: master
       working_directory: ~/dist
@@ -66,6 +66,9 @@ jobs:
         - attach_workspace:
             at: ~/project
         - checkout
+        - run: git checkout << parameters.branch_deploy >>
+        # - run: git submodule sync
+        # - run: git submodule update --init
         - run:
             name: "Dump files"
             command: |
@@ -94,12 +97,12 @@ jobs:
                   echo "has modified, try git push"
                   git config user.name "Kaede"
                   git config user.email "kidhaibara@gmail.com"
-                  # git pull origin << parameters.branch_name >>
+                  # git pull origin << parameters.branch_deploy >>
                   git add *
                   git status
                   git commit -a -m "Update README via CircleciBot - ${CIRCLE_BUILD_NUM}"
                   git status
-                  git push --quiet "https://${GH_TOKEN}@github.com/kaedea/notion-down.git" << parameters.branch_name >>:<< parameters.branch_name >>
+                  git push --quiet "https://${GH_TOKEN}@github.com/kaedea/notion-down.git" << parameters.branch_deploy >>:<< parameters.branch_deploy >>
               fi
 
               

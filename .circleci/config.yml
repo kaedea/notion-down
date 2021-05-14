@@ -19,7 +19,7 @@ workflows:
             - build-and-test
           filters:
             branches:
-              only: deploy/readme
+              only: ci/build-readme
 
 jobs:
   build-and-test: 

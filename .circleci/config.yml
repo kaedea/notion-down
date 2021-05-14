@@ -72,12 +72,12 @@ jobs:
               pwd
               echo "n--n"
 
-              git ls-files -m
-              git diff --diff-filter=ACMR --ignore-space-at-eol -M100%
+              # git ls-files -m
+              # git diff --name-only --diff-filter=ACMR --ignore-space-at-eol -M100%
               # has_modified=$(git ls-files -m)
-              has_modified="$(git diff --diff-filter=ACMR --ignore-space-at-eol -M100%)"
+              has_modified="$(git diff --name-only --diff-filter=ACMR --ignore-space-at-eol -M100%)"
               
-              if [ -z "$(echo $has_modified | xargs)" ] ; then
+              if [ -z "$(echo $has_modified)" ] ; then
                   echo "not modified"
               else
                   echo "has modified"

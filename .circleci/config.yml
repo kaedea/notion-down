@@ -64,8 +64,8 @@ jobs:
 
               # find ~/project/build -name "*.md" -type f | head -1 | xargs -n1 sh -c "echo mv $0 $1 ~/dist/README.md"
               echo "mv $(find ~/project/build -name "*.md" -type f | head -1) ~/dist/README.md"
-              mv $(find ~/project/build -name "*.md" -type f | head -1) ~/dist/README.md
-              cat ~/dist/README.md
+              # mv $(find ~/project/build -name "*.md" -type f | head -1) ~/dist/README.md
+              # cat ~/dist/README.md
         - run:
             name: "Push"
             command: |
@@ -73,8 +73,9 @@ jobs:
               echo "n--n"
 
               # git ls-files -m
-              # git diff --name-only --diff-filter=ACMR --ignore-space-at-eol -M100%
               # has_modified=$(git ls-files -m)
+
+              git diff --name-only --diff-filter=ACMR --ignore-space-at-eol -M100%
               has_modified="$(git diff --name-only --diff-filter=ACMR --ignore-space-at-eol -M100%)"
               
               if [ -z "$(echo $has_modified)" ] ; then

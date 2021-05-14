@@ -82,6 +82,9 @@ jobs:
                   echo "not modified"
               else
                   echo "has modified, try git push"
+                  git config user.name "Kaede"
+                  git config user.email "kidhaibara@gmail.com"
+                  # git pull origin master
                   git add *
                   git status
                   git commit -a -m "Update README via CircleciBot - ${CIRCLE_BUILD_NUM}"

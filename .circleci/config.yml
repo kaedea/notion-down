@@ -41,7 +41,7 @@ jobs:
       - run:
           name: Run tests
           command: |
-              python -m unittest test.notion_ci_test.NotionCiTest.test_generate_markdown_showcase 
+              python -m unittest test.notion_ci_test.NotionCiTest.test_generate_read_me 
       - run:
           name: Dump outputs
           command: |

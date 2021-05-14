@@ -81,7 +81,11 @@ jobs:
               if [ -z "$has_modified" ] ; then
                   echo "not modified"
               else
-                  echo "has modified"
+                  echo "has modified, try git push"
+                  git add *
+                  git status
+                  git commit -a -m "Update README via CircleciBot - ${CIRCLE_BUILD_NUM}"
+                  git push --quiet "https://${GH_TOKEN}@github.com/kaedea/notion-down.git" circleci-bot:circleci-bot
               fi
 
               

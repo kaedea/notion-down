@@ -11,13 +11,13 @@ workflows:
       - build-and-test:
           filters:
             branches:
-              only: master
+              only: ${BRANCH_FILTER}
       - publish-github-push:
           requires:
             - build-and-test
           filters:
             branches:
-              only: master
+              only: ${BRANCH_FILTER}
 
 jobs:
   build-and-test: 
@@ -84,12 +84,12 @@ jobs:
                   echo "has modified, try git push"
                   git config user.name "Kaede"
                   git config user.email "kidhaibara@gmail.com"
-                  # git pull origin master
+                  # git pull origin ${BRANCH_FILTER}
                   git add *
                   git status
                   git commit -a -m "Update README via CircleciBot - ${CIRCLE_BUILD_NUM}"
                   git status
-                  git push --quiet "https://${GH_TOKEN}@github.com/kaedea/notion-down.git" master:master
+                  git push --quiet "https://${GH_TOKEN}@github.com/kaedea/notion-down.git" ${BRANCH_FILTER}:${BRANCH_FILTER}
               fi
 
               

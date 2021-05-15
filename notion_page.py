@@ -1,5 +1,6 @@
 import os
 import re
+import urllib
 
 from notion.block import CodeBlock
 
@@ -282,6 +283,7 @@ class NotionPage:
     def __init__(self):
         self.id = ''
         self.title = ''
+        self.cover = ''
         self.blocks = []
         self.properties = {}
 
@@ -396,6 +398,13 @@ class NotionPage:
     def parse(self, page):
         self.id = str(page.id)
         self.title = str(page.title)
+        page_cover = page.get("format.page_cover")
+        if page_cover:
+            if str(page_cover).startswith("http"):
+                self.cover = str(page_cover)
+            else:
+                self.cover = "https://www.notion.so/image/" \
+                             + urllib.parse.quote("https://www.notion.so{}".format(page_cover).replace("/", "%2F"))
 
         # parse page blocks
         for block in page.children:

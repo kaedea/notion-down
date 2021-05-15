@@ -1,6 +1,7 @@
 import os
+import re
 
-from notion.block import CodeBlock, ImageBlock, TextBlock, DividerBlock
+from notion.block import CodeBlock
 
 from config import Config
 from utils.utils import Utils
@@ -128,6 +129,26 @@ class PageTextBlock(PageBaseBlock):
         self.text = ''
 
     def write_block(self):
+        # Check obfuscated links or images
+        pattern = re.compile("\[.*\]\(\[.*\]\(.*\)\)")
+        if pattern.search(self.text) is not None:
+            # parse obfuscated blocks
+            obfuscated_links = []
+
+            try:
+                p = pattern
+                for m in p.finditer(self.text):
+                    obfuscated_link = m.group()
+                    prefix = obfuscated_link[:obfuscated_link.find("]([")] + "]"
+                    link = obfuscated_link[obfuscated_link.rfind("](") + len("]("):obfuscated_link.rfind("))")]
+                    obfuscated_links.append("{}({})".format(prefix, link))
+
+                intermediate_text = re.sub(pattern, '{}', self.text)
+                return intermediate_text.format(*obfuscated_links)
+            except Exception as e:
+                print("Parse obfuscated links block error: text = {}\t\n".format(self.text))
+                raise e
+
         return self.text
 
 

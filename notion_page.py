@@ -178,9 +178,10 @@ class PageNumberedListBlock(PageTextBlock):
         super().__init__()
         self.type = 'numbered_list'
         self.text = ''
+        self.level = 0
 
     def write_block(self):
-        return '0. {}'.format(self.text)
+        return '{}1. {}'.format(" " * 4 * self.level, self.text)
 
 
 class PageBulletedListBlock(PageTextBlock):
@@ -188,9 +189,10 @@ class PageBulletedListBlock(PageTextBlock):
         super().__init__()
         self.type = 'bulleted_list'
         self.text = ''
+        self.level = 0
 
     def write_block(self):
-        return ' - {}'.format(self.text)
+        return '{} - {}'.format(" " * 4 * self.level, self.text)
 
 
 class PageQuoteBlock(PageTextBlock):
@@ -484,14 +486,50 @@ class NotionPage:
         page_block.id = block.id
         page_block.type = block.type
         page_block.text = block.title
+        page_block.level = 0
         self.blocks.append(page_block)
+
+        if block.children:
+            self.__recursive_parse_numbered_list(block.children, page_block.level + 1)
+            pass
+
+    def __recursive_parse_numbered_list(self, blocks, level):
+        for block in blocks:
+            page_block = PageNumberedListBlock()
+            page_block.id = block.id
+            page_block.type = block.type
+            page_block.text = block.title
+            page_block.level = level
+            self.blocks.append(page_block)
+
+            if block.children:
+                self.__recursive_parse_numbered_list(block.children, level + 1)
+                pass
 
     def _parse_bulleted_list(self, block):
         page_block = PageBulletedListBlock()
         page_block.id = block.id
         page_block.type = block.type
         page_block.text = block.title
+        page_block.level = 0
         self.blocks.append(page_block)
+
+        if block.children:
+            self.__recursive_parse_bulleted_list(block.children, page_block.level + 1)
+            pass
+
+    def __recursive_parse_bulleted_list(self, blocks, level):
+        for block in blocks:
+            page_block = PageBulletedListBlock()
+            page_block.id = block.id
+            page_block.type = block.type
+            page_block.text = block.title
+            page_block.level = level
+            self.blocks.append(page_block)
+
+            if block.children:
+                self.__recursive_parse_bulleted_list(block.children, level + 1)
+                pass
 
     def _parse_quote(self, block):
         page_block = PageQuoteBlock()

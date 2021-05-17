@@ -16,9 +16,10 @@ What can notion-down do now:
  - Notion pages to basic MarkDown files
  - Notion images downloading
  - Noton custom `ShortCode` blocks that control parametered MD files generating
- - Advanced Notion pageblocks support (WIP)
  - Hexo Integration (WIP)
- - Advanced MarkDown embed feature (WIP)
+ - Advanced Notion pageblocks support (WIP)
+     - Pullquote Blocks
+     - Notion page embed blocks
 
 ## Hot It Works
 

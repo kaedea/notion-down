@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 Update Notion page parsing.
 
 ### Added
+- ShortCode feature support.
+
 ### Changed
 ### Fixed
 - Nested Number/Bullet List parsing support.

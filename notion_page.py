@@ -1,5 +1,6 @@
 import os
 import re
+import typing
 import urllib
 
 from notion.block import CodeBlock
@@ -21,6 +22,28 @@ type: {}
 
     def _wip_msg(self):
         return "notion id: " + self.id
+
+
+class PageGroupBlock(PageBaseBlock):
+    def __init__(self):
+        super().__init__()
+        self.type = 'group_block'
+        self.children: typing.List[PageBaseBlock] = []
+
+    def write_block(self):
+        lines = [it.write_block() for it in self.children]
+        return "{}".format("\n".join(lines))
+
+
+class PageChannelBlock(PageGroupBlock):
+    def __init__(self):
+        super().__init__()
+        self.type = 'channel_block'
+        self.channel = ''
+
+    def write_block(self):
+        lines = [it.write_block() for it in self.children]
+        return "{}".format("\n".join(lines))
 
 
 class PageTocBlock(PageBaseBlock):
@@ -426,13 +449,44 @@ class NotionPage:
                              + urllib.parse.quote("https://www.notion.so{}".format(page_cover).replace("/", "%2F"))
 
         # parse page blocks
-        for block in page.children:
+        idx = 0
+        while idx < len(page.children):
+            block = page.children[idx]
+
+            # Channel Block
+            if self._is_short_code_start(block):
+                idx_end = self._parse_short_code_chunks(page.children, idx)
+                if idx_end > idx:
+                    idx = idx_end
+                    continue
+
+            # Mapping for parse
             if block.type in self.mapping:
                 self.mapping[block.type].__call__(block)
+                idx += 1
                 continue
+
             # Basic Block Parsing
+            idx += 1
             self._parse_basic(block)
         pass
+
+    def _is_short_code_start(self, block):
+        if block.type == "text":
+            if str(block.title).startswith("<!-- SHORT_CODE_"):
+                return True
+        return False
+
+    def _parse_short_code_chunks(self, blocks, idx_start):
+        if idx_start < 0 or idx_start >= len(blocks) - 1:
+            return -1
+
+        if not self._is_short_code_start(blocks[idx_start]):
+            return -1
+
+        # FIXME: parsing chunks
+
+        return idx_start + 1
 
     def _parse_basic(self, block):
         page_block = PageBaseBlock()

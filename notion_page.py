@@ -26,11 +26,12 @@ class PageGroupBlock(PageBaseBlock):
     def __init__(self):
         super().__init__()
         self.type = 'group_block'
+        self.name = 'unknown'
         self.children: typing.List[PageBaseBlock] = []
 
     def write_block(self):
         lines = [it.write_block() for it in self.children]
-        return "{}".format("\n".join(lines))
+        return "<!-- ShortCode: {}\n{}\n-->".format(self.name, "\n".join(lines))
 
 
 class PageChannelBlock(PageGroupBlock):
@@ -499,10 +500,19 @@ class NotionPage:
         group_block.id = blocks[idx_start].id
         start_line = str(blocks[idx_start].title)
 
+        symbol = 'SHORT_CODE_'
+        if symbol in start_line:
+            name = start_line[start_line.rfind(symbol) + len(symbol):].strip()
+            symbol_end = "="
+            if symbol_end in name:
+                name = name[:name.find(symbol_end)]
+            group_block.name = name
+            pass
+
         symbol = 'SHORT_CODE_CHANNEL='
         if symbol in start_line:
             group_block = PageChannelBlock()
-            channel = start_line[start_line.rfind(symbol) + len(symbol):]
+            channel = start_line[start_line.rfind(symbol) + len(symbol):].strip()
             group_block.channel = channel
             pass
 

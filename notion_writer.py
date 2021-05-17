@@ -7,7 +7,7 @@ from pathlib import Path
 from notion.utils import slugify
 
 from config import Config
-from notion_page import NotionPage, PageBaseBlock
+from notion_page import NotionPage, PageBaseBlock, PageImageBlock
 from utils.utils import FileUtils
 
 
@@ -66,6 +66,12 @@ class NotionPageWriter:
 
     def _write_header(self, page_lines: typing.List[typing.Text], notion_page: NotionPage):
         page_lines.append("")
+        if notion_page.cover:
+            image_block = PageImageBlock()
+            image_block.image_caption = "Page Cover"
+            image_block.image_url = notion_page.cover
+            page_lines.append(image_block.write_block())
+            page_lines.append("")
         pass
 
     def _write_blocks(self, page_lines: typing.List[typing.Text], blocks: typing.List[PageBaseBlock]):

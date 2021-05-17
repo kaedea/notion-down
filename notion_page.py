@@ -263,13 +263,29 @@ class PageCodeBlock(PageTextBlock):
 class PageImageBlock(PageBaseBlock):
     def __init__(self):
         super().__init__()
-        self.text = 'image'
+        self.type = 'image'
         self.image_caption = ''
         self.image_url = ''
         self.image_file = ''
 
     def write_block(self):
         return "![{}]({})".format(self.image_caption, self.image_url)
+
+
+class PageToggleBlock(PageTextBlock):
+    def __init__(self):
+        super().__init__()
+        self.type = 'image'
+        self.text = ''
+        self.children = []
+        self.status = 'details'  # or 'details open'
+
+    def write_block(self):
+        return '''<{}>
+<summary>{}</summary>
+<pre><code>{}
+</code></pre>
+</details>'''.format(self.status, self.text, "\n".join(self.children))
 
 
 # noinspection PyBroadException
@@ -303,6 +319,7 @@ class NotionPage:
             "code": self._parse_code,
             "table_of_contents": self._parse_toc,
             "collection_view": self._parse_collection,
+            "toggle": self._parse_toggle,
             "page": self._parse_sub_page,
         }
 
@@ -581,6 +598,16 @@ class NotionPage:
         page_block.id = block.id
         page_block.type = block.type
         page_block.block = block
+        self.blocks.append(page_block)
+
+    def _parse_toggle(self, block):
+        page_block = PageToggleBlock()
+        page_block.id = block.id
+        page_block.type = block.type
+        page_block.text = block.title
+        for child in block.children:
+            page_block.children.append(child.title)
+
         self.blocks.append(page_block)
 
     def _parse_stub(self, block):

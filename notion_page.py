@@ -3,8 +3,6 @@ import re
 import typing
 import urllib
 
-from notion.block import CodeBlock
-
 from config import Config
 from utils.utils import Utils
 
@@ -311,7 +309,7 @@ class PageToggleBlock(PageTextBlock):
 </details>'''.format(self.status, self.text, "\n".join(self.children))
 
 
-# noinspection PyBroadException
+# noinspection PyBroadException,PyMethodMayBeStatic
 class NotionPage:
     """
     relative_path = None
@@ -449,27 +447,34 @@ class NotionPage:
                              + urllib.parse.quote("https://www.notion.so{}".format(page_cover).replace("/", "%2F"))
 
         # parse page blocks
-        idx = 0
-        while idx < len(page.children):
-            block = page.children[idx]
+        self.blocks = self._parse_page_blocks(page.children)
 
-            # Channel Block
+    def _parse_page_blocks(self, blocks):
+        page_blocks: typing.List[PageBaseBlock] = []
+
+        # parse page blocks
+        idx = 0
+        while idx < len(blocks):
+            block = blocks[idx]
+
+            # Channel Block START
             if self._is_short_code_start(block):
-                idx_end = self._parse_short_code_chunks(page.children, idx)
+                idx_end = self._parse_short_code_chunks(page_blocks, blocks, idx)
                 if idx_end > idx:
                     idx = idx_end
                     continue
 
             # Mapping for parse
             if block.type in self.mapping:
-                self.mapping[block.type].__call__(block)
+                self.mapping[block.type].__call__(page_blocks, block)
                 idx += 1
                 continue
 
             # Basic Block Parsing
             idx += 1
-            self._parse_basic(block)
-        pass
+            self._parse_basic(page_blocks, block)
+
+        return page_blocks
 
     def _is_short_code_start(self, block):
         if block.type == "text":
@@ -477,35 +482,77 @@ class NotionPage:
                 return True
         return False
 
-    def _parse_short_code_chunks(self, blocks, idx_start):
+    def _is_short_code_end(self, block):
+        if block.type == "text":
+            if str(block.title).startswith("SHORT_CODE_END -->"):
+                return True
+        return False
+
+    def _parse_short_code_chunks(self, page_blocks: typing.List[PageBaseBlock], blocks, idx_start):
         if idx_start < 0 or idx_start >= len(blocks) - 1:
             return -1
 
         if not self._is_short_code_start(blocks[idx_start]):
             return -1
 
-        # FIXME: parsing chunks
+        group_block: PageGroupBlock = PageGroupBlock()
+        group_block.id = blocks[idx_start].id
+        start_line = str(blocks[idx_start].title)
 
-        return idx_start + 1
+        symbol = 'SHORT_CODE_CHANNEL='
+        if symbol in start_line:
+            group_block = PageChannelBlock()
+            channel = start_line[start_line.rfind(symbol) + len(symbol):]
+            group_block.channel = channel
+            pass
 
-    def _parse_basic(self, block):
+        channel_blocks: typing.List[PageBaseBlock] = []
+
+        end_found = False
+        idx = idx_start + 1
+        while idx < len(blocks):
+            block = blocks[idx]
+
+            # Channel Block END
+            if self._is_short_code_end(block):
+                end_found = True
+                break
+
+            # Mapping for parse
+            if block.type in self.mapping:
+                self.mapping[block.type].__call__(channel_blocks, block)
+                idx += 1
+                continue
+
+            # Basic Block Parsing
+            idx += 1
+            self._parse_basic(channel_blocks, block)
+
+        if end_found:
+            group_block.children = channel_blocks
+            page_blocks.append(group_block)
+            return idx + 1
+
+        return -1
+
+    def _parse_basic(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageBaseBlock()
         page_block.id = block.id
         page_block.type = block.type
-        self.blocks.append(page_block)
+        page_blocks.append(page_block)
 
-    def _parse_text(self, block):
+    def _parse_text(self, page_blocks: typing.List[PageBaseBlock], block):
         if len(str(block.title).strip()) == 0:
             self.blocks.append(PageEnterBlock())
             return
         page_block = PageTextBlock()
-        page_block.type = block.id
+        page_block.id = block.id
         page_block.type = block.type
         page_block.text = block.title
-        self.blocks.append(page_block)
+        page_blocks.append(page_block)
         pass
 
-    def _parse_image(self, block):
+    def _parse_image(self, page_blocks: typing.List[PageBaseBlock], block):
         image_id = block.id
         image_caption = str(block.caption)
         image_url = str(block.source)
@@ -517,13 +564,13 @@ class NotionPage:
         page_block.image_caption = image_caption
         page_block.image_url = image_url
         page_block.image_file = temp_file
-        self.blocks.append(page_block)
+        page_blocks.append(page_block)
 
-    def _parse_divider(self, block):
+    def _parse_divider(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageDividerBlock()
         page_block.id = block.id
         page_block.type = block.type
-        self.blocks.append(page_block)
+        page_blocks.append(page_block)
 
     def _parse_properties(self, block):
         content = block.title
@@ -538,7 +585,7 @@ class NotionPage:
                     value = line[idx + len('='):].strip()
                     self.properties[key] = value
 
-    def _parse_code(self, block: CodeBlock):
+    def _parse_code(self, page_blocks: typing.List[PageBaseBlock], block):
         content = block.title
         symbol = '[properties]'
         if symbol in content:
@@ -550,111 +597,112 @@ class NotionPage:
         page_block.type = block.type
         page_block.text = block.title
         page_block.lang = block.language
-        self.blocks.append(page_block)
+        page_blocks.append(page_block)
 
-    def _parse_numbered_list(self, block):
+    def _parse_numbered_list(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageNumberedListBlock()
         page_block.id = block.id
         page_block.type = block.type
         page_block.text = block.title
         page_block.level = 0
-        self.blocks.append(page_block)
+        page_blocks.append(page_block)
 
         if block.children:
-            self.__recursive_parse_numbered_list(block.children, page_block.level + 1)
+            self.__recursive_parse_numbered_list(page_blocks, block.children, page_block.level + 1)
             pass
 
-    def __recursive_parse_numbered_list(self, blocks, level):
+    def __recursive_parse_numbered_list(self, page_blocks: typing.List[PageBaseBlock], blocks, level):
         for block in blocks:
             page_block = PageNumberedListBlock()
             page_block.id = block.id
             page_block.type = block.type
             page_block.text = block.title
             page_block.level = level
-            self.blocks.append(page_block)
+            page_blocks.append(page_block)
 
             if block.children:
-                self.__recursive_parse_numbered_list(block.children, level + 1)
+                self.__recursive_parse_numbered_list(page_blocks, block.children, level + 1)
                 pass
 
-    def _parse_bulleted_list(self, block):
+    def _parse_bulleted_list(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageBulletedListBlock()
         page_block.id = block.id
         page_block.type = block.type
         page_block.text = block.title
         page_block.level = 0
-        self.blocks.append(page_block)
+        page_blocks.append(page_block)
 
         if block.children:
-            self.__recursive_parse_bulleted_list(block.children, page_block.level + 1)
+            self.__recursive_parse_bulleted_list(page_blocks, block.children, page_block.level + 1)
             pass
 
-    def __recursive_parse_bulleted_list(self, blocks, level):
+    def __recursive_parse_bulleted_list(self, page_blocks: typing.List[PageBaseBlock], blocks, level):
         for block in blocks:
             page_block = PageBulletedListBlock()
             page_block.id = block.id
             page_block.type = block.type
             page_block.text = block.title
             page_block.level = level
-            self.blocks.append(page_block)
+            page_blocks.append(page_block)
 
             if block.children:
-                self.__recursive_parse_bulleted_list(block.children, level + 1)
+                self.__recursive_parse_bulleted_list(page_blocks, block.children, level + 1)
                 pass
 
-    def _parse_quote(self, block):
+    def _parse_quote(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageQuoteBlock()
         page_block.id = block.id
         page_block.type = block.type
         page_block.text = block.title
-        self.blocks.append(page_block)
+        page_blocks.append(page_block)
 
-    def _parse_callout(self, block):
+    def _parse_callout(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageCalloutBlock()
         page_block.id = block.id
         page_block.type = block.type
         page_block.text = block.title
-        self.blocks.append(page_block)
+        page_blocks.append(page_block)
 
-    def _parse_header(self, block):
+    def _parse_header(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageHeaderBlock()
         page_block.id = block.id
         page_block.type = block.type
         page_block.text = block.title
-        self.blocks.append(page_block)
+        page_blocks.append(page_block)
 
-    def _parse_sub_header(self, block):
+    def _parse_sub_header(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageSubHeaderBlock()
         page_block.id = block.id
         page_block.type = block.type
         page_block.text = block.title
-        self.blocks.append(page_block)
+        page_blocks.append(page_block)
 
-    def _parse_sub_sub_header(self, block):
+    def _parse_sub_sub_header(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageSubSubHeaderBlock()
         page_block.id = block.id
         page_block.type = block.type
         page_block.text = block.title
-        self.blocks.append(page_block)
+        page_blocks.append(page_block)
 
-    def _parse_toc(self, block):
+    def _parse_toc(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageTocBlock()
         page_block.id = block.id
         page_block.type = block.type
         page_block.page_blocks = self.blocks
-        self.blocks.append(page_block)
+        page_blocks.append(page_block)
 
-    def _parse_sub_page(self, block):
+    # noinspection PyUnusedLocal
+    def _parse_sub_page(self, page_blocks: typing.List[PageBaseBlock], block):
         print("Ignore subpage block within page")
 
-    def _parse_collection(self, block):
+    def _parse_collection(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageTableBlock()
         page_block.id = block.id
         page_block.type = block.type
         page_block.block = block
-        self.blocks.append(page_block)
+        page_blocks.append(page_block)
 
-    def _parse_toggle(self, block):
+    def _parse_toggle(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageToggleBlock()
         page_block.id = block.id
         page_block.type = block.type
@@ -662,11 +710,11 @@ class NotionPage:
         for child in block.children:
             page_block.children.append(child.title)
 
-        self.blocks.append(page_block)
+        page_blocks.append(page_block)
 
-    def _parse_stub(self, block):
+    def _parse_stub(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageBaseBlock()
         page_block.id = block.id
         page_block.type = block.type
-        self.blocks.append(page_block)
+        page_blocks.append(page_block)
         raise Exception('Stub!')

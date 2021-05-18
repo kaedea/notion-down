@@ -81,10 +81,22 @@ class PageColumnBlock(PageGroupBlock):
         super().__init__()
         self.type = 'column'
         self.children: typing.List[PageBaseBlock] = []
+        self.block_joiner: PageBlockJoiner = PageBlockJoiner()
 
     def write_block(self):
-        lines = [it.write_block() for it in self.children]
-        return "\n\n".join(lines)
+        lines = []
+        for idx in range(len(self.children)):
+            block = self.children[idx]
+
+            if self.block_joiner.should_add_separator_before(self.children, idx):
+                lines.append("")
+
+            lines.append(block.write_block())
+
+            if self.block_joiner.should_add_separator_after(self.children, idx):
+                lines.append("")
+
+        return "\n".join(lines)
 
 
 class PageTocBlock(PageBaseBlock):
@@ -814,3 +826,52 @@ class NotionPage:
         page_block.type = block.type
         page_blocks.append(page_block)
         raise Exception('Stub!')
+
+
+# noinspection PyMethodMayBeStatic,PyUnusedLocal
+class PageBlockJoiner:
+    def should_add_separator_before(
+            self,
+            blocks: typing.List[PageBaseBlock],
+            curr_idx) -> bool:
+
+        block = blocks[curr_idx]
+        block_pre = None if curr_idx <= 0 else blocks[curr_idx - 1]
+        block_nxt = None if curr_idx >= len(blocks) - 1 else blocks[curr_idx + 1]
+        result = False
+
+        # Check prefix-separator
+        if block.type in ['enter']:
+            pass
+        else:
+            if not block_pre:
+                pass
+            else:
+                if block_pre.type in ['enter']:
+                    pass
+                else:
+                    if block_pre.type in ['bulleted_list', 'numbered_list']:
+                        if block.type in ['bulleted_list', 'numbered_list']:
+                            pass
+                        else:
+                            result = True
+                    else:
+                        result = True
+
+        return result
+
+    def should_add_separator_after(
+            self,
+            blocks: typing.List[PageBaseBlock],
+            curr_idx) -> bool:
+
+        block = blocks[curr_idx]
+        block_pre = None if curr_idx <= 0 else blocks[curr_idx - 1]
+        block_nxt = None if curr_idx >= len(blocks) - 1 else blocks[curr_idx + 1]
+        result = False
+
+        # Check suffix-separator
+        if block_nxt is None:
+            result = True
+
+        return result

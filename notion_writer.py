@@ -1,13 +1,10 @@
 import json
-import os
-import shutil
 import typing
-from pathlib import Path
 
 from notion.utils import slugify
 
 from config import Config
-from notion_page import NotionPage, PageBaseBlock, PageImageBlock
+from notion_page import NotionPage, PageBaseBlock, PageImageBlock, PageBlockJoiner
 from utils.utils import FileUtils
 
 
@@ -31,55 +28,6 @@ class NotionWriter:
         page_writer = NotionPageWriter()
         page_writer.write_page(notion_page)
         print("\n----------\n")
-
-
-# noinspection PyMethodMayBeStatic,PyUnusedLocal
-class PageBlockJoiner:
-    def should_add_separator_before(
-            self,
-            blocks: typing.List[PageBaseBlock],
-            curr_idx) -> bool:
-
-        block = blocks[curr_idx]
-        block_pre = None if curr_idx <= 0 else blocks[curr_idx - 1]
-        block_nxt = None if curr_idx >= len(blocks) - 1 else blocks[curr_idx + 1]
-        result = False
-
-        # Check prefix-separator
-        if block.type in ['enter']:
-            pass
-        else:
-            if not block_pre:
-                pass
-            else:
-                if block_pre.type in ['enter']:
-                    pass
-                else:
-                    if block_pre.type in ['bulleted_list', 'numbered_list']:
-                        if block.type in ['bulleted_list', 'numbered_list']:
-                            pass
-                        else:
-                            result = True
-                    else:
-                        result = True
-
-        return result
-
-    def should_add_separator_after(
-            self,
-            blocks: typing.List[PageBaseBlock],
-            curr_idx) -> bool:
-
-        block = blocks[curr_idx]
-        block_pre = None if curr_idx <= 0 else blocks[curr_idx - 1]
-        block_nxt = None if curr_idx >= len(blocks) - 1 else blocks[curr_idx + 1]
-        result = False
-
-        # Check suffix-separator
-        if block_nxt is None:
-            result = True
-
-        return result
 
 
 # noinspection PyMethodMayBeStatic

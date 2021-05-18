@@ -33,6 +33,51 @@ class NotionWriter:
         print("\n----------\n")
 
 
+# noinspection PyMethodMayBeStatic,PyUnusedLocal
+class PageBlockJoiner:
+    def should_add_separator_before(
+            self,
+            block: PageBaseBlock,
+            block_pre: PageBaseBlock = None,
+            block_nxt: PageBaseBlock = None) -> bool:
+
+        result = False
+
+        # Check prefix-separator
+        if block.type in ['enter']:
+            pass
+        else:
+            if not block_pre:
+                pass
+            else:
+                if block_pre.type in ['enter']:
+                    pass
+                else:
+                    if block_pre.type in ['bulleted_list', 'numbered_list']:
+                        if block.type in ['bulleted_list', 'numbered_list']:
+                            pass
+                        else:
+                            result = True
+                    else:
+                        result = True
+
+        return result
+
+    def should_add_separator_after(
+            self,
+            block: PageBaseBlock,
+            block_pre: PageBaseBlock = None,
+            block_nxt: PageBaseBlock = None) -> bool:
+
+        result = False
+
+        # Check suffix-separator
+        if block_nxt is None:
+            result = True
+
+        return result
+
+
 # noinspection PyMethodMayBeStatic
 class NotionPageWriter:
     def __init__(self):
@@ -40,6 +85,7 @@ class NotionPageWriter:
         self.assets_dir = "assets"
         self.post_dir = "post"
         self.draft_dir = "draft"
+        self.block_joiner: PageBlockJoiner = PageBlockJoiner()
 
     def write_page(self, notion_page: NotionPage):
         print("#write_page")
@@ -90,30 +136,15 @@ class NotionPageWriter:
             block_nxt: PageBaseBlock = None):
 
         # Check prefix-separator
-        if block.type in ['enter']:
-            pass
-        else:
-            if not block_pre:
-                pass
-            else:
-                if block_pre.type in ['enter']:
-                    pass
-                else:
-                    if block_pre.type in ['bulleted_list', 'numbered_list']:
-                        if block.type in ['bulleted_list', 'numbered_list']:
-                            pass
-                        else:
-                            page_lines.append("")
-                    else:
-                        page_lines.append("")
+        if self.block_joiner.should_add_separator_before(block, block_pre, block_nxt):
+            page_lines.append("")
 
         # Curr block
         page_lines.append(block.write_block())
 
         # Check suffix-separator
-        if block_nxt is None:
+        if self.block_joiner.should_add_separator_after(block, block_pre, block_nxt) is None:
             page_lines.append("")
-        pass
 
     def _write_tail(self, page_lines: typing.List[typing.Text], notion_page: NotionPage):
         page_lines.append("\n")

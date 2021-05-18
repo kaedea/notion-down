@@ -37,10 +37,12 @@ class NotionWriter:
 class PageBlockJoiner:
     def should_add_separator_before(
             self,
-            block: PageBaseBlock,
-            block_pre: PageBaseBlock = None,
-            block_nxt: PageBaseBlock = None) -> bool:
+            blocks: typing.List[PageBaseBlock],
+            curr_idx) -> bool:
 
+        block = blocks[curr_idx]
+        block_pre = None if curr_idx <= 0 else blocks[curr_idx - 1]
+        block_nxt = None if curr_idx >= len(blocks) - 1 else blocks[curr_idx + 1]
         result = False
 
         # Check prefix-separator
@@ -65,10 +67,12 @@ class PageBlockJoiner:
 
     def should_add_separator_after(
             self,
-            block: PageBaseBlock,
-            block_pre: PageBaseBlock = None,
-            block_nxt: PageBaseBlock = None) -> bool:
+            blocks: typing.List[PageBaseBlock],
+            curr_idx) -> bool:
 
+        block = blocks[curr_idx]
+        block_pre = None if curr_idx <= 0 else blocks[curr_idx - 1]
+        block_nxt = None if curr_idx >= len(blocks) - 1 else blocks[curr_idx + 1]
         result = False
 
         # Check suffix-separator
@@ -122,28 +126,26 @@ class NotionPageWriter:
 
     def _write_blocks(self, page_lines: typing.List[typing.Text], blocks: typing.List[PageBaseBlock]):
         for idx in range(len(blocks)):
-            block = blocks[idx]
-            block_pre = None if idx <= 0 else blocks[idx - 1]
-            block_nxt = None if idx >= len(blocks) - 1 else blocks[idx + 1]
-            self._write_block(page_lines, block, block_pre, block_nxt)
+            self._write_block(page_lines, blocks, idx)
         pass
 
     def _write_block(
             self,
             page_lines: typing.List[typing.Text],
-            block: PageBaseBlock,
-            block_pre: PageBaseBlock = None,
-            block_nxt: PageBaseBlock = None):
+            blocks: typing.List[PageBaseBlock],
+            curr_idx) -> bool:
+
+        block = blocks[curr_idx]
 
         # Check prefix-separator
-        if self.block_joiner.should_add_separator_before(block, block_pre, block_nxt):
+        if self.block_joiner.should_add_separator_before(blocks, curr_idx):
             page_lines.append("")
 
         # Curr block
         page_lines.append(block.write_block())
 
         # Check suffix-separator
-        if self.block_joiner.should_add_separator_after(block, block_pre, block_nxt) is None:
+        if self.block_joiner.should_add_separator_after(blocks, curr_idx):
             page_lines.append("")
 
     def _write_tail(self, page_lines: typing.List[typing.Text], notion_page: NotionPage):

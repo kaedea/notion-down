@@ -71,3 +71,19 @@ class NotionHandlerTest(unittest.TestCase):
         notion_page.parse(test_page)
         self.assertIsNotNone(notion_page)
 
+    def test_parse_notion_page_with_pull_quote(self):
+        Config.load_env()
+        Config.set_debuggable(True)
+        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
+        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
+
+        main_page = NotionReader.read_main_page()
+        self.assertIsNotNone(main_page)
+
+        test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown Pullquote Blocks")
+        self.assertIsNotNone(test_page)
+
+        notion_page = NotionPage()
+        notion_page.parse(test_page)
+        self.assertIsNotNone(notion_page)
+

@@ -56,6 +56,37 @@ class PageChannelBlock(PageGroupBlock):
         return "<!-- For channel only: {} -->\n{}".format(self.channel, "\n".join(lines))
 
 
+class PageColumnListBlock(PageGroupBlock):
+    def __init__(self):
+        super().__init__()
+        self.type = 'column_list'
+        self.children: typing.List[PageColumnBlock] = []
+
+    def write_block(self):
+        column_lines = []
+        for idx, column_block in enumerate(self.children):
+            column_lines.append(
+                "{}<!-- Column {} start -->\n{}\n<!-- Column end -->" .format(
+                    "\n" if idx > 0 else "",
+                    idx,
+                    column_block.write_block()
+                )
+            )
+
+        return "<!-- ColumnList start -->\n{}\n<!-- ColumnList end -->".format("\n".join(column_lines))
+
+
+class PageColumnBlock(PageGroupBlock):
+    def __init__(self):
+        super().__init__()
+        self.type = 'column'
+        self.children: typing.List[PageBaseBlock] = []
+
+    def write_block(self):
+        lines = [it.write_block() for it in self.children]
+        return "\n\n".join(lines)
+
+
 class PageTocBlock(PageBaseBlock):
     def __init__(self):
         super().__init__()
@@ -353,6 +384,8 @@ class NotionPage:
             "table_of_contents": self._parse_toc,
             "collection_view": self._parse_collection,
             "toggle": self._parse_toggle,
+            "column_list": self._parse_column_list,
+            "column": self._parse_column,
             "page": self._parse_sub_page,
         }
 
@@ -476,14 +509,22 @@ class NotionPage:
                     idx = idx_end
                     continue
 
-            # Mapping for parse
-            if block.type in self.mapping:
-                self.mapping[block.type].__call__(page_blocks, block)
-                idx += 1
-                continue
-
-            # Basic Block Parsing
+            # Basic Parsing
+            self._parse_page_blocks_flatt(page_blocks, block)
             idx += 1
+
+        return page_blocks
+
+    def _parse_page_blocks_flatt(self, page_blocks: typing.List[PageBaseBlock], block):
+        '''
+        Only parse non-group block here.
+        '''
+
+        # Mapping for parse
+        if block.type in self.mapping:
+            self.mapping[block.type].__call__(page_blocks, block)
+        else:
+            # Basic Block Parsing
             self._parse_basic(page_blocks, block)
 
         return page_blocks
@@ -736,6 +777,34 @@ class NotionPage:
         page_block.text = block.title
         for child in block.children:
             page_block.children.append(child.title)
+
+        page_blocks.append(page_block)
+
+    def _parse_column_list(self, page_blocks: typing.List[PageBaseBlock], block):
+        page_block = PageColumnListBlock()
+        page_block.id = block.id
+        page_block.type = block.type
+
+        page_column_blocks: typing.List[PageColumnBlock] = []
+        page_block.children = page_column_blocks
+
+        if block.children:
+            for child in block.children:
+                self._parse_column(page_column_blocks, child)
+
+        page_blocks.append(page_block)
+
+    def _parse_column(self, page_blocks: typing.List[PageColumnBlock], block):
+        page_block = PageColumnBlock()
+        page_block.id = block.id
+        page_block.type = block.type
+
+        column_blocks: typing.List[PageBaseBlock] = []
+        page_block.children = column_blocks
+
+        if block.children:
+            for child in block.children:
+                self._parse_page_blocks_flatt(column_blocks, child)
 
         page_blocks.append(page_block)
 

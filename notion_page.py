@@ -31,6 +31,17 @@ class PageGroupBlock(PageBaseBlock):
 
     def write_block(self):
         lines = [it.write_block() for it in self.children]
+        return "<!-- Group start: {} -->\n{}\n<!-- Group end -->".format(self.name, "\n".join(lines))
+
+
+class PageShortCodeBlock(PageGroupBlock):
+    def __init__(self):
+        super().__init__()
+        self.type = 'short_code_block'
+        self.children: typing.List[PageBaseBlock] = []
+
+    def write_block(self):
+        lines = [it.write_block() for it in self.children]
         return "<!-- ShortCode: {}\n{}\n-->".format(self.name, "\n".join(lines))
 
 
@@ -42,7 +53,7 @@ class PageChannelBlock(PageGroupBlock):
 
     def write_block(self):
         lines = [it.write_block() for it in self.children]
-        return "{}".format("\n".join(lines))
+        return "<!-- For channel only: {} -->\n{}".format(self.channel, "\n".join(lines))
 
 
 class PageTocBlock(PageBaseBlock):
@@ -496,12 +507,16 @@ class NotionPage:
         if not self._is_short_code_start(blocks[idx_start]):
             return -1
 
-        group_block: PageGroupBlock = PageGroupBlock()
-        group_block.id = blocks[idx_start].id
         start_line = str(blocks[idx_start].title)
+        block_id = blocks[idx_start].id
+
+        group_block: PageGroupBlock = PageGroupBlock()
+        group_block.id = block_id
 
         symbol = 'SHORT_CODE_'
         if symbol in start_line:
+            group_block = PageShortCodeBlock()
+            group_block.id = block_id
             name = start_line[start_line.rfind(symbol) + len(symbol):].strip()
             symbol_end = "="
             if symbol_end in name:
@@ -512,6 +527,8 @@ class NotionPage:
         symbol = 'SHORT_CODE_CHANNEL='
         if symbol in start_line:
             group_block = PageChannelBlock()
+            group_block.id = block_id
+            group_block.name = 'CHANNEL'
             channel = start_line[start_line.rfind(symbol) + len(symbol):].strip()
             group_block.channel = channel
             pass

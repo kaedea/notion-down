@@ -17,8 +17,10 @@ What can notion-down do now:
  - Notion images downloading
  - Noton custom `ShortCode` blocks that control parametered MD files generating
  - Hexo Integration (WIP)
+     - Hexo generate
+     - Hexo tags
  - Advanced Notion pageblocks support (WIP)
-     - Pullquote Blocks
+     - ~~Pullquote Blocks~~
      - Notion page embed blocks
 
 ## Hot It Works
@@ -44,6 +46,12 @@ See unitest cases at `/test`.
 ### CI Build Script
 
 See building script at `/.circleci/config.yaml`.
+
+### Showcases
+
+ - README generating (WIP)
+ - Notion sample post generating (WIP)
+ - Hexo public generating (WIP)
 
 ---
 

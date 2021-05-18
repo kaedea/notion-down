@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [Unreleased] - 2021-05-18
+Update Notion page parsing.
+
+### Added
+- Notion page column list & column block support.
+
+### Changed
+### Fixed
+### Removed
+
+
 ## [Unreleased] - 2021-05-17
 Update Notion page parsing.
 

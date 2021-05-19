@@ -5,7 +5,7 @@
 
 ![](https://circleci.com/gh/kaedea/notion-down.svg?style=shield&circle-token=9f4dc656e94d8deccd362e52400c96e709c7e8b3)
 
-[Notion Down](https://github.com/kaedea/notion-down), python tools that convert Notion blog pages into Markdown files, along with intergation to build static webpages such as Hexo.
+[Notion Down](https://github.com/kaedea/notion-down), python tools that convert Notion blog pages into Markdown files, along with intergation to build static webpages such as Hexo.  It's inspiration and goal is to __avoid separation  of writting__ by keep writting drafts or posts within [notion.so](http://notion.so) and then publish them into MD webpages automatically. 
 
 
 
@@ -14,14 +14,20 @@
 What can notion-down do now:
 
  - Notion pages to basic MarkDown files
- - Notion images downloading
- - Noton custom `ShortCode` blocks that control parametered MD files generating
- - Hexo Integration (WIP)
-     - Hexo generate
-     - Hexo tags
+     - ~~Notion images downloading~~
+     - ~~Notion nested list blocks~~
+     - ~~Notion obfuscated-links parsing~~
+     - ~~Notion table block (Collection)~~
  - Advanced Notion pageblocks support (WIP)
      - ~~Pullquote Blocks~~
      - Notion page embed blocks
+ - Writting optimized integeration (WIP)
+     - ~~Noton custom `ShortCode` blocks that control parametered MD files generating~~
+     - CN/EN separation format
+ - Hexo Integration (WIP)
+     - ~~Hexo page properties config~~
+     - Hexo generate
+     - Hexo tags
 
 ## Hot It Works
 

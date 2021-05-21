@@ -18,7 +18,7 @@ class Utils:
 
     @staticmethod
     def get_workspace():
-        return Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute()
+        return str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 
     @staticmethod
     def get_temp_dir():

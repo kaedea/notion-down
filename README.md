@@ -23,7 +23,7 @@ What can notion-down do now:
      - Notion page embed blocks
  - Writting optimized integeration (WIP)
      - ~~Noton custom `ShortCode` blocks that control parametered MD files generating~~
-     - CN/EN separation format
+     - ~~Mixed CN-EN text separation format [~~~~[by pangu](https://github.com/vinta/pangu)~~~~]~~
  - Hexo Integration (WIP)
      - ~~Hexo page properties config~~
      - Hexo generate

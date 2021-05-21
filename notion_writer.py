@@ -1,6 +1,7 @@
 import json
 import typing
 
+import pangu
 from notion.utils import slugify
 
 from config import Config
@@ -90,7 +91,9 @@ class NotionPageWriter:
             page_lines.append("")
 
         # Curr block
-        page_lines.append(block.write_block())
+        block_text = block.write_block()
+        text = pangu.spacing_text(block_text)
+        page_lines.append(text)
 
         # Check suffix-separator
         if self.block_joiner.should_add_separator_after(blocks, curr_idx):

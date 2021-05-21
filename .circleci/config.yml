@@ -38,6 +38,7 @@ jobs:
           name: pip install
           command: |
               pip install notion
+              pip install pangu
       - run:
           name: Run tests
           command: |

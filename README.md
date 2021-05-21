@@ -21,9 +21,9 @@ What can notion-down do now:
  - Advanced Notion pageblocks support (WIP)
      - ~~Pullquote Blocks~~
      - Notion page embed blocks
- - Writting optimized integeration (WIP)
+ - Writting optimized integeration
      - ~~Noton custom `ShortCode` blocks that control parametered MD files generating~~
-     - ~~Mixed CN-EN text separation format [~~~~[by pangu](https://github.com/vinta/pangu)~~~~]~~
+     - ~~Mixed CN-EN text separation format~~ [[by pangu](https://github.com/vinta/pangu)]
  - Hexo Integration (WIP)
      - ~~Hexo page properties config~~
      - Hexo generate

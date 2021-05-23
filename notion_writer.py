@@ -9,6 +9,19 @@ from notion_page import NotionPage, PageBaseBlock, PageImageBlock, PageBlockJoin
 from utils.utils import FileUtils
 
 
+class NotionOutput:
+
+    def __init__(self) -> None:
+        self.markdown_path = ""
+        self.properties_path = ""
+
+    def has_markdown(self):
+        return FileUtils.exists(self.markdown_path)
+
+    def has_properties(self):
+        return FileUtils.exists(self.markdown_path)
+
+
 class NotionWriter:
 
     @staticmethod
@@ -17,19 +30,19 @@ class NotionWriter:
 
     # noinspection SpellCheckingInspection
     @staticmethod
-    def handle_page(notion_page: NotionPage):
+    def handle_page(notion_page: NotionPage) -> NotionOutput:
         if not notion_page.is_markdown_able():
             print("Skip non-markdownable page: " + notion_page.get_identify())
-            return
+            return NotionOutput()
         if not notion_page.is_output_able():
             print("Skip non-outputable page: " + notion_page.get_identify())
-            return
+            return NotionOutput()
 
         print("Write page: " + notion_page.get_identify())
         page_writer = NotionPageWriter()
-        file_path = page_writer.write_page(notion_page)
+        output = page_writer.write_page(notion_page)
         print("\n----------\n")
-        return file_path
+        return output
 
 
 # noinspection PyMethodMayBeStatic
@@ -41,7 +54,7 @@ class NotionPageWriter:
         self.draft_dir = "draft"
         self.block_joiner: PageBlockJoiner = PageBlockJoiner()
 
-    def write_page(self, notion_page: NotionPage) -> str:
+    def write_page(self, notion_page: NotionPage) -> NotionOutput:
         print("#write_page")
         print("page identify = " + notion_page.get_identify())
 
@@ -55,7 +68,12 @@ class NotionPageWriter:
         properties_file_path = file_path + "_properties.json"
         self._prepare_file(properties_file_path)
         self._write_file(json.dumps(notion_page.properties, indent=2), properties_file_path)
-        return file_path
+
+        output = NotionOutput()
+        output.markdown_path = file_path
+        output.properties_path = properties_file_path
+
+        return output
 
     def _start_writing(self, notion_page: NotionPage) -> typing.List[typing.Text]:
         page_lines = []
@@ -83,7 +101,7 @@ class NotionPageWriter:
             self,
             page_lines: typing.List[typing.Text],
             blocks: typing.List[PageBaseBlock],
-            curr_idx) -> bool:
+            curr_idx):
 
         block = blocks[curr_idx]
 

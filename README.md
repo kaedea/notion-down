@@ -21,9 +21,10 @@ What can notion-down do now:
  - Advanced Notion pageblocks support (WIP)
      - ~~Pullquote Blocks~~
      - Notion page embed blocks
- - Writting optimized integeration
+ - Writing optimized integration
      - ~~Noton custom `ShortCode` blocks that control parametered MD files generating~~
      - ~~Mixed CN-EN text separation format~~ [[by pangu](https://github.com/vinta/pangu)]
+     - Spelling check
  - Hexo Integration (WIP)
      - ~~Hexo page properties config~~
      - Hexo generate
@@ -43,7 +44,7 @@ Advanced usage:
 
 ## Getting Started
 
-Set `notion_token_v2` at System ENV or `config.py` first, and then check the following procedures. Check [here](https://github.com/kaedea/notion-down/blob/master/dist/parse_readme/notiondown_gettokenv2.md) to get notion_token_v2.
+Set `notion_token_v2` at System ENV or `config.py` first, and then check the following procedures. <br>Check [here](https://github.com/kaedea/notion-down/blob/master/dist/parse_readme/notiondown_gettokenv2.md) to get notion_token_v2.
 
 ### UnitTest Examples
 
@@ -56,7 +57,7 @@ See building script at `/.circleci/config.yaml`.
 ### Showcases
 
  - [README generating](/jobs/parse_readme/)
- - Notion sample post generating (WIP)
+ - [Notion sample post generating](/jobs/parse_sample_posts/)
  - Hexo public generating (WIP)
 
 ---

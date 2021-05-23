@@ -43,7 +43,7 @@ Advanced usage:
 
 ## Getting Started
 
-Set `notion_token_v2` at System ENV or `config.py` first, and then check the following procedures.
+Set `notion_token_v2` at System ENV or `config.py` first, and then check the following procedures. Check [here](https://github.com/kaedea/notion-down/blob/master/dist/parse_readme/notiondown_gettokenv2.md) to get notion_token_v2.
 
 ### UnitTest Examples
 
@@ -55,7 +55,7 @@ See building script at `/.circleci/config.yaml`.
 
 ### Showcases
 
- - README generating (WIP)
+ - [README generating](/jobs/parse_readme/)
  - Notion sample post generating (WIP)
  - Hexo public generating (WIP)
 

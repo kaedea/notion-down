@@ -27,8 +27,9 @@ class NotionWriter:
 
         print("Write page: " + notion_page.get_identify())
         page_writer = NotionPageWriter()
-        page_writer.write_page(notion_page)
+        file_path = page_writer.write_page(notion_page)
         print("\n----------\n")
+        return file_path
 
 
 # noinspection PyMethodMayBeStatic
@@ -40,7 +41,7 @@ class NotionPageWriter:
         self.draft_dir = "draft"
         self.block_joiner: PageBlockJoiner = PageBlockJoiner()
 
-    def write_page(self, notion_page: NotionPage):
+    def write_page(self, notion_page: NotionPage) -> str:
         print("#write_page")
         print("page identify = " + notion_page.get_identify())
 
@@ -54,7 +55,7 @@ class NotionPageWriter:
         properties_file_path = file_path + "_properties.json"
         self._prepare_file(properties_file_path)
         self._write_file(json.dumps(notion_page.properties, indent=2), properties_file_path)
-        pass
+        return file_path
 
     def _start_writing(self, notion_page: NotionPage) -> typing.List[typing.Text]:
         page_lines = []

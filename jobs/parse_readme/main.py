@@ -1,11 +1,29 @@
 import os
+from shutil import copyfile
 
 from config import Config
-from utils.utils import Utils
+from notion_reader import NotionReader
+from notion_writer import NotionWriter
+from utils.utils import Utils, FileUtils
 
 
 def start():
     print('\nHello, readme page!\n')
+    NotionWriter.clean_output()
+
+    main_page = NotionReader.read_main_page()
+    test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown README")
+    md_page = NotionReader.handle_single_page(test_page)
+    file_path = NotionWriter.handle_page(md_page)
+    if not FileUtils.exists(file_path):
+        raise Exception("job fail, file not found: {}".format(file_path))
+        pass
+
+    dist_dir_path = FileUtils.new_file(Utils.get_workspace(), "dist/parse_readme/README.md")
+    FileUtils.create_file(dist_dir_path)
+
+    print("publish file to: {}".format(dist_dir_path))
+    copyfile(file_path, dist_dir_path)
 
 
 if __name__ == '__main__':

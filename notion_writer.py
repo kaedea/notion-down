@@ -16,10 +16,16 @@ class NotionOutput:
         self.properties_path = ""
 
     def has_markdown(self):
-        return FileUtils.exists(self.markdown_path)
+        return self.markdown_path and FileUtils.exists(self.markdown_path)
 
     def has_properties(self):
-        return FileUtils.exists(self.markdown_path)
+        return self.properties_path and FileUtils.exists(self.properties_path)
+
+    def __str__(self) -> str:
+        return json.dumps({
+            "markdown_path": self.markdown_path,
+            "properties_path": self.properties_path,
+        }, indent=2)
 
 
 class NotionWriter:

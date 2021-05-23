@@ -5,11 +5,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
-## [Unreleased] - 2021-05-20
-Update Notion page parsing.
+## [Unreleased] - 2021-05-24
+Update NotionDown showcases.
 
 ### Added
-- Notion page CN-EN concat format optimized with pangu.
+- README parsing job.
+- Notion sample posts parsing job.
 
 ### Changed
 ### Fixed
@@ -17,10 +18,10 @@ Update Notion page parsing.
 
 
 ## [Unreleased] - 2021-05-20
-Update NotionDown showcases.
+Update Notion page parsing.
 
 ### Added
-- README parsing job.
+- Notion page CN-EN concat format optimized with pangu.
 
 ### Changed
 ### Fixed

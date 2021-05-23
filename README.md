@@ -43,7 +43,7 @@ Advanced usage:
 
 ## Getting Started
 
-Set `notion_token_v2` at System ENV or `config.py` first, and then check the following procedures. Check [here](https://github.com/kaedea/notion-down/blob/master/dist/parse_readme/notiondown_gettokenv2.md) to get notion_token_v2.
+Set `notion_token_v2` at System ENV or `config.py` first, and then check the following procedures. <br>Check [here](https://github.com/kaedea/notion-down/blob/master/dist/parse_readme/notiondown_gettokenv2.md) to get notion_token_v2.
 
 ### UnitTest Examples
 

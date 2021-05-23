@@ -13,20 +13,26 @@ def start():
     NotionWriter.clean_output()
 
     main_page = NotionReader.read_main_page()
-    test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown README")
-    md_page = NotionReader.handle_single_page(test_page)
-    notion_output = NotionWriter.handle_page(md_page)
+    source_pages = Utils.find(main_page.children, lambda it: it and str(it.title) in [
+        "NotionDown README",
+        "NotionDown GetTokenV2"
+    ])
 
-    if not notion_output.has_markdown():
-        raise Exception("job fail, output md file not found: {}".format(notion_output))
+    for source_page in source_pages:
+        md_page = NotionReader.handle_single_page(source_page)
+        notion_output = NotionWriter.handle_page(md_page)
 
-    dist_dir = FileUtils.new_file(Utils.get_workspace(), "dist/parse_readme")
-    FileUtils.create_dir(dist_dir)
+        if not notion_output.has_markdown():
+            raise Exception("job fail, output md file not found: {}".format(notion_output))
 
-    print("publish file to: {}".format(dist_dir))
-    copyfile(notion_output.markdown_path, FileUtils.new_file(dist_dir, Path(notion_output.markdown_path).name))
-    if notion_output.has_properties():
-        copyfile(notion_output.properties_path, FileUtils.new_file(dist_dir, Path(notion_output.properties_path).name))
+        dist_dir = FileUtils.new_file(Utils.get_workspace(), "dist/parse_readme")
+        FileUtils.create_dir(dist_dir)
+
+        print("publish file to: {}".format(dist_dir))
+        copyfile(notion_output.markdown_path, FileUtils.new_file(dist_dir, Path(notion_output.markdown_path).name))
+        if notion_output.has_properties():
+            copyfile(notion_output.properties_path, FileUtils.new_file(dist_dir, Path(notion_output.properties_path).name))
+        print("done\n")
 
 
 if __name__ == '__main__':

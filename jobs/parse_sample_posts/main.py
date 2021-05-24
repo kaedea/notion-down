@@ -22,10 +22,16 @@ def start():
             raise Exception("job fail, output md file not found: {}".format(notion_output))
 
     dist_dir = FileUtils.new_file(Utils.get_workspace(), "dist/parse_sample_posts")
-    FileUtils.delete(dist_dir)
+    FileUtils.create_dir(dist_dir)
     print("publish file to: {}".format(dist_dir))
 
-    shutil.copytree(FileUtils.new_file(Config.output(), NotionPageWriter().root_dir), dist_dir)
+    # Copy dir append
+    # noinspection PyArgumentList
+    shutil.copytree(
+        FileUtils.new_file(Config.output(), NotionPageWriter().root_dir),
+        dist_dir,
+        dirs_exist_ok=True
+    )
     print("done\n")
 
 

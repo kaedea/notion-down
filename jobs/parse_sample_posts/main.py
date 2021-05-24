@@ -10,7 +10,7 @@ from utils.utils import Utils, FileUtils
 
 
 def start():
-    print('\nHello, readme page!\n')
+    print('\nHello, NotionDown sample posts\n')
     NotionWriter.clean_output()
 
     notion_pages = NotionReader.handle_post()

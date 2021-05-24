@@ -21,7 +21,7 @@ What can notion-down do now:
  - Advanced Notion pageblocks support (WIP)
      - ~~Pullquote Blocks~~
      - Notion page embed blocks
- - Writting optimized integeration
+ - Writing optimized integration
      - ~~Noton custom `ShortCode` blocks that control parametered MD files generating~~
      - ~~Mixed CN-EN text separation format~~ [[by pangu](https://github.com/vinta/pangu)]
      - Spelling check
@@ -56,8 +56,10 @@ See building script at `/.circleci/config.yaml`.
 
 ### Showcases
 
+See the usage showcase jobs at [/jobs](/jobs), and jobs outputs at [/dist](/dist).
+
  - [README generating](/jobs/parse_readme/)
- - Notion sample post generating (WIP)
+ - [Notion sample post generating](/jobs/parse_sample_posts/)
  - Hexo public generating (WIP)
 
 ---

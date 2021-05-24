@@ -67,5 +67,13 @@ class Config:
         Config.set("blog_url", value)
 
     @staticmethod
+    def channels():
+        return Config.get("channels", [])
+
+    @staticmethod
+    def set_channels(value):
+        Config.set("channels", value)
+
+    @staticmethod
     def to_string():
         return json.dumps(KV, indent=2)

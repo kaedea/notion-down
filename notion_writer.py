@@ -31,6 +31,14 @@ class NotionOutput:
 class NotionWriter:
 
     @staticmethod
+    def get_page_writer(channel=None):
+        if not channel or str(channel).lower() == "default":
+            return NotionPageWriter()
+        if str(channel).lower() == "github":
+            return GitHubWriter()
+        raise Exception("Unsupported channel: {}".format(channel))
+
+    @staticmethod
     def clean_output():
         FileUtils.clean_dir(Config.output())
 
@@ -45,10 +53,17 @@ class NotionWriter:
             return NotionOutput()
 
         print("Write page: " + notion_page.get_identify())
-        page_writer = NotionPageWriter()
-        output = page_writer.write_page(notion_page)
-        print("\n----------\n")
-        return output
+        if not Config.channels():
+            page_writer = NotionWriter.get_page_writer()
+            output = page_writer.write_page(notion_page)
+            print("\n----------\n")
+            return output
+        else:
+            for channel in Config.channels():
+                page_writer = NotionWriter.get_page_writer(channel)
+                output = page_writer.write_page(notion_page)
+                print("\n----------\n")
+                return output
 
 
 # noinspection PyMethodMayBeStatic
@@ -160,3 +175,10 @@ class NotionPageWriter:
 
     def _write_file(self, content, file_path):
         FileUtils.write_text(content, file_path)
+
+
+class GitHubWriter(NotionPageWriter):
+
+    def __init__(self):
+        super().__init__()
+        self.root_dir = "GitHub"

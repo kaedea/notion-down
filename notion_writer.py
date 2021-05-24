@@ -12,6 +12,29 @@ from utils.utils import FileUtils
 class NotionOutput:
 
     def __init__(self) -> None:
+        self.channel = ""
+
+
+class NotionDirOutput(NotionOutput):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.output_dir = ""
+
+    def has_output(self):
+        return self.output_dir and FileUtils.exists(self.output_dir)
+
+    def __str__(self) -> str:
+        return json.dumps({
+            "channel": self.channel,
+            "output_dir": self.output_dir,
+        }, indent=2)
+
+
+class NotionFileOutput(NotionDirOutput):
+
+    def __init__(self) -> None:
+        super().__init__()
         self.markdown_path = ""
         self.properties_path = ""
 
@@ -23,6 +46,8 @@ class NotionOutput:
 
     def __str__(self) -> str:
         return json.dumps({
+            "channel": self.channel,
+            "output_dir": self.output_dir,
             "markdown_path": self.markdown_path,
             "properties_path": self.properties_path,
         }, indent=2)
@@ -44,26 +69,43 @@ class NotionWriter:
 
     # noinspection SpellCheckingInspection
     @staticmethod
-    def handle_page(notion_page: NotionPage) -> NotionOutput:
+    def handle_page(notion_page: NotionPage) -> typing.Dict[str, NotionFileOutput]:
         if not notion_page.is_markdown_able():
             print("Skip non-markdownable page: " + notion_page.get_identify())
-            return NotionOutput()
+            return {}
+
         if not notion_page.is_output_able():
             print("Skip non-outputable page: " + notion_page.get_identify())
-            return NotionOutput()
+            return {}
 
         print("Write page: " + notion_page.get_identify())
         if not Config.channels():
             page_writer = NotionWriter.get_page_writer()
             output = page_writer.write_page(notion_page)
             print("\n----------\n")
-            return output
+            return {
+                "default": output
+            }
         else:
+            outputs = {}
             for channel in Config.channels():
                 page_writer = NotionWriter.get_page_writer(channel)
                 output = page_writer.write_page(notion_page)
-                print("\n----------\n")
-                return output
+                outputs[channel] = output
+            print("\n----------\n")
+            return outputs
+
+    # noinspection SpellCheckingInspection
+    @staticmethod
+    def handle_pages(notion_pages: typing.List[NotionPage]) -> typing.Dict[str, NotionDirOutput]:
+        dir_outputs = {}
+        for notion_page in notion_pages:
+            file_outputs = NotionWriter.handle_page(notion_page)
+            for channel in file_outputs.keys():
+                if channel not in dir_outputs and file_outputs[channel].has_output():
+                    dir_outputs[channel] = file_outputs[channel]
+
+        return dir_outputs
 
 
 # noinspection PyMethodMayBeStatic
@@ -75,13 +117,14 @@ class NotionPageWriter:
         self.draft_dir = "draft"
         self.block_joiner: PageBlockJoiner = PageBlockJoiner()
 
-    def write_page(self, notion_page: NotionPage) -> NotionOutput:
+    def write_page(self, notion_page: NotionPage) -> NotionFileOutput:
         print("#write_page")
         print("page identify = " + notion_page.get_identify())
 
         page_lines = self._start_writing(notion_page)
         self._on_dump_page_content(page_lines)
 
+        root_dir = self._configure_root_dir()
         file_path = self._configure_file_path(notion_page)
         self._prepare_file(file_path)
         self._write_file("\n".join(page_lines), file_path)
@@ -90,7 +133,8 @@ class NotionPageWriter:
         self._prepare_file(properties_file_path)
         self._write_file(json.dumps(notion_page.properties, indent=2), properties_file_path)
 
-        output = NotionOutput()
+        output = NotionFileOutput()
+        output.output_dir = root_dir
         output.markdown_path = file_path
         output.properties_path = properties_file_path
 
@@ -149,12 +193,18 @@ class NotionPageWriter:
     def _on_dump_page_content(self, page_lines):
         pass
 
+    def _configure_root_dir(self) -> typing.Text:
+        print("#_configure_root_dir")
+        root_dir = FileUtils.new_file(Config.output(), self.root_dir)
+        FileUtils.create_dir(root_dir)
+        return root_dir
+
     def _configure_file_path(self, notion_page: NotionPage) -> typing.Text:
         print("#_configure_file_path")
 
         base_dir = FileUtils.new_file(
-            Config.output(),
-            self.root_dir + "/" + (self.post_dir if notion_page.is_published() else self.draft_dir)
+            self._configure_root_dir(),
+            self.post_dir if notion_page.is_published() else self.draft_dir
         )
 
         page_path = FileUtils.new_file(

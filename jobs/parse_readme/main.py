@@ -10,6 +10,7 @@ from utils.utils import Utils, FileUtils
 
 def start():
     print('\nHello, readme page!\n')
+    channel = 'default'
     NotionWriter.clean_output()
 
     main_page = NotionReader.read_main_page()
@@ -20,7 +21,7 @@ def start():
 
     for source_page in source_pages:
         md_page = NotionReader.handle_single_page(source_page)
-        notion_output = NotionWriter.handle_page(md_page)
+        notion_output = NotionWriter.handle_page(md_page)[channel]
 
         if not notion_output.has_markdown():
             raise Exception("job fail, output md file not found: {}".format(notion_output))
@@ -44,6 +45,7 @@ if __name__ == '__main__':
     parser.add_argument('output', nargs='?', default=os.path.join(Utils.get_temp_dir(), "notion-down/outputs"))
     parser.add_argument('notion_token_v2', nargs='?', default=None)
     parser.add_argument('blog_url', nargs='?', default=None)
+    parser.add_argument('channels', nargs='?', default='default')
 
     args = parser.parse_args()
     if args.debug:
@@ -63,6 +65,7 @@ if __name__ == '__main__':
     Config.set_output(args.output)
     Config.set_token_v2(args.notion_token_v2)
     Config.set_blog_url(args.blog_url)
+    Config.set_channels(str(args.channels).split("|"))
 
     print("")
     print("Run with configs:")

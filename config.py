@@ -1,5 +1,6 @@
 import json
 import os
+import typing
 
 SYS_ENV_MAP = dict(
     token_v2="NOTION_TOKEN_V2",
@@ -71,7 +72,7 @@ class Config:
         return Config.get("channels", [])
 
     @staticmethod
-    def set_channels(value):
+    def set_channels(value: typing.List):
         Config.set("channels", value)
 
     @staticmethod

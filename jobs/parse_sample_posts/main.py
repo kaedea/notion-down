@@ -1,7 +1,5 @@
 import os
 import shutil
-from pathlib import Path
-from shutil import copyfile
 
 from config import Config
 from notion_reader import NotionReader
@@ -12,14 +10,16 @@ from utils.utils import Utils, FileUtils
 def start():
     print('\nHello, NotionDown sample posts\n')
     NotionWriter.clean_output()
+    channel = 'default'
 
     notion_pages = NotionReader.handle_post()
+    dir_outputs = NotionWriter.handle_pages(notion_pages)
 
-    for md_page in notion_pages:
-        notion_output = NotionWriter.handle_page(md_page)
+    if not dir_outputs[channel] or not dir_outputs[channel].has_output():
+        raise Exception("job fail, output dir not found: {}".format(dir_outputs[channel]))
 
-        if not notion_output.has_markdown():
-            raise Exception("job fail, output md file not found: {}".format(notion_output))
+    output_dir = dir_outputs[channel].output_dir
+    print("get writer output dir: {}".format(output_dir))
 
     dist_dir = FileUtils.new_file(Utils.get_workspace(), "dist/parse_sample_posts")
     FileUtils.create_dir(dist_dir)
@@ -28,7 +28,7 @@ def start():
     # Copy dir append
     # noinspection PyArgumentList
     shutil.copytree(
-        FileUtils.new_file(Config.output(), NotionPageWriter().root_dir),
+        output_dir,
         dist_dir,
         dirs_exist_ok=True
     )
@@ -44,6 +44,7 @@ if __name__ == '__main__':
     parser.add_argument('output', nargs='?', default=os.path.join(Utils.get_temp_dir(), "notion-down/outputs"))
     parser.add_argument('notion_token_v2', nargs='?', default=None)
     parser.add_argument('blog_url', nargs='?', default=None)
+    parser.add_argument('channels', nargs='?', default='default')
 
     args = parser.parse_args()
     if args.debug:
@@ -63,6 +64,7 @@ if __name__ == '__main__':
     Config.set_output(args.output)
     Config.set_token_v2(args.notion_token_v2)
     Config.set_blog_url(args.blog_url)
+    Config.set_channels(str(args.channels).split("|"))
 
     print("")
     print("Run with configs:")

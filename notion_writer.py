@@ -131,7 +131,10 @@ class NotionPageWriter:
 
         properties_file_path = file_path + "_properties.json"
         self._prepare_file(properties_file_path)
-        self._write_file(json.dumps(notion_page.properties, indent=2), properties_file_path)
+        self._write_file(
+            json.dumps(notion_page.properties, indent=4, ensure_ascii=False),
+            properties_file_path
+        )
 
         output = NotionFileOutput()
         output.output_dir = root_dir

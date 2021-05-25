@@ -190,7 +190,9 @@ class NotionPageWriter:
         page_lines.append("\n")
         page_lines.append("""
 <!-- NotionPageWriter
--->""")
+notion-down.version = {}
+notion-down.revision = {}
+-->""".format(Config.notion_down_version(), Config.notion_down_revision()))
         pass
 
     def _on_dump_page_content(self, page_lines):

@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 import typing
 
 SYS_ENV_MAP = dict(
@@ -26,6 +27,14 @@ class Config:
     @staticmethod
     def set(key, value):
         KV[key] = value
+
+    @staticmethod
+    def notion_down_version():
+        return "0.0.1"
+
+    @staticmethod
+    def notion_down_revision():
+        return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()
 
     @staticmethod
     def debuggable():

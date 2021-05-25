@@ -654,7 +654,7 @@ class NotionPage:
 
     def _parse_properties(self, block):
         content = block.title
-        symbol = '[properties]'
+        symbol = '[notion-down-properties]'
         if symbol in content:
             content_properties = content[content.rfind(symbol) + len(symbol):]
             lines = str(content_properties).split("\n")
@@ -667,7 +667,7 @@ class NotionPage:
 
     def _parse_code(self, page_blocks: typing.List[PageBaseBlock], block):
         content = block.title
-        symbol = '[properties]'
+        symbol = '[notion-down-properties]'
         if symbol in content:
             self._parse_properties(block)
             return

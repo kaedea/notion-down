@@ -23,7 +23,7 @@ workflows:
 
   test-run-pycorrector:
     jobs:
-      - build-and-test:
+      - build-pycorrector-test:
           branch_build: feature/spell-inspect
           filters:
             branches:

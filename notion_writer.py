@@ -279,7 +279,7 @@ class SpellInspectWriter(NotionPageWriter):
                     )
                     page_lines_inspected.append(formatted_text)
                     page_lines_inspected.append('\'\'\'pycorrector')
-                    page_lines_inspected.append(json.dumps(inspect_issues, indent=4, ensure_ascii=False))
+                    page_lines_inspected.append(str(inspect_issues))
                     page_lines_inspected.append('\'\'\'')
                     continue
 

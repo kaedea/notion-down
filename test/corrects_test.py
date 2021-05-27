@@ -5,11 +5,28 @@ from config import Config
 from corrects.inspect_spell import PyCorrectorInspector
 from notion_page import NotionPage
 from notion_reader import NotionReader
-from notion_writer import NotionWriter
+from notion_writer import NotionWriter, SpellInspectWriter
 from utils.utils import Utils
 
 
 class CorrectsApiTest(unittest.TestCase):
+
+    def test_issue_format(self):
+        text = '真麻烦你了。希望你们好好的跳无。少先队员因该为老人让坐。机七学习是人工智能领遇最能体现智能的一个分知。一只小鱼船浮在平净的河面上。我的家乡是有明的渔米之乡。'
+        issues = [
+            ['无', '舞', 14, 15],
+            ['因该', '应该', 20, 22],
+            ['坐', '座', 26, 27],
+            ['机七', '机器', 28, 30],
+            ['领遇', '领域', 37, 39],
+            ['平净', '平静', 58, 60],
+            ['有明', '有名', 70, 72]
+        ]
+        formatted_text = SpellInspectWriter._format_text_with_inspect_issues(text, issues)
+        self.assertEquals(
+            '真麻烦你了。希望你们好好的跳~~无~~。少先队员~~因该~~为老人让~~坐~~。~~机七~~学习是人工智能~~领遇~~最能体现智能的一个分知。一只小鱼船浮在~~平净~~的河面上。我的家乡是~~有明~~的渔米之乡。',
+            formatted_text
+        )
 
     def _get_test_page(self) -> NotionPage:
         Config.load_env()

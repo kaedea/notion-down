@@ -7,7 +7,7 @@ class SpellInspector:
     def inspect_text(self, text):
         raise Exception('Stub!')
 
-    def get_inspect_comment(self, text):
+    def get_inspect_issues(self, text):
         raise Exception('Stub!')
 
 
@@ -19,7 +19,7 @@ class PyCorrectorInspector(SpellInspector):
         print(corrected_sent, detail)
         pass
 
-    def get_inspect_comment(self, text):
+    def get_inspect_issues(self, text):
         corrected_sent, detail = pycorrector.correct(text)
         print(corrected_sent, detail)
         return detail

@@ -269,9 +269,56 @@ class SpellInspectWriter(NotionPageWriter):
     def _on_dump_page_content(self, page_lines):
         page_lines_inspected = []
         for line in page_lines:
-            page_lines_inspected.append(line)
             if line and len(str(line).strip()) > 0:
-                page_lines_inspected.append(str(self.inspector.get_inspect_comment(line)))
+                inspect_issues = self.inspector.get_inspect_issues(line)
+                if len(inspect_issues) > 0:
+                    # has inspected issues
+                    formatted_text = SpellInspectWriter._format_text_with_inspect_issues(
+                        line,
+                        inspect_issues
+                    )
+                    page_lines_inspected.append(formatted_text)
+                    page_lines_inspected.append('\'\'\'pycorrector')
+                    page_lines_inspected.append(json.dumps(inspect_issues, indent=4, ensure_ascii=False))
+                    page_lines_inspected.append('\'\'\'')
+                    continue
+
+            page_lines_inspected.append(line)
 
         page_lines.clear()
         page_lines.extend(page_lines_inspected)
+
+    @staticmethod
+    def _format_text_with_inspect_issues(text: str, issues):
+        """
+        [
+            ['无', '舞', 14, 15],
+            ['因该', '应该', 20, 22],
+            ['坐', '座', 26, 27],
+            ['机七', '机器', 28, 30],
+            ['领遇', '领域', 37, 39],
+            ['平净', '平静', 58, 60],
+            ['有明', '有名', 70, 72]
+        ]
+        """
+        if text and len(text.strip()) > 0:
+            if len(issues) > 0:
+                # has inspected issues
+                phases = []
+                for idx, issue in enumerate(issues):
+                    issue_pre = None if idx == 0 else issues[idx - 1]
+                    issue_nxt = None if idx >= len(issues) - 1 else issues[idx + 1]
+
+                    # prefix
+                    if issue_pre:
+                        phases.append(text[issue_pre[3]:issue[2]])
+                    else:
+                        phases.append(text[:issue[2]])
+                    # issue_word
+                    phases.append('~~{}~~'.format(text[issue[2]:issue[3]]))
+                    # suffix
+                    if not issue_nxt:
+                        phases.append(text[issue[3]:])
+                return "".join(phases)
+            pass
+        return text

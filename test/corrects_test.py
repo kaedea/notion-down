@@ -40,7 +40,7 @@ class CorrectsApiTest(unittest.TestCase):
             text = block.write_block()
             if text:
                 print("inspect bgn: {}".format(text))
-                PyCorrectorInspector().inspect_text(block)
+                PyCorrectorInspector().inspect_text(text)
             else:
                 print("inspect skip: {}".format(text))
 

@@ -126,7 +126,7 @@ jobs:
       - image: cimg/python:3.8
     steps:
       - attach_workspace:
-            at: ~/project
+            at: ~/spell-inspect
       - checkout
       - run:
           name: pip install
@@ -140,3 +140,6 @@ jobs:
           name: Run tests
           command: |
               python -m unittest test.corrects_test.CorrectsApiTest.test_pycorrector_spelling_inspect_witter
+
+      - store_artifacts:
+          path: ~/spell-inspect/build/SpellInspect

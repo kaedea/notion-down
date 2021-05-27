@@ -5,6 +5,7 @@ from config import Config
 from corrects.inspect_spell import PyCorrectorInspector
 from notion_page import NotionPage
 from notion_reader import NotionReader
+from notion_writer import NotionWriter
 from utils.utils import Utils
 
 
@@ -45,3 +46,7 @@ class CorrectsApiTest(unittest.TestCase):
                 print("inspect skip: {}".format(text))
 
             print("------")
+
+    def test_pycorrector_spelling_inspect_witter(self):
+        md_page = self._get_test_page()
+        NotionWriter.inspect_page(md_page)

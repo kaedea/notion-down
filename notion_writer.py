@@ -5,6 +5,7 @@ import pangu
 from notion.utils import slugify
 
 from config import Config
+from corrects.inspect_spell import SpellInspector, PyCorrectorInspector
 from notion_page import NotionPage, PageBaseBlock, PageImageBlock, PageBlockJoiner
 from utils.utils import FileUtils
 
@@ -106,6 +107,25 @@ class NotionWriter:
                     dir_outputs[channel] = file_outputs[channel]
 
         return dir_outputs
+
+    # noinspection SpellCheckingInspection
+    @staticmethod
+    def inspect_page(notion_page: NotionPage) -> typing.Dict[str, NotionFileOutput]:
+        if not notion_page.is_markdown_able():
+            print("Skip non-markdownable page: " + notion_page.get_identify())
+            return {}
+
+        if not notion_page.is_output_able():
+            print("Skip non-outputable page: " + notion_page.get_identify())
+            return {}
+
+        print("Write page: " + notion_page.get_identify())
+        page_writer = SpellInspectWriter()
+        output = page_writer.write_page(notion_page)
+        print("\n----------\n")
+        return {
+            "default": output
+        }
 
 
 # noinspection PyMethodMayBeStatic
@@ -237,3 +257,21 @@ class GitHubWriter(NotionPageWriter):
     def __init__(self):
         super().__init__()
         self.root_dir = "GitHub"
+
+
+class SpellInspectWriter(NotionPageWriter):
+
+    def __init__(self):
+        super().__init__()
+        self.root_dir = "SpellInspect"
+        self.inspector: SpellInspector = PyCorrectorInspector()
+
+    def _on_dump_page_content(self, page_lines):
+        page_lines_inspected = []
+        for line in page_lines:
+            page_lines_inspected.append(line)
+            page_lines_inspected.append(str(self.inspector.get_inspect_comment(line)))
+            pass
+
+        page_lines.clear()
+        page_lines.extend(page_lines_inspected)

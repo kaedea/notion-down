@@ -139,4 +139,4 @@ jobs:
       - run:
           name: Run tests
           command: |
-              python -m unittest test.corrects_test.CorrectsApiTest.test_pycorrector_spelling_inspect
+              python -m unittest test.corrects_test.CorrectsApiTest.test_pycorrector_spelling_inspect_witter

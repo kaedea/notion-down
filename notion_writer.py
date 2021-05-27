@@ -269,8 +269,8 @@ class SpellInspectWriter(NotionPageWriter):
     def _on_dump_page_content(self, page_lines):
         page_lines_inspected = []
         for line in page_lines:
-            if line and line(line) > 0:
-                page_lines_inspected.append(line)
+            page_lines_inspected.append(line)
+            if line and len(line) > 0:
                 page_lines_inspected.append(str(self.inspector.get_inspect_comment(line)))
 
         page_lines.clear()

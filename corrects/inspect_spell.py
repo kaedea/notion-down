@@ -13,6 +13,9 @@ class SpellInspector:
 
 # noinspection PyMethodMayBeStatic
 class PyCorrectorInspector(SpellInspector):
+    
+    def __init__(self):
+        pycorrector.enable_char_error(enable=False)
 
     def inspect_text(self, text):
         corrected_sent, detail = pycorrector.correct(text)

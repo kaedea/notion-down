@@ -270,7 +270,7 @@ class SpellInspectWriter(NotionPageWriter):
         page_lines_inspected = []
         for line in page_lines:
             page_lines_inspected.append(line)
-            if line and len(line) > 0:
+            if line and len(str(line).strip()) > 0:
                 page_lines_inspected.append(str(self.inspector.get_inspect_comment(line)))
 
         page_lines.clear()

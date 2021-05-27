@@ -33,6 +33,37 @@ class CorrectsApiTest(unittest.TestCase):
         )
         return md_page
 
+    def _get_test_pages(self) -> NotionPage:
+        Config.load_env()
+        Config.set_debuggable(True)
+        Config.set_blog_url(
+            "https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
+        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
+
+        main_page = NotionReader.read_main_page()
+        self.assertIsNotNone(main_page)
+        test_pages = Utils.find(
+            main_page.children,
+            lambda it: it and str(it.title) in [
+                "NotionDown Spelling Inspect",
+                "MarkDown Test Page - SPA",
+                "MarkDown Test Page - NotionDown",
+            ]
+        )
+
+        md_pages = []
+        for test_page in test_pages:
+            self.assertIsNotNone(test_page)
+            md_page = NotionReader.handle_single_page(test_page)
+            self.assertIsNotNone(md_page)
+            self.assertTrue(
+                "should have test text block",
+                len([it for it in md_page.blocks if it.type == 'text']) > 0
+            )
+            md_pages.append(md_page)
+
+        return md_pages
+
     def test_read_demo_page(self):
         self._get_test_page()
 
@@ -48,7 +79,14 @@ class CorrectsApiTest(unittest.TestCase):
 
             print("------")
 
-    def test_pycorrector_spelling_inspect_witter(self):
+    def test_pycorrector_spelling_inspect_writer(self):
         md_page = self._get_test_page()
         NotionWriter.clean_output()
         NotionWriter.inspect_page(md_page)
+
+    def test_pycorrector_spelling_inspect_writer_r2(self):
+        md_pages = self._get_test_pages()
+        NotionWriter.clean_output()
+        for md_page in md_pages:
+            NotionWriter.inspect_page(md_page)
+            pass

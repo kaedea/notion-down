@@ -13,34 +13,39 @@
 
 What can notion-down do now:
 
- - Notion pages to basic MarkDown files
-     - ~~Notion images downloading~~
+ - Notion pages to MarkDown files
+     - ~~Basic Notion PageBlocks parsing~~
+     - ~~Notion images refer & download~~
      - ~~Notion nested list blocks~~
      - ~~Notion obfuscated-links parsing~~
      - ~~Notion table block (Collection)~~
- - Advanced Notion pageblocks support (WIP)
+     - Notion subpage link parsing
+ - Advanced Notion PageBlocks support
      - ~~Pullquote Blocks~~
      - Notion page embed blocks
+     - Image source replacing
  - Writing optimized integration
      - ~~Noton custom `ShortCode` blocks that control parametered MD files generating~~
-     - ~~Mixed CN-EN text separation format~~ [[by pangu](https://github.com/vinta/pangu)]
-     - Spelling check
- - Hexo Integration (WIP)
-     - ~~Hexo page properties config~~
-     - Hexo generate
-     - Hexo tags
+     - ~~Mixed CN-EN text separation format~~ ([by pangu](https://github.com/vinta/pangu))
+     - Spelling inspect (by [pycorrector](https://github.com/shibing624/pycorrector))
+ - HEXO Integration
+     - ~~HEXO page properties config~~
+     - HEXO generate
+     - HEXO tags
 
 ## Hot It Works
 
+![NotionDown Workflows](https://s3.us-west-2.amazonaws.com/secure.notion-static.com/737ff770-dc4c-44e3-ba32-90c98bd8bd33/Untitled.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAT73L2G45O3KS52Y5%2F20210527%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20210527T113245Z&X-Amz-Expires=86400&X-Amz-Signature=0bdcbdb886dfd8a3f0118f170efaebb4ffe05d5b1c6edefe3b8c1fcc2ab14607&X-Amz-SignedHeaders=host)
+
 NotionDown read Notion pages data using [notion-py](https://github.com/jamalex/notion-py), and then write pages into MD files.
 
-Basic usage:
+### Basic usage
 
-> notion-down >> notion-py >> Notion pages data >> generating MD files
+> notion-down >> Notion APIs (notion-py) >> Notion pages data >> generating MD files
 
-Advanced usage:
+### Advanced usage
 
-> WebHook >> notion-down >> notion-py >> Notion pages data >> generating MD files >> Copy into Hexo source >> generating webpages >> push to GitHub pages
+> WebHook >> notion-down >> Notion APIs (notion-py) >> Notion pages data >> generating MD files >> Copy into Hexo source >> generating webpages >> push to GitHub pages
 
 ## Getting Started
 
@@ -55,6 +60,8 @@ See unitest cases at `/test`.
 See building script at `/.circleci/config.yaml`.
 
 ### Showcases
+
+See the usage showcase jobs at [/jobs](/jobs), and jobs outputs at [/dist](/dist).
 
  - [README generating](/jobs/parse_readme/)
  - [Notion sample post generating](/jobs/parse_sample_posts/)

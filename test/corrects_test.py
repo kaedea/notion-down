@@ -17,6 +17,7 @@ class CorrectsApiTest(unittest.TestCase):
         Config.set_blog_url(
             "https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
         Config.set_output(os.path.join(Utils.get_workspace(), "build"))
+
         main_page = NotionReader.read_main_page()
         self.assertIsNotNone(main_page)
         test_page = Utils.find_one(
@@ -49,4 +50,5 @@ class CorrectsApiTest(unittest.TestCase):
 
     def test_pycorrector_spelling_inspect_witter(self):
         md_page = self._get_test_page()
+        NotionWriter.clean_output()
         NotionWriter.inspect_page(md_page)

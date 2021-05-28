@@ -5,7 +5,6 @@ import pangu
 from notion.utils import slugify
 
 from config import Config
-from corrects.inspect_spell import SpellInspector, PyCorrectorInspector
 from notion_page import NotionPage, PageBaseBlock, PageImageBlock, PageBlockJoiner
 from utils.utils import FileUtils
 
@@ -267,11 +266,12 @@ class GitHubWriter(NotionPageWriter):
 
 
 class SpellInspectWriter(NotionPageWriter):
+    from corrects.inspect_spell import PyCorrectorInspector
 
     def __init__(self):
         super().__init__()
         self.root_dir = "SpellInspect"
-        self.inspector: SpellInspector = PyCorrectorInspector()
+        self.inspector = self.PyCorrectorInspector()
         self.inspected_issues = []
 
     def _on_dump_page_content(self, page_lines):

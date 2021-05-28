@@ -111,6 +111,121 @@ class NotionClientMarkDownPageTest(unittest.TestCase):
         self.assertTrue(os.path.exists(temp_file))
         pass
 
+    def test_upload_image(self):
+        token = os.environ['NOTION_TOKEN_V2']
+        post_url = 'https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34'
+
+        client = NotionClient(token_v2=token)
+        page = client.get_block(post_url)
+        self.assertIsNotNone(page)
+
+        print("The title is:", page.title)
+        print("SubPage count = {}", len(page.children))
+
+        md_page = Utils.find_one(
+            page.children,
+            lambda it: it.type == 'page' and str(it.title) == "NotionDown Image Source"
+        )
+        self.assertIsNotNone(md_page)
+
+        temp_file = ''
+
+        for block in md_page.children:
+            if type(block) is ImageBlock:
+                image_caption = str(block.caption)
+                image_url = str(block.source)
+                temp_file = os.path.join(Utils.get_temp_dir(), image_caption + ".jpg")
+
+                print("Download image to : " + temp_file)
+                self.__download_file(client, block.id, image_url, temp_file)
+                break
+
+        self.assertTrue(os.path.exists(temp_file))
+
+        count = len([it for it in md_page.children if type(it) is ImageBlock])
+        print("Image count = {}".format(count))
+
+        print("Upload new image {}".format(count + 1))
+        new_image_block = md_page.children.add_new(
+            ImageBlock,
+            caption="Image {}".format(count + 1),
+            width=800
+        )
+        new_image_block.upload_file(temp_file)
+        pass
+
+    def test_replace_image(self):
+        token = os.environ['NOTION_TOKEN_V2']
+        post_url = 'https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34'
+
+        client = NotionClient(token_v2=token)
+        page = client.get_block(post_url)
+        self.assertIsNotNone(page)
+
+        print("The title is:", page.title)
+        print("SubPage count = {}", len(page.children))
+
+        md_page = Utils.find_one(page.children,
+                                 lambda it: it.type == 'page' and str(it.title) == "NotionDown Image Source")
+        self.assertIsNotNone(md_page)
+
+        for block in md_page.children:
+            if type(block) is ImageBlock:
+                image_caption = str(block.caption)
+                image_url = str(block.source)
+                temp_file = os.path.join(Utils.get_temp_dir(), image_caption + ".jpg")
+
+                print("Download image to : " + temp_file)
+                self.__download_file(client, block.id, image_url, temp_file)
+
+                self.assertTrue(os.path.exists(temp_file))
+
+                print("Upload image file : " + temp_file)
+                block.upload_file(temp_file)
+                new_url = str(block.source)
+                print("Get new image url : " + new_url)
+                break
+
+        pass
+
+    def test_replace_image_r2(self):
+        token = os.environ['NOTION_TOKEN_V2']
+        post_url = 'https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34'
+
+        client = NotionClient(token_v2=token)
+        page = client.get_block(post_url)
+        self.assertIsNotNone(page)
+
+        print("The title is:", page.title)
+        print("SubPage count = {}", len(page.children))
+
+        md_page = Utils.find_one(page.children,
+                                 lambda it: it.type == 'page' and str(it.title) == "NotionDown Image Source")
+        self.assertIsNotNone(md_page)
+
+        for block in md_page.children:
+            if type(block) is ImageBlock:
+                image_caption = str(block.caption)
+                image_url = str(block.source)
+                temp_file = os.path.join(Utils.get_temp_dir(), image_caption + ".jpg")
+
+                print("Download image to : " + temp_file)
+                self.__download_file(client, block.id, image_url, temp_file)
+
+                self.assertTrue(os.path.exists(temp_file))
+
+                print("Upload image file : " + temp_file)
+                temp_image = md_page.children.add_new(ImageBlock, caption="temp image", width=800)
+                temp_image.upload_file(temp_file)
+                new_url = str(temp_image.source)
+                print("Get new image url : " + new_url)
+                temp_image.remove()
+
+                block.source = new_url
+                break
+
+        pass
+
     def __download_file(self, client, block_id, source, path):
 
         # "oneliner" helper to safely unwrap lists, see: https://bit.ly/35SUfMK
@@ -183,6 +298,7 @@ class NotionClientMarkDownPageTest(unittest.TestCase):
             print("{}".format(" | ".join(contents)))
         pass
 
+
     def __parse_collection_item(self, collection_type, item):
         if not item:
             return str(item)
@@ -219,6 +335,7 @@ class NotionClientMarkDownPageTest(unittest.TestCase):
             return ", ".join(urls)
 
         return str(item)
+
 
 
 

@@ -212,7 +212,10 @@ class NotionPageWriter:
 <!-- NotionPageWriter
 notion-down.version = {}
 notion-down.revision = {}
--->""".format(Config.notion_down_version(), Config.notion_down_revision()))
+-->""".format(
+            Config.notion_down_version(),
+            Config.notion_down_revision()
+        ))
         pass
 
     def _on_dump_page_content(self, page_lines):
@@ -287,6 +290,20 @@ class SpellInspectWriter(NotionPageWriter):
 
         page_lines.clear()
         page_lines.extend(page_lines_inspected)
+
+    def _write_tail(self, page_lines: typing.List[typing.Text], notion_page: NotionPage):
+        page_lines.append("\n")
+        page_lines.append("""
+<!-- SpellInspectWriter
+notion-down.version = {}
+notion-down.revision = {}
+spell-inspector = {}
+-->""".format(
+            Config.notion_down_version(),
+            Config.notion_down_revision(),
+            self.inspector.get_name()
+        ))
+        pass
 
     @staticmethod
     def _format_text_with_inspect_issues(text: str, issues):

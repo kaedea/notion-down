@@ -31,6 +31,17 @@ class PageGroupBlock(PageBaseBlock):
 
     def write_block(self):
         lines = [it.write_block() for it in self.children]
+        return "<!-- Group start: {} -->\n{}\n<!-- Group end -->".format(self.name, "\n".join(lines))
+
+
+class PageShortCodeBlock(PageGroupBlock):
+    def __init__(self):
+        super().__init__()
+        self.type = 'short_code_block'
+        self.children: typing.List[PageBaseBlock] = []
+
+    def write_block(self):
+        lines = [it.write_block() for it in self.children]
         return "<!-- ShortCode: {}\n{}\n-->".format(self.name, "\n".join(lines))
 
 
@@ -42,7 +53,50 @@ class PageChannelBlock(PageGroupBlock):
 
     def write_block(self):
         lines = [it.write_block() for it in self.children]
-        return "{}".format("\n".join(lines))
+        return "<!-- For channel only: {} -->\n{}".format(self.channel, "\n".join(lines))
+
+
+class PageColumnListBlock(PageGroupBlock):
+    def __init__(self):
+        super().__init__()
+        self.type = 'column_list'
+        self.children: typing.List[PageColumnBlock] = []
+
+    def write_block(self):
+        column_lines = []
+        for idx, column_block in enumerate(self.children):
+            column_lines.append(
+                "{}<!-- Column {} start -->\n{}\n<!-- Column end -->" .format(
+                    "\n" if idx > 0 else "",
+                    idx,
+                    column_block.write_block()
+                )
+            )
+
+        return "<!-- ColumnList start -->\n{}\n<!-- ColumnList end -->".format("\n".join(column_lines))
+
+
+class PageColumnBlock(PageGroupBlock):
+    def __init__(self):
+        super().__init__()
+        self.type = 'column'
+        self.children: typing.List[PageBaseBlock] = []
+        self.block_joiner: PageBlockJoiner = PageBlockJoiner()
+
+    def write_block(self):
+        lines = []
+        for idx in range(len(self.children)):
+            block = self.children[idx]
+
+            if self.block_joiner.should_add_separator_before(self.children, idx):
+                lines.append("")
+
+            lines.append(block.write_block())
+
+            if self.block_joiner.should_add_separator_after(self.children, idx):
+                lines.append("")
+
+        return "\n".join(lines)
 
 
 class PageTocBlock(PageBaseBlock):
@@ -342,6 +396,8 @@ class NotionPage:
             "table_of_contents": self._parse_toc,
             "collection_view": self._parse_collection,
             "toggle": self._parse_toggle,
+            "column_list": self._parse_column_list,
+            "column": self._parse_column,
             "page": self._parse_sub_page,
         }
 
@@ -465,14 +521,22 @@ class NotionPage:
                     idx = idx_end
                     continue
 
-            # Mapping for parse
-            if block.type in self.mapping:
-                self.mapping[block.type].__call__(page_blocks, block)
-                idx += 1
-                continue
-
-            # Basic Block Parsing
+            # Basic Parsing
+            self._parse_page_blocks_flatt(page_blocks, block)
             idx += 1
+
+        return page_blocks
+
+    def _parse_page_blocks_flatt(self, page_blocks: typing.List[PageBaseBlock], block):
+        '''
+        Only parse non-group block here.
+        '''
+
+        # Mapping for parse
+        if block.type in self.mapping:
+            self.mapping[block.type].__call__(page_blocks, block)
+        else:
+            # Basic Block Parsing
             self._parse_basic(page_blocks, block)
 
         return page_blocks
@@ -496,12 +560,16 @@ class NotionPage:
         if not self._is_short_code_start(blocks[idx_start]):
             return -1
 
-        group_block: PageGroupBlock = PageGroupBlock()
-        group_block.id = blocks[idx_start].id
         start_line = str(blocks[idx_start].title)
+        block_id = blocks[idx_start].id
+
+        group_block: PageGroupBlock = PageGroupBlock()
+        group_block.id = block_id
 
         symbol = 'SHORT_CODE_'
         if symbol in start_line:
+            group_block = PageShortCodeBlock()
+            group_block.id = block_id
             name = start_line[start_line.rfind(symbol) + len(symbol):].strip()
             symbol_end = "="
             if symbol_end in name:
@@ -512,6 +580,8 @@ class NotionPage:
         symbol = 'SHORT_CODE_CHANNEL='
         if symbol in start_line:
             group_block = PageChannelBlock()
+            group_block.id = block_id
+            group_block.name = 'CHANNEL'
             channel = start_line[start_line.rfind(symbol) + len(symbol):].strip()
             group_block.channel = channel
             pass
@@ -584,7 +654,7 @@ class NotionPage:
 
     def _parse_properties(self, block):
         content = block.title
-        symbol = '[properties]'
+        symbol = '[notion-down-properties]'
         if symbol in content:
             content_properties = content[content.rfind(symbol) + len(symbol):]
             lines = str(content_properties).split("\n")
@@ -597,7 +667,7 @@ class NotionPage:
 
     def _parse_code(self, page_blocks: typing.List[PageBaseBlock], block):
         content = block.title
-        symbol = '[properties]'
+        symbol = '[notion-down-properties]'
         if symbol in content:
             self._parse_properties(block)
             return
@@ -722,9 +792,86 @@ class NotionPage:
 
         page_blocks.append(page_block)
 
+    def _parse_column_list(self, page_blocks: typing.List[PageBaseBlock], block):
+        page_block = PageColumnListBlock()
+        page_block.id = block.id
+        page_block.type = block.type
+
+        page_column_blocks: typing.List[PageColumnBlock] = []
+        page_block.children = page_column_blocks
+
+        if block.children:
+            for child in block.children:
+                self._parse_column(page_column_blocks, child)
+
+        page_blocks.append(page_block)
+
+    def _parse_column(self, page_blocks: typing.List[PageColumnBlock], block):
+        page_block = PageColumnBlock()
+        page_block.id = block.id
+        page_block.type = block.type
+
+        column_blocks: typing.List[PageBaseBlock] = []
+        page_block.children = column_blocks
+
+        if block.children:
+            for child in block.children:
+                self._parse_page_blocks_flatt(column_blocks, child)
+
+        page_blocks.append(page_block)
+
     def _parse_stub(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageBaseBlock()
         page_block.id = block.id
         page_block.type = block.type
         page_blocks.append(page_block)
         raise Exception('Stub!')
+
+
+# noinspection PyMethodMayBeStatic,PyUnusedLocal
+class PageBlockJoiner:
+    def should_add_separator_before(
+            self,
+            blocks: typing.List[PageBaseBlock],
+            curr_idx) -> bool:
+
+        block = blocks[curr_idx]
+        block_pre = None if curr_idx <= 0 else blocks[curr_idx - 1]
+        block_nxt = None if curr_idx >= len(blocks) - 1 else blocks[curr_idx + 1]
+        result = False
+
+        # Check prefix-separator
+        if block.type in ['enter']:
+            pass
+        else:
+            if not block_pre:
+                pass
+            else:
+                if block_pre.type in ['enter']:
+                    pass
+                else:
+                    if block_pre.type in ['bulleted_list', 'numbered_list']:
+                        if block.type in ['bulleted_list', 'numbered_list']:
+                            pass
+                        else:
+                            result = True
+                    else:
+                        result = True
+
+        return result
+
+    def should_add_separator_after(
+            self,
+            blocks: typing.List[PageBaseBlock],
+            curr_idx) -> bool:
+
+        block = blocks[curr_idx]
+        block_pre = None if curr_idx <= 0 else blocks[curr_idx - 1]
+        block_nxt = None if curr_idx >= len(blocks) - 1 else blocks[curr_idx + 1]
+        result = False
+
+        # Check suffix-separator
+        if block_nxt is None:
+            result = True
+
+        return result

@@ -18,7 +18,7 @@ class Utils:
 
     @staticmethod
     def get_workspace():
-        return Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute()
+        return str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 
     @staticmethod
     def get_temp_dir():
@@ -145,6 +145,11 @@ class FileUtils:
 
     @staticmethod
     def clean_dir(file_path, fore=False):
+        FileUtils.delete(file_path, fore)
+        FileUtils.create_dir(file_path, fore)
+
+    @staticmethod
+    def delete(file_path, fore=False):
         path = Path(file_path)
         if path.is_file():
             if not fore:
@@ -153,8 +158,6 @@ class FileUtils:
 
         if path.exists():
             shutil.rmtree(file_path)
-
-        FileUtils.create_dir(file_path, fore)
 
     @staticmethod
     def write_text(text, file_path, mode="w+"):

@@ -1,5 +1,7 @@
 import json
 import os
+import subprocess
+import typing
 
 SYS_ENV_MAP = dict(
     token_v2="NOTION_TOKEN_V2",
@@ -25,6 +27,14 @@ class Config:
     @staticmethod
     def set(key, value):
         KV[key] = value
+
+    @staticmethod
+    def notion_down_version():
+        return "0.0.1"
+
+    @staticmethod
+    def notion_down_revision():
+        return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()
 
     @staticmethod
     def debuggable():
@@ -65,6 +75,14 @@ class Config:
     @staticmethod
     def set_blog_url(value):
         Config.set("blog_url", value)
+
+    @staticmethod
+    def channels():
+        return Config.get("channels", [])
+
+    @staticmethod
+    def set_channels(value: typing.List):
+        Config.set("channels", value)
 
     @staticmethod
     def to_string():

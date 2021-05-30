@@ -1,8 +1,9 @@
+import datetime
 import os
 import unittest
 
 from urllib.request import quote
-from notion.block import CodeBlock, ImageBlock, CollectionViewBlock
+from notion.block import CodeBlock, ImageBlock, CollectionViewBlock, DividerBlock, TextBlock
 from notion.client import NotionClient
 from notion.collection import Collection
 from notion.settings import BASE_URL
@@ -109,6 +110,28 @@ class NotionClientMarkDownPageTest(unittest.TestCase):
                 # f.close()
 
         self.assertTrue(os.path.exists(temp_file))
+        pass
+
+    def test_list_image(self):
+        token = os.environ['NOTION_TOKEN_V2']
+        post_url = 'https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34'
+
+        client = NotionClient(token_v2=token)
+        page = client.get_block(post_url)
+        self.assertIsNotNone(page)
+
+        print("The title is:", page.title)
+        print("SubPage count = {}", len(page.children))
+
+        md_page = Utils.find_one(
+            page.children,
+            lambda it: it.type == 'page' and str(it.title) == "NotionDown Image Source"
+        )
+        self.assertIsNotNone(md_page)
+
+        for block in md_page.children:
+            if type(block) is ImageBlock:
+                print("get image block: {}".format(block))
         pass
 
     def test_upload_image(self):
@@ -219,9 +242,67 @@ class NotionClientMarkDownPageTest(unittest.TestCase):
                 temp_image.upload_file(temp_file)
                 new_url = str(temp_image.source)
                 print("Get new image url : " + new_url)
-                temp_image.remove()
-
+                temp_image.remove()  # this will cause new_url become 404
                 block.source = new_url
+                break
+
+        pass
+
+    def test_replace_image_r3(self):
+        token = os.environ['NOTION_TOKEN_V2']
+        post_url = 'https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34'
+
+        client = NotionClient(token_v2=token)
+        page = client.get_block(post_url)
+        self.assertIsNotNone(page)
+
+        print("The title is:", page.title)
+        print("SubPage count = {}", len(page.children))
+
+        md_page = Utils.find_one(
+            page.children,
+            lambda it: it.type == 'page' and str(it.title) == "NotionDown Image Source"
+        )
+        self.assertIsNotNone(md_page)
+
+        new_url = None
+
+        for block in md_page.children:
+            if type(block) is ImageBlock:
+                image_caption = str(block.caption)
+                image_url = str(block.source)
+                temp_file = os.path.join(Utils.get_temp_dir(), image_caption + ".jpg")
+
+                print("Download image to : " + temp_file)
+                self.__download_file(client, block.id, image_url, temp_file)
+
+                self.assertTrue(os.path.exists(temp_file))
+
+                print("Upload image file : " + temp_file)
+                new_image_block = md_page.children.add_new(
+                    ImageBlock,
+                    caption=block.caption,
+                    width=block.width,
+                    full_width=block.full_width,
+                    page_width=block.page_width,
+                )
+                new_image_block.upload_file(temp_file)
+                new_url = str(new_image_block.source)
+                print("Get new image url : " + new_url)
+                new_image_block.move_to(block, "after")
+                block.remove()
+                continue
+
+            if type(block) is TextBlock:
+                if 'Updated:' in block.title:
+                    block.title = "Updated: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                    pass
+                elif 'Image source was replacing to:' in block.title:
+                    block.title = 'Image source was replacing to: [{}]({})'.format(new_url, new_url)
+                    pass
+                continue
+
+            if type(block) is DividerBlock:
                 break
 
         pass

@@ -1,12 +1,11 @@
-from typing import List
+from utils.utils import Utils
 
+if not Utils.check_module_installed("notion"):
+    raise Exception("Pls call 'pip install notion' first!")
+
+from typing import List
 from notion.block import PageBlock
 from notion.client import NotionClient
-
-from config import Config
-from notion_page import NotionPage
-from notion.client import NotionClient
-
 from config import Config
 from notion_page import NotionPage
 

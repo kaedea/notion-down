@@ -266,12 +266,12 @@ class GitHubWriter(NotionPageWriter):
 
 
 class SpellInspectWriter(NotionPageWriter):
-    from corrects.inspect_spell import PyCorrectorInspector
 
     def __init__(self):
         super().__init__()
+        from corrects.inspect_spell import PyCorrectorInspector
         self.root_dir = "SpellInspect"
-        self.inspector = self.PyCorrectorInspector()
+        self.inspector = PyCorrectorInspector()
         self.inspected_issues = []
 
     def _on_dump_page_content(self, page_lines):

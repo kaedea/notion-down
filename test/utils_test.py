@@ -68,3 +68,9 @@ class PyUtils(unittest.TestCase):
         args = ["__LINK__", "__IMAGE__"]
         print(text.format(*args))
 
+    def test_check_module_installed(self):
+        self.assertTrue(Utils.check_module_installed("notion"))
+        self.assertTrue(Utils.check_module_installed("pangu"))
+        self.assertFalse(Utils.check_module_installed("panguxx"))
+        self.assertFalse(Utils.check_module_installed("pycorrector"))
+

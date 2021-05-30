@@ -6,6 +6,8 @@ import shutil
 import tempfile
 from pathlib import Path
 
+import pkg_resources
+
 
 class Utils:
 
@@ -107,6 +109,14 @@ class Utils:
                 print('\'{}\' is not given: {}'.format(key, item))
                 result = False
         return result
+
+    @staticmethod
+    def check_module_installed(name):
+        try:
+            pkg_resources.get_distribution(name)
+            return True
+        except pkg_resources.DistributionNotFound:
+            return False
 
 
 class FileUtils:

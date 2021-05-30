@@ -19,7 +19,15 @@ workflows:
             - build-and-test
           filters:
             branches:
-              only: deploy/readme
+              only: ci/build-readme
+
+  test-run-pycorrector:
+    jobs:
+      - build-pycorrector-test:
+          branch_build: feature/spell-inspect
+          filters:
+            branches:
+              only: feature/spell-inspect
 
 jobs:
   build-and-test: 
@@ -38,6 +46,7 @@ jobs:
           name: pip install
           command: |
               pip install notion
+              pip install pangu
       - run:
           name: Run tests
           command: |
@@ -53,6 +62,7 @@ jobs:
           root: ~/project
           paths:
             - ./build
+
 
   publish-github-push:
       parameters:
@@ -90,7 +100,7 @@ jobs:
 
               # git diff HEAD --name-only --diff-filter=ACMR --ignore-space-at-eol -M100%
               has_modified="$(git diff HEAD --name-only --diff-filter=ACMR --ignore-space-at-eol -M100%)"
-              
+
               if [ -z "$has_modified" ] ; then
                   echo "not modified"
               else
@@ -105,4 +115,31 @@ jobs:
                   git push --quiet "https://${GH_TOKEN}@github.com/kaedea/notion-down.git" << parameters.branch_deploy >>:<< parameters.branch_deploy >>
               fi
 
-              
+
+  build-pycorrector-test:
+    parameters:
+      branch_build:
+        type: string
+        default: feature/spell-inspect
+    working_directory: ~/spell-inspect
+    docker:
+      - image: cimg/python:3.8
+    steps:
+      - attach_workspace:
+            at: ~/spell-inspect
+      - checkout
+      - run:
+          name: pip install
+          command: |
+              pip install notion
+              pip install pangu
+              pip install pycorrector
+              pip install https://github.com/kpu/kenlm/archive/master.zip
+              # pip install -r requirements.txt
+      - run:
+          name: Run tests
+          command: |
+              python -m unittest test.corrects_test.CorrectsApiTest.test_pycorrector_spelling_inspect_writer_r2
+
+      - store_artifacts:
+          path: ~/spell-inspect/build/SpellInspect

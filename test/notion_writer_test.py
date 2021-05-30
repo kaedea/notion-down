@@ -75,6 +75,28 @@ class NotionHandlerTest(unittest.TestCase):
         NotionWriter.handle_page(md_page)
         pass
 
+    def test_handle_write_markdown_notion_down_solution_showcase_page(self):
+        Config.load_env()
+        Config.set_debuggable(True)
+        Config.set_blog_url(
+            "https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
+        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
+
+        NotionWriter.clean_output()
+
+        main_page = NotionReader.read_main_page()
+        self.assertIsNotNone(main_page)
+
+        test_page = Utils.find_one(main_page.children, lambda it: it and str(
+            it.title) == "MarkDown Test Page - NotionDown")
+        self.assertIsNotNone(test_page)
+
+        md_page = NotionReader.handle_single_page(test_page)
+        self.assertIsNotNone(md_page)
+
+        NotionWriter.handle_page(md_page)
+        pass
+
     def test_handle_write_markdown_readme_page(self):
         Config.load_env()
         Config.set_debuggable(True)
@@ -87,6 +109,126 @@ class NotionHandlerTest(unittest.TestCase):
         self.assertIsNotNone(main_page)
 
         test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown README")
+        self.assertIsNotNone(test_page)
+
+        md_page = NotionReader.handle_single_page(test_page)
+        self.assertIsNotNone(md_page)
+
+        NotionWriter.handle_page(md_page)
+        pass
+
+    def test_handle_write_notion_obfuscating_page(self):
+        Config.load_env()
+        Config.set_debuggable(True)
+        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
+        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
+
+        NotionWriter.clean_output()
+
+        main_page = NotionReader.read_main_page()
+        self.assertIsNotNone(main_page)
+
+        test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown Obfuscated Blocks")
+        self.assertIsNotNone(test_page)
+
+        md_page = NotionReader.handle_single_page(test_page)
+        self.assertIsNotNone(md_page)
+
+        NotionWriter.handle_page(md_page)
+        pass
+
+    def test_handle_write_notion_nested_list_page(self):
+        Config.load_env()
+        Config.set_debuggable(True)
+        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
+        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
+
+        NotionWriter.clean_output()
+
+        main_page = NotionReader.read_main_page()
+        self.assertIsNotNone(main_page)
+
+        test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown Nested List")
+        self.assertIsNotNone(test_page)
+
+        md_page = NotionReader.handle_single_page(test_page)
+        self.assertIsNotNone(md_page)
+
+        NotionWriter.handle_page(md_page)
+        pass
+
+    def test_handle_write_notion_short_code_page(self):
+        Config.load_env()
+        Config.set_debuggable(True)
+        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
+        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
+
+        NotionWriter.clean_output()
+
+        main_page = NotionReader.read_main_page()
+        self.assertIsNotNone(main_page)
+
+        test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown ShortCode")
+        self.assertIsNotNone(test_page)
+
+        md_page = NotionReader.handle_single_page(test_page)
+        self.assertIsNotNone(md_page)
+
+        NotionWriter.handle_page(md_page)
+        pass
+
+    def test_handle_write_notion_pull_quote_page(self):
+        Config.load_env()
+        Config.set_debuggable(True)
+        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
+        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
+
+        NotionWriter.clean_output()
+
+        main_page = NotionReader.read_main_page()
+        self.assertIsNotNone(main_page)
+
+        test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown Pullquote Blocks")
+        self.assertIsNotNone(test_page)
+
+        md_page = NotionReader.handle_single_page(test_page)
+        self.assertIsNotNone(md_page)
+
+        NotionWriter.handle_page(md_page)
+        pass
+
+    def test_handle_write_notion_cn_en_mixing_page(self):
+        Config.load_env()
+        Config.set_debuggable(True)
+        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
+        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
+
+        NotionWriter.clean_output()
+
+        main_page = NotionReader.read_main_page()
+        self.assertIsNotNone(main_page)
+
+        test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown CN-EN Concat Format")
+        self.assertIsNotNone(test_page)
+
+        md_page = NotionReader.handle_single_page(test_page)
+        self.assertIsNotNone(md_page)
+
+        NotionWriter.handle_page(md_page)
+        pass
+
+    def test_handle_write_notion_down_properties_page(self):
+        Config.load_env()
+        Config.set_debuggable(True)
+        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
+        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
+
+        NotionWriter.clean_output()
+
+        main_page = NotionReader.read_main_page()
+        self.assertIsNotNone(main_page)
+
+        test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown Properties")
         self.assertIsNotNone(test_page)
 
         md_page = NotionReader.handle_single_page(test_page)

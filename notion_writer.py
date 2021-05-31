@@ -60,6 +60,8 @@ class NotionWriter:
             return NotionPageWriter()
         if str(channel).lower() == "github":
             return GitHubWriter()
+        if str(channel).lower() == "spellinspect":
+            return SpellInspectWriter()
         raise Exception("Unsupported channel: {}".format(channel))
 
     @staticmethod

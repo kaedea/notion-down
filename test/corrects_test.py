@@ -1,4 +1,5 @@
 import os
+import typing
 import unittest
 
 from config import Config
@@ -39,7 +40,7 @@ class CorrectsApiTest(unittest.TestCase):
         self.assertIsNotNone(main_page)
         test_page = Utils.find_one(
             main_page.children,
-            lambda it: it and str(it.title) == "NotionDown Spelling Inspect"
+            lambda it: it.type == 'page' and str(it.title) == "NotionDown Spelling Inspect"
         )
         self.assertIsNotNone(test_page)
         md_page = NotionReader.handle_single_page(test_page)
@@ -50,7 +51,7 @@ class CorrectsApiTest(unittest.TestCase):
         )
         return md_page
 
-    def _get_test_pages(self) -> NotionPage:
+    def _get_test_pages(self) -> typing.List[NotionPage]:
         Config.load_env()
         Config.set_debuggable(True)
         Config.set_blog_url(
@@ -61,7 +62,7 @@ class CorrectsApiTest(unittest.TestCase):
         self.assertIsNotNone(main_page)
         test_pages = Utils.find(
             main_page.children,
-            lambda it: it and str(it.title) in [
+            lambda it: it.type == 'page' and str(it.title) in [
                 "NotionDown Spelling Inspect",
                 "MarkDown Test Page - SPA",
                 "MarkDown Test Page - NotionDown",
@@ -106,4 +107,4 @@ class CorrectsApiTest(unittest.TestCase):
         md_pages = self._get_test_pages()
         Config.set_channels(['SpellInspect'])
         NotionWriter.clean_output()
-        NotionWriter.inspect_pages(md_pages)
+        NotionWriter.handle_pages(md_pages)

@@ -24,11 +24,6 @@ class NotionReader:
         return NOTION_CLIENT
 
     @staticmethod
-    def read_main_page() -> PageBlock:
-        print("#read_main_page")
-        return NotionReader.get_client().get_block(Config.blog_url())
-
-    @staticmethod
     def handle_post() -> List[NotionPage]:
         print("#handle_post")
         print("read all pages from main page")
@@ -52,9 +47,24 @@ class NotionReader:
         return NotionReader._parse_page(find_one)
 
     @staticmethod
-    def handle_single_page(page) -> NotionPage:
+    def handle_page(page) -> NotionPage:
         print("#handle_single_page")
         return NotionReader._parse_page(page)
+
+    @staticmethod
+    def read_main_page() -> typing.Optional[PageBlock]:
+        print("#read_main_page")
+        return NotionReader.get_client().get_block(Config.blog_url())
+
+    @staticmethod
+    def read_all_pages() -> typing.List[PageBlock]:
+        print("#read_all_pages")
+        return NotionReader._read_post_pages()
+
+    @staticmethod
+    def read_page_with_title(page_title: str) -> typing.Optional[PageBlock]:
+        print("#read_page_with_title")
+        return Utils.find_one(NotionReader.read_all_pages(), lambda it: it.title == page_title)
 
     @staticmethod
     def _read_post_pages() -> typing.List[PageBlock]:

@@ -20,7 +20,7 @@ def start():
     ])
 
     for source_page in source_pages:
-        md_page = NotionReader.handle_single_page(source_page)
+        md_page = NotionReader._parse_page(source_page)
         notion_output = NotionWriter.handle_page(md_page)[channel]
 
         if not notion_output.has_markdown():

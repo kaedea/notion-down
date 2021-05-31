@@ -9,7 +9,7 @@ DEFAULT_ARGS = {
     'config_file': None,
     'debuggable': True,
     'workspace': Utils.get_workspace(),
-    'output': os.path.join(Utils.get_temp_dir(), "notion-down/outputs"),
+    'output': os.path.join(Utils.get_workspace(), "build"),
     'token_v2': None,
     'channels': ['default'],
     'blog_url': None,
@@ -17,8 +17,12 @@ DEFAULT_ARGS = {
 }
 SYS_ENV_MAP = {
     'token_v2': "NOTION_TOKEN_V2",
+    'blog_url': "NOTION_TOKEN_BLOG_URL",
 }
-REQUIRED_ARGS = ['blog_url']
+REQUIRED_ARGS = [
+    'token_v2',
+    'blog_url',
+]
 PROPERTIES = {}
 
 
@@ -129,7 +133,7 @@ class Config:
     def check_required_args():
         for item in REQUIRED_ARGS:
             if item not in PROPERTIES or PROPERTIES[item] is None:
-                raise Exception('{} is null or not presented'.format(item))
+                raise Exception('\'{}\' is null or not presented, configure it in sys_env | config_file | cli_args !'.format(item))
 
     @staticmethod
     def to_string():

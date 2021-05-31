@@ -3,6 +3,7 @@
 import json
 import os
 import shutil
+import sys
 import tempfile
 from pathlib import Path
 
@@ -117,6 +118,10 @@ class Utils:
             return True
         except pkg_resources.DistributionNotFound:
             return False
+
+    @staticmethod
+    def is_unittest():
+        return 'unittest' in sys.modules.keys()
 
 
 class FileUtils:

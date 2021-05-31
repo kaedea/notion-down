@@ -152,41 +152,39 @@ class ArgsParser:
 
     @staticmethod
     def parse():
-        import argparse
-
-        parser = argparse.ArgumentParser(description='Process running args.')
+        # 1. Config getter & setter
         for key in DEFAULT_ARGS.keys():
-            # getter & setter
             Config.define_getter(key)
             Config.define_getter(key, "get_")
             Config.define_setter(key)
+
+        # 2. Load default values (lowest priority)
+        for key in DEFAULT_ARGS.keys():
             if DEFAULT_ARGS[key]:
                 Config.set(key, DEFAULT_ARGS[key])
 
-            # args configs
-            parser.add_argument("--{}".format(key), nargs='?', default=None)
-
-        # parser.add_argument('--config_file', nargs='?', default=None)
-        # parser.add_argument('--debug', nargs='?', default=True)
-        # parser.add_argument('--workspace', nargs='?', default=Utils.get_workspace())
-        # parser.add_argument('--output', nargs='?', default=os.path.join(Utils.get_temp_dir(), "notion-down/outputs"))
-        # parser.add_argument('--notion_token_v2', nargs='?', default=None)
-        # parser.add_argument('--channels', nargs='?', default='default')
-        # parser.add_argument('--blog_url', nargs='?', default=None)
-        # parser.add_argument('--page_titles', nargs='?', default='all')
-
-        # load configs from Env parameters (lowest priority)
+        # 3. load configs from SysEnv parameters
         Config.load_sys_env()
 
-        # load configs from output config_file
-        args = parser.parse_args()
-        if args.config_file:
-            Config.load_config_file(args.config_file)
-
-        # load configs from cli input (highest priority)
+        # 4. Load configs from cli input (highest priority)
+        import argparse
+        parser = argparse.ArgumentParser(description='Process running args.')
         for key in DEFAULT_ARGS.keys():
-            input_value = getattr(args, key)
+            parser.add_argument("--{}".format(key), nargs='?', default=None)
+
+        if Utils.is_unittest():
+            # don NOT parse args when running from unittest
+            cli_args = {key: None for key in DEFAULT_ARGS.keys()}
+        else:
+            cli_args = parser.parse_args()
+
+        for key in DEFAULT_ARGS.keys():
+            input_value = cli_args[key] if type(cli_args) is dict else getattr(cli_args, key)
             if input_value:
+                # load configs from output config_file
+                if key == 'config_file':
+                    Config.load_config_file(input_value)
+                # parse cli input args
                 if type(DEFAULT_ARGS[key]) is bool:
                     Config.set(key, True if str(input_value).lower() == 'True' else False)
                 elif type(DEFAULT_ARGS[key]) is int:
@@ -197,16 +195,3 @@ class ArgsParser:
                 else:
                     Config.set(key, input_value)
 
-        # if Config.debuggable():
-        #     Config.set_output(os.path.join(Config.workspace(), "build/outputs"))
-        #     Config.set_token_v2(os.environ['NOTION_TOKEN_V2'])
-        #     Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
-        #     pass
-
-        # Config.set_debuggable(args.debug)
-        # Config.set_workspace(args.workspace)
-        # Config.set_output(args.output)
-        # Config.set_token_v2(args.notion_token_v2)
-        # Config.set_channels([it.strip() for it in str(args.channels).split("|")])
-        # Config.set_blog_url(args.blog_url)
-        # Config.set_page_titles([it.strip() for it in str(args.page_titles).split("|")])

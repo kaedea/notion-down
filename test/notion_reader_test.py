@@ -9,15 +9,20 @@ from utils.utils import Utils
 
 class NotionHandlerTest(unittest.TestCase):
 
+    def setUp(self):
+        Config.parse_configs()
+        Config.set_debuggable(True)
+        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
+        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
+        Config.check_required_args()
+
     def test_check_token(self):
         self.assertTrue("NOTION_TOKEN_V2" in os.environ, "Token exist")
 
     def test_handle_post(self):
-        Config.load_env()
-        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
-        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
         notion_pages = NotionReader.handle_post()
         self.assertIsNotNone(notion_pages)
+
         for notion_page in notion_pages:
             notion_page.is_published()
             notion_page.get_title()
@@ -56,11 +61,6 @@ class NotionHandlerTest(unittest.TestCase):
         ''', block_text)
 
     def test_parse_notion_page_with_channel_short_code(self):
-        Config.load_env()
-        Config.set_debuggable(True)
-        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
-        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
-
         main_page = NotionReader.read_main_page()
         self.assertIsNotNone(main_page)
 
@@ -72,11 +72,6 @@ class NotionHandlerTest(unittest.TestCase):
         self.assertIsNotNone(notion_page)
 
     def test_parse_notion_page_with_pull_quote(self):
-        Config.load_env()
-        Config.set_debuggable(True)
-        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
-        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
-
         main_page = NotionReader.read_main_page()
         self.assertIsNotNone(main_page)
 

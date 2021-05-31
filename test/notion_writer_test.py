@@ -9,16 +9,17 @@ from utils.utils import Utils
 
 class NotionHandlerTest(unittest.TestCase):
 
-    def test_clean_output(self):
-        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
-        NotionWriter.clean_output()
-
-    def test_handle_write_post(self):
-        Config.load_env()
+    def setUp(self):
+        Config.parse_configs()
         Config.set_debuggable(True)
         Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
         Config.set_output(os.path.join(Utils.get_workspace(), "build"))
+        Config.check_required_args()
 
+    def test_clean_output(self):
+        NotionWriter.clean_output()
+
+    def test_handle_write_post(self):
         NotionWriter.clean_output()
 
         notion_pages = NotionReader.handle_post()
@@ -37,11 +38,6 @@ class NotionHandlerTest(unittest.TestCase):
             pass
 
     def test_handle_write_markdown_test_page(self):
-        Config.load_env()
-        Config.set_debuggable(True)
-        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
-        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
-
         NotionWriter.clean_output()
 
         md_page = NotionReader.handle_page_with_title("MarkDown Test Page")
@@ -51,11 +47,6 @@ class NotionHandlerTest(unittest.TestCase):
         pass
 
     def test_handle_write_markdown_spa_showcase_page(self):
-        Config.load_env()
-        Config.set_debuggable(True)
-        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
-        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
-
         NotionWriter.clean_output()
 
         md_page = NotionReader.handle_page_with_title("MarkDown Test Page - SPA")
@@ -65,12 +56,6 @@ class NotionHandlerTest(unittest.TestCase):
         pass
 
     def test_handle_write_markdown_notion_down_solution_showcase_page(self):
-        Config.load_env()
-        Config.set_debuggable(True)
-        Config.set_blog_url(
-            "https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
-        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
-
         NotionWriter.clean_output()
 
         md_page = NotionReader.handle_page_with_title("MarkDown Test Page - NotionDown")
@@ -80,11 +65,6 @@ class NotionHandlerTest(unittest.TestCase):
         pass
 
     def test_handle_write_markdown_readme_page(self):
-        Config.load_env()
-        Config.set_debuggable(True)
-        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
-        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
-
         NotionWriter.clean_output()
 
         md_page = NotionReader.handle_page_with_title("NotionDown README")
@@ -94,11 +74,6 @@ class NotionHandlerTest(unittest.TestCase):
         pass
 
     def test_handle_write_notion_obfuscating_page(self):
-        Config.load_env()
-        Config.set_debuggable(True)
-        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
-        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
-
         NotionWriter.clean_output()
 
         md_page = NotionReader.handle_page_with_title("NotionDown Obfuscated Blocks")
@@ -108,11 +83,6 @@ class NotionHandlerTest(unittest.TestCase):
         pass
 
     def test_handle_write_notion_nested_list_page(self):
-        Config.load_env()
-        Config.set_debuggable(True)
-        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
-        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
-
         NotionWriter.clean_output()
 
         md_page = NotionReader.handle_page_with_title("NotionDown Nested List")
@@ -122,11 +92,6 @@ class NotionHandlerTest(unittest.TestCase):
         pass
 
     def test_handle_write_notion_short_code_page(self):
-        Config.load_env()
-        Config.set_debuggable(True)
-        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
-        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
-
         NotionWriter.clean_output()
 
         md_page = NotionReader.handle_page_with_title("NotionDown ShortCode")
@@ -136,11 +101,6 @@ class NotionHandlerTest(unittest.TestCase):
         pass
 
     def test_handle_write_notion_pull_quote_page(self):
-        Config.load_env()
-        Config.set_debuggable(True)
-        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
-        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
-
         NotionWriter.clean_output()
 
         md_page = NotionReader.handle_page_with_title("NotionDown Pullquote Blocks")
@@ -150,11 +110,6 @@ class NotionHandlerTest(unittest.TestCase):
         pass
 
     def test_handle_write_notion_cn_en_mixing_page(self):
-        Config.load_env()
-        Config.set_debuggable(True)
-        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
-        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
-
         NotionWriter.clean_output()
 
         md_page = NotionReader.handle_page_with_title("NotionDown CN-EN Concat Format")
@@ -164,11 +119,6 @@ class NotionHandlerTest(unittest.TestCase):
         pass
 
     def test_handle_write_notion_down_properties_page(self):
-        Config.load_env()
-        Config.set_debuggable(True)
-        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
-        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
-
         NotionWriter.clean_output()
 
         md_page = NotionReader.handle_page_with_title("NotionDown Properties")

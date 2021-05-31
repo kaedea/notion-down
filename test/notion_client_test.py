@@ -1,11 +1,10 @@
 import datetime
 import os
 import unittest
-
 from urllib.request import quote
+
 from notion.block import CodeBlock, ImageBlock, CollectionViewBlock, DividerBlock, TextBlock
 from notion.client import NotionClient
-from notion.collection import Collection
 from notion.settings import BASE_URL
 
 from utils.utils import Utils

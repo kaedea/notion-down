@@ -3,7 +3,6 @@ import typing
 import unittest
 
 from config import Config
-from corrects.inspect_spell import PyCorrectorInspector
 from notion_page import NotionPage
 from notion_reader import NotionReader
 from notion_writer import NotionWriter, SpellInspectWriter
@@ -11,6 +10,13 @@ from utils.utils import Utils
 
 
 class CorrectsApiTest(unittest.TestCase):
+
+    def setUp(self):
+        Config.parse_configs()
+        Config.set_debuggable(True)
+        Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
+        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
+        Config.check_required_args()
 
     def test_issue_format(self):
         text = '真麻烦你了。希望你们好好的跳无。少先队员因该为老人让坐。机七学习是人工智能领遇最能体现智能的一个分知。一只小鱼船浮在平净的河面上。我的家乡是有明的渔米之乡。'
@@ -30,20 +36,7 @@ class CorrectsApiTest(unittest.TestCase):
         )
 
     def _get_test_page(self) -> NotionPage:
-        Config.load_env()
-        Config.set_debuggable(True)
-        Config.set_blog_url(
-            "https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
-        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
-
-        main_page = NotionReader.read_main_page()
-        self.assertIsNotNone(main_page)
-        test_page = Utils.find_one(
-            main_page.children,
-            lambda it: it.type == 'page' and str(it.title) == "NotionDown Spelling Inspect"
-        )
-        self.assertIsNotNone(test_page)
-        md_page = NotionReader.handle_single_page(test_page)
+        md_page = NotionReader.handle_page_with_title("NotionDown Spelling Inspect")
         self.assertIsNotNone(md_page)
         self.assertTrue(
             "should have test text block",
@@ -52,38 +45,24 @@ class CorrectsApiTest(unittest.TestCase):
         return md_page
 
     def _get_test_pages(self) -> typing.List[NotionPage]:
-        Config.load_env()
-        Config.set_debuggable(True)
-        Config.set_blog_url(
-            "https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
-        Config.set_output(os.path.join(Utils.get_workspace(), "build"))
+        Config.set_page_titles([
+            "NotionDown Spelling Inspect",
+            "MarkDown Test Page - SPA",
+            "MarkDown Test Page - NotionDown",
+        ])
 
-        main_page = NotionReader.read_main_page()
-        self.assertIsNotNone(main_page)
-        test_pages = Utils.find(
-            main_page.children,
-            lambda it: it.type == 'page' and str(it.title) in [
-                "NotionDown Spelling Inspect",
-                "MarkDown Test Page - SPA",
-                "MarkDown Test Page - NotionDown",
-            ]
-        )
-
-        md_pages = []
-        for test_page in test_pages:
-            self.assertIsNotNone(test_page)
-            md_page = NotionReader.handle_single_page(test_page)
-            self.assertIsNotNone(md_page)
+        md_pages = NotionReader.handle_post()
+        self.assertTrue(len(md_pages) > 0)
+        for md_page in md_pages:
             self.assertTrue(
                 "should have test text block",
                 len([it for it in md_page.blocks if it.type == 'text']) > 0
             )
-            md_pages.append(md_page)
-
         return md_pages
 
     def test_read_demo_page(self):
-        self._get_test_page()
+        self.assertIsNotNone(self._get_test_page())
+        self.assertTrue(len(self._get_test_pages()) > 1)
 
     def test_pycorrector_spelling_inspect(self):
         md_page = self._get_test_page()
@@ -91,6 +70,7 @@ class CorrectsApiTest(unittest.TestCase):
             text = block.write_block()
             if text:
                 print("inspect bgn: {}".format(text))
+                from corrects.inspect_spell import PyCorrectorInspector
                 PyCorrectorInspector().inspect_text(text)
             else:
                 print("inspect skip: {}".format(text))

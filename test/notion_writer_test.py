@@ -23,6 +23,7 @@ class NotionHandlerTest(unittest.TestCase):
 
         notion_pages = NotionReader.handle_post()
         self.assertIsNotNone(notion_pages)
+
         for notion_page in notion_pages:
             notion_page.is_published()
             notion_page.get_title()
@@ -43,13 +44,7 @@ class NotionHandlerTest(unittest.TestCase):
 
         NotionWriter.clean_output()
 
-        main_page = NotionReader.read_main_page()
-        self.assertIsNotNone(main_page)
-
-        test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "MarkDown Test Page")
-        self.assertIsNotNone(test_page)
-
-        md_page = NotionReader.handle_single_page(test_page)
+        md_page = NotionReader.handle_page_with_title("MarkDown Test Page")
         self.assertIsNotNone(md_page)
 
         NotionWriter.handle_page(md_page)
@@ -63,13 +58,7 @@ class NotionHandlerTest(unittest.TestCase):
 
         NotionWriter.clean_output()
 
-        main_page = NotionReader.read_main_page()
-        self.assertIsNotNone(main_page)
-
-        test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "MarkDown Test Page - SPA")
-        self.assertIsNotNone(test_page)
-
-        md_page = NotionReader.handle_single_page(test_page)
+        md_page = NotionReader.handle_page_with_title("MarkDown Test Page - SPA")
         self.assertIsNotNone(md_page)
 
         NotionWriter.handle_page(md_page)
@@ -84,14 +73,7 @@ class NotionHandlerTest(unittest.TestCase):
 
         NotionWriter.clean_output()
 
-        main_page = NotionReader.read_main_page()
-        self.assertIsNotNone(main_page)
-
-        test_page = Utils.find_one(main_page.children, lambda it: it and str(
-            it.title) == "MarkDown Test Page - NotionDown")
-        self.assertIsNotNone(test_page)
-
-        md_page = NotionReader.handle_single_page(test_page)
+        md_page = NotionReader.handle_page_with_title("MarkDown Test Page - NotionDown")
         self.assertIsNotNone(md_page)
 
         NotionWriter.handle_page(md_page)
@@ -105,13 +87,7 @@ class NotionHandlerTest(unittest.TestCase):
 
         NotionWriter.clean_output()
 
-        main_page = NotionReader.read_main_page()
-        self.assertIsNotNone(main_page)
-
-        test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown README")
-        self.assertIsNotNone(test_page)
-
-        md_page = NotionReader.handle_single_page(test_page)
+        md_page = NotionReader.handle_page_with_title("NotionDown README")
         self.assertIsNotNone(md_page)
 
         NotionWriter.handle_page(md_page)
@@ -125,13 +101,7 @@ class NotionHandlerTest(unittest.TestCase):
 
         NotionWriter.clean_output()
 
-        main_page = NotionReader.read_main_page()
-        self.assertIsNotNone(main_page)
-
-        test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown Obfuscated Blocks")
-        self.assertIsNotNone(test_page)
-
-        md_page = NotionReader.handle_single_page(test_page)
+        md_page = NotionReader.handle_page_with_title("NotionDown Obfuscated Blocks")
         self.assertIsNotNone(md_page)
 
         NotionWriter.handle_page(md_page)
@@ -145,13 +115,7 @@ class NotionHandlerTest(unittest.TestCase):
 
         NotionWriter.clean_output()
 
-        main_page = NotionReader.read_main_page()
-        self.assertIsNotNone(main_page)
-
-        test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown Nested List")
-        self.assertIsNotNone(test_page)
-
-        md_page = NotionReader.handle_single_page(test_page)
+        md_page = NotionReader.handle_page_with_title("NotionDown Nested List")
         self.assertIsNotNone(md_page)
 
         NotionWriter.handle_page(md_page)
@@ -165,13 +129,7 @@ class NotionHandlerTest(unittest.TestCase):
 
         NotionWriter.clean_output()
 
-        main_page = NotionReader.read_main_page()
-        self.assertIsNotNone(main_page)
-
-        test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown ShortCode")
-        self.assertIsNotNone(test_page)
-
-        md_page = NotionReader.handle_single_page(test_page)
+        md_page = NotionReader.handle_page_with_title("NotionDown ShortCode")
         self.assertIsNotNone(md_page)
 
         NotionWriter.handle_page(md_page)
@@ -185,13 +143,7 @@ class NotionHandlerTest(unittest.TestCase):
 
         NotionWriter.clean_output()
 
-        main_page = NotionReader.read_main_page()
-        self.assertIsNotNone(main_page)
-
-        test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown Pullquote Blocks")
-        self.assertIsNotNone(test_page)
-
-        md_page = NotionReader.handle_single_page(test_page)
+        md_page = NotionReader.handle_page_with_title("NotionDown Pullquote Blocks")
         self.assertIsNotNone(md_page)
 
         NotionWriter.handle_page(md_page)
@@ -205,13 +157,7 @@ class NotionHandlerTest(unittest.TestCase):
 
         NotionWriter.clean_output()
 
-        main_page = NotionReader.read_main_page()
-        self.assertIsNotNone(main_page)
-
-        test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown CN-EN Concat Format")
-        self.assertIsNotNone(test_page)
-
-        md_page = NotionReader.handle_single_page(test_page)
+        md_page = NotionReader.handle_page_with_title("NotionDown CN-EN Concat Format")
         self.assertIsNotNone(md_page)
 
         NotionWriter.handle_page(md_page)
@@ -225,13 +171,7 @@ class NotionHandlerTest(unittest.TestCase):
 
         NotionWriter.clean_output()
 
-        main_page = NotionReader.read_main_page()
-        self.assertIsNotNone(main_page)
-
-        test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown Properties")
-        self.assertIsNotNone(test_page)
-
-        md_page = NotionReader.handle_single_page(test_page)
+        md_page = NotionReader.handle_page_with_title("NotionDown Properties")
         self.assertIsNotNone(md_page)
 
         NotionWriter.handle_page(md_page)

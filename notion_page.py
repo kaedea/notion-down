@@ -151,7 +151,7 @@ class PageTableBlock(PageBaseBlock):
         slugs = [it['slug'] for it in ordered_column_properties]
         types = [it['type'] for it in ordered_column_properties]
 
-        block_lines.append("{}".format(" | ".join([it['name'] for it in ordered_column_properties])))
+        block_lines.append("{}".format(" | ".join([str(it['name']).replace('|', '&#124;') for it in ordered_column_properties])))
         block_lines.append("{}".format(" | ".join([':---:' for it in ordered_column_properties])))
 
         for row in self.block.collection.get_rows():
@@ -159,7 +159,7 @@ class PageTableBlock(PageBaseBlock):
             for idx, slug in enumerate(slugs):
                 item_type = types[idx]
                 item_value = getattr(row, slug)
-                contents.append(self.__parse_collection_item(item_type, item_value))
+                contents.append(str(self.__parse_collection_item(item_type, item_value)).replace('|', '&#124;'))
             block_lines.append("{}".format(" | ".join(contents)))
 
         return "\n".join(block_lines)

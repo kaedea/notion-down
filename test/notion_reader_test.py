@@ -2,7 +2,7 @@ import os
 import unittest
 
 from config import Config
-from notion_page import PageTextBlock, NotionPage
+from notion_page import PageTextBlock, NotionPage, PageTocBlock
 from notion_reader import NotionReader
 from utils.utils import Utils
 
@@ -81,4 +81,16 @@ class NotionHandlerTest(unittest.TestCase):
         notion_page = NotionPage()
         notion_page.parse(test_page)
         self.assertIsNotNone(notion_page)
+
+    def test_parse_notion_page_with_toc(self):
+        test_page = NotionReader.read_page_with_title("MarkDown Test Page")
+        self.assertIsNotNone(test_page)
+
+        notion_page = NotionPage()
+        notion_page.parse(test_page)
+        page_toc_block: PageTocBlock = Utils.find_one(notion_page.blocks, lambda it: type(it) == PageTocBlock)
+
+        self.assertIsNotNone(page_toc_block)
+        text = page_toc_block.write_block()
+        self.assertTrue(len(text.strip()) > 0)
 

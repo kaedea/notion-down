@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [0.1.0] - 2021-05-30
+Update NotionDown args config.
+
+### Changed
+- Config optimized. 
+
+
 ## [Unreleased] - 2021-05-27
 Update Notion page parsing.
 

@@ -35,7 +35,9 @@ def start():
 
 
 if __name__ == '__main__':
-    ArgsParser.parse()
+    Config.parse_configs()
+    Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
+
     print("")
     print("Run with configs:")
     print("config = {}".format(Config.to_string()))

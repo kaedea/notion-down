@@ -768,7 +768,7 @@ class NotionPage:
         page_block = PageTocBlock()
         page_block.id = block.id
         page_block.type = block.type
-        page_block.page_blocks = self.blocks
+        page_block.page_blocks = page_blocks
         page_blocks.append(page_block)
 
     # noinspection PyUnusedLocal

@@ -1,12 +1,11 @@
 import json
 import typing
 
-import pangu
 from notion.utils import slugify
 
 from config import Config
 from notion_page import NotionPage, PageBaseBlock, PageImageBlock, PageBlockJoiner
-from utils.utils import FileUtils
+from utils.utils import FileUtils, Utils
 
 
 class NotionOutput:
@@ -61,6 +60,8 @@ class NotionWriter:
             return NotionPageWriter()
         if str(channel).lower() == "github":
             return GitHubWriter()
+        if str(channel).lower() == "spellinspect":
+            return SpellInspectWriter()
         raise Exception("Unsupported channel: {}".format(channel))
 
     @staticmethod
@@ -198,7 +199,11 @@ class NotionPageWriter:
 
         # Curr block
         block_text = block.write_block()
-        text = pangu.spacing_text(block_text)
+        if Utils.check_module_installed("notion"):
+            import pangu
+            text = pangu.spacing_text(block_text)
+        else:
+            text = block_text
         page_lines.append(text)
 
         # Check suffix-separator

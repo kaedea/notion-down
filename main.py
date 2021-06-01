@@ -4,8 +4,8 @@ from notion_writer import NotionWriter
 
 
 def start():
-    print('\nHello, NotionDown!\n')
-
+    print("Run with configs:")
+    print("config = {}".format(Config.to_string()))
     NotionWriter.clean_output()
     notion_pages = NotionReader.handle_post()
     for notion_page in notion_pages:
@@ -16,12 +16,14 @@ def start():
 # python main.py \
 #     --blog_url 'https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34' \
 #     --token_v2 <token_v2>
+# or
+# python main.py \
+#     --config_file '.config_file.json'
+#
 if __name__ == '__main__':
     Config.parse_configs()
     Config.check_required_args()
+    Config.check_required_modules()
 
-    print("")
-    print("Run with configs:")
-    print("config = {}".format(Config.to_string()))
-
+    print('\nHello, NotionDown!\n')
     start()

@@ -4,7 +4,6 @@ import subprocess
 
 from utils.utils import Utils
 
-
 DEFAULT_ARGS = {
     'config_file': None,
     'debuggable': True,
@@ -22,6 +21,9 @@ SYS_ENV_MAP = {
 REQUIRED_ARGS = [
     'token_v2',
     'blog_url',
+]
+REQUIRED_MODULES = [
+    'notion',
 ]
 PROPERTIES = {}
 
@@ -47,10 +49,11 @@ class Config:
     @staticmethod
     def load_config_file(file_path):
         if os.path.exists(file_path):
-            json_obj = json.load(file_path)
+            json_obj = Utils.parse_json(file_path)
             if type(json_obj) is not dict:
                 raise Exception("config file should be dict:\n{}".format(json_obj))
-            for k, v in json_obj:
+            for k in json_obj:
+                v = json_obj[k]
                 PROPERTIES[k] = v
         else:
             raise Exception("config file not found: {}".format(file_path))
@@ -134,6 +137,12 @@ class Config:
         for item in REQUIRED_ARGS:
             if item not in PROPERTIES or PROPERTIES[item] is None:
                 raise Exception('\'{}\' is null or not presented, configure it in sys_env | config_file | cli_args !'.format(item))
+
+    @staticmethod
+    def check_required_modules():
+        for module in REQUIRED_MODULES:
+            if not Utils.check_module_installed(module):
+                raise Exception("{} not installed, pls exec 'pip install {}' first!".format(module, module))
 
     @staticmethod
     def to_string():

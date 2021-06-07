@@ -62,6 +62,8 @@ class NotionWriter:
             return GitHubWriter()
         if str(channel).lower() == "spellinspect":
             return SpellInspectWriter()
+        if str(channel).lower() == "hexo":
+            return HexoWriter()
         raise Exception("Unsupported channel: {}".format(channel))
 
     @staticmethod
@@ -343,3 +345,12 @@ class SpellInspectWriter(NotionPageWriter):
                 return "".join(phases)
             pass
         return text
+
+
+class HexoWriter(NotionPageWriter):
+
+    def __init__(self):
+        super().__init__()
+        self.root_dir = "Hexo"
+        self.post_dir = "_posts"
+        self.draft_dir = "_drafts"

@@ -663,6 +663,10 @@ class NotionPage:
                     idx = line.find('=')
                     key = line[:idx].strip()
                     value = line[idx + len('='):].strip()
+                    if ',' in value:
+                        # list
+                        self.properties[key] = [it.strip() for it in value.split(',')]
+                        continue
                     self.properties[key] = value
 
     def _parse_code(self, page_blocks: typing.List[PageBaseBlock], block):

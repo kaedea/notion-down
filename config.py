@@ -154,7 +154,10 @@ class Config:
 
     @staticmethod
     def notion_down_revision():
-        return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()
+        if Utils.is_git_directory():
+            return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()
+        else:
+            return Config.notion_down_version()
 
 
 class ArgsParser:

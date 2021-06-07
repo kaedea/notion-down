@@ -3,6 +3,7 @@
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -26,6 +27,14 @@ class Utils:
     @staticmethod
     def get_temp_dir():
         return tempfile.gettempdir()
+
+    @staticmethod
+    def is_git_directory(path='.'):
+        return subprocess.call(
+            ['git', '-C', path, 'status'],
+            stderr=subprocess.STDOUT,
+            stdout=open(os.devnull, 'w')
+        ) == 0
 
     @staticmethod
     def find(array, predicate):

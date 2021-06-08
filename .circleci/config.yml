@@ -30,10 +30,10 @@ workflows:
   test-build-hexo:
     jobs:
       - build-hexo:
-          branch_build: ci/build-readme
+          branch_build: ci/build-hexo
           filters:
             branches:
-              only: ci/build-readme
+              only: ci/build-hexo
 
 
 jobs:

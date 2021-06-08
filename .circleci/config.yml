@@ -34,6 +34,12 @@ workflows:
           filters:
             branches:
               only: ci/build-hexo
+      - build-hexo-generate:
+            requires:
+              - test-build-hexo
+            filters:
+              branches:
+                only: ci/build-hexo
 
 
 jobs:
@@ -186,3 +192,17 @@ jobs:
           root: ~/project-hexo
           paths:
             - ./build
+
+  build-hexo-generate:
+    docker:
+      - image: node:13
+    working_directory: ~/project-hexo-source
+    steps:
+      - attach_workspace:
+          at: ~/project-hexo
+      - run:
+          name: Checkout hexo source repo
+          command: |
+            git clone https://github.com/kaedea/notion-down-hexo-showcase.git notion-down-hexo-showcase
+            pwd && ls -l
+

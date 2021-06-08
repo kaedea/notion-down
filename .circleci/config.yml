@@ -251,7 +251,7 @@ jobs:
       - run:
           name: Collect hexo dist
           command: |
-            pwd && ls -l
+            pwd && ls -l && cd notion-down-hexo-showcase
             rm -rf docs
             mv ~/project-hexo-source/notion-down-hexo-showcase/hexo-blog/public docs
             ls -l docs

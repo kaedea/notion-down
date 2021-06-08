@@ -209,21 +209,26 @@ jobs:
           command: |
             cp -rv ~/project-hexo/build/Hexo/. notion-down-hexo-showcase/hexo-blog/source
             ls -l notion-down-hexo-showcase/hexo-blog/source
+            ls -l notion-down-hexo-showcase/hexo-blog/source/_drafts
+            ls -l notion-down-hexo-showcase/hexo-blog/source/_posts
       - run:
           name: Install Hexo CLI
           command: |
             pwd && ls -l && cd notion-down-hexo-showcase/hexo-blog
+            pwd
             npm install -g hexo-cli
       - run:
           name: Install dependencies
           command: |
             pwd && ls -l && cd notion-down-hexo-showcase/hexo-blog
+            pwd
             npm install
       - run:
           name: Generate static website
           command: |
-            pwd && ls -l && notion-down-hexo-showcase/hexo-blog
+            pwd && ls -l && cd notion-down-hexo-showcase/hexo-blog
+            pwd
+            ls -l
             hexo clean
             hexo generate
-            ls -l
             cat public/index.html

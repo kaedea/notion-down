@@ -4,9 +4,7 @@ orbs:
   python: circleci/python@1.2
 
 workflows:
-  test-build-md:  # This is the name of the workflow, feel free to change it to better match your workflow.
-    # Inside the workflow, you define the jobs you want to run. 
-    # For more details on extending your workflow, see the configuration docs: https://circleci.com/docs/2.0/configuration-reference/#workflows 
+  test-build-readme:
     jobs:
       - build-readme:
           branch_build: ci/build-readme
@@ -28,6 +26,15 @@ workflows:
           filters:
             branches:
               only: feature/spell-inspect
+
+  test-build-hexo:
+    jobs:
+      - build-hexo:
+          branch_build: ci/build-readme
+          filters:
+            branches:
+              only: ci/build-readme
+
 
 jobs:
   build-readme:
@@ -62,7 +69,6 @@ jobs:
           root: ~/project
           paths:
             - ./build
-
 
   publish-github-readme:
       parameters:
@@ -143,3 +149,40 @@ jobs:
 
       - store_artifacts:
           path: ~/spell-inspect/build/SpellInspect
+
+
+  build-hexo:
+    parameters:
+      branch_build:
+        type: string
+        default: master
+    working_directory: ~/project-hexo
+    docker:
+      - image: cimg/python:3.8
+    steps:
+      - attach_workspace:
+          at: ~/project-hexo
+      - checkout
+      - run:
+          name: pip install
+          command: |
+            pip install notion
+            pip install pangu
+      - run:
+          name: Run tests
+          command: |
+            PYTHONPATH=./ python jobs/parse_sample_posts_for_hexo/main.py \
+                --blog_url "https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34" \
+                --channels "Hexo" \
+                --page_titles_match "^(Hexo page -)"
+      - run:
+          name: Dump outputs
+          command: |
+            echo "Generated MD file:\n" |
+            cat "$(find ~/project-hexo/build -name "*.md" -type f | head -1)"
+            echo "\n---\n"
+            pwd && ls -l
+      - persist_to_workspace:
+          root: ~/project-hexo
+          paths:
+            - ./build

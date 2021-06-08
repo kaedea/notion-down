@@ -371,6 +371,23 @@ class HexoWriter(NotionPageWriter):
         self.post_dir = "_posts"
         self.draft_dir = "_drafts"
 
+    def write_page(self, notion_page: NotionPage) -> NotionFileOutput:
+        print("#write_page")
+        print("page identify = " + notion_page.get_identify())
+
+        page_lines = self._start_writing(notion_page)
+        self._on_dump_page_content(page_lines)
+
+        root_dir = self._configure_root_dir()
+        file_path = self._configure_file_path(notion_page)
+        self._prepare_file(file_path)
+        self._write_file("\n".join(page_lines), file_path)
+
+        output = NotionFileOutput()
+        output.output_dir = root_dir
+        output.markdown_path = file_path
+        return output
+
     def _write_header(self, page_lines: typing.List[typing.Text], notion_page: NotionPage):
         # Write Hexo page front-matter according to page's properties
         front_matter_lines = self._write_front_matter(notion_page)
@@ -449,4 +466,10 @@ class HexoWriter(NotionPageWriter):
 
         lines.append('---\n')
         return lines
+
+    def _get_page_tail(self, notion_page: NotionPage):
+        tail_lines = [super()._get_page_tail(notion_page)]
+        for key in notion_page.properties.keys():
+            tail_lines.append("{} = {}".format(key, notion_page.properties[key]))
+        return "\n".join(tail_lines)
 

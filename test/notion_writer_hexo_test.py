@@ -16,13 +16,24 @@ class NotionWriterHexoIntegrationTest(unittest.TestCase):
         Config.set_output(os.path.join(Utils.get_workspace(), "build"))
         Config.check_required_args()
 
-    def test_write_posts_with_hexo_channel(self):
+    def test_write_page_with_hexo_channel(self):
         Config.set_channels(['Hexo'])
         NotionWriter.clean_output()
-
         notion_page = NotionReader.handle_page_with_title("Hexo page - Japanese Test")
         self.assertIsNotNone(notion_page)
-
         NotionWriter.handle_page(notion_page)
+
+    def test_write_posts_with_hexo_channel(self):
+        Config.set_channels(['Hexo'])
+        Config.set_page_titles_match([
+            "^(Hexo page -)"
+        ])
+        NotionWriter.clean_output()
+
+        notion_pages = NotionReader.handle_post()
+        self.assertIsNotNone(notion_pages)
+
+        for notion_page in notion_pages:
+            NotionWriter.handle_page(notion_page)
 
 

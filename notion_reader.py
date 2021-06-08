@@ -77,7 +77,7 @@ class NotionReader:
         # filter by config
         titles = Config.page_titles()
         titles_match = Config.page_titles_match()
-        if titles == ['all'] and len(titles_match) == 0:
+        if titles == ['all'] and (not titles_match or len(titles_match) == 0):
             return page_blocks
 
         filter_by_titles = [it for it in page_blocks if it.title in titles]

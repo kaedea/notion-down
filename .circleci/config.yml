@@ -36,7 +36,7 @@ workflows:
               only: ci/build-hexo
       - build-hexo-generate:
             requires:
-              - test-build-hexo
+              - build-hexo
             filters:
               branches:
                 only: ci/build-hexo

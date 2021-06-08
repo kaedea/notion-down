@@ -244,6 +244,7 @@ jobs:
     steps:
       - attach_workspace:
             at: ~/project-hexo-source
+      - checkout
       - run:
           name: Checkout hexo source repo
           command: |

@@ -37,9 +37,9 @@ workflows:
       - build-hexo-generate:
             requires:
               - build-hexo
-            filters:
-              branches:
-                only: ci/build-hexo
+      - publish-github-hexo:
+            requires:
+              - build-hexo-generate
 
 
 jobs:
@@ -232,3 +232,27 @@ jobs:
             hexo clean
             hexo generate
             cat public/index.html
+      - persist_to_workspace:
+          root: ~/project-hexo-source
+          paths:
+            - ./notion-down-hexo-showcase/hexo-blog/public
+
+  publish-github-hexo:
+    working_directory: ~/dist-hexo
+    docker:
+      - image: cibuilds/github:0.10
+    steps:
+      - attach_workspace:
+            at: ~/project-hexo-source
+      - run:
+          name: Checkout hexo source repo
+          command: |
+            git clone https://github.com/kaedea/notion-down-hexo-showcase.git notion-down-hexo-showcase
+      - run:
+          name: Publish hexo dist
+          command: |
+            pwd && ls -l
+            rm -rf docs
+            mv ~/project-hexo-source/notion-down-hexo-showcase/hexo-blog/public docs
+            ls -l docs
+      

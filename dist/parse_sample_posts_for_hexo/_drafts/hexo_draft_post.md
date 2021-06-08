@@ -1,12 +1,10 @@
 ---
 title: Hexo website
-date: 2012-01-02 23:30:04
+date: 2016-01-02 23:30:04
 categories:
  - tranquilpeak
  - features
 link: http://www.hexo.io/
-thumbnailImagePosition: left
-thumbnailImage: http://d1u9biwaxjngwg.cloudfront.net/hexo-website/peak-140.jpg
 ---
 
 

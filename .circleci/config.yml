@@ -249,10 +249,20 @@ jobs:
           command: |
             git clone https://github.com/kaedea/notion-down-hexo-showcase.git notion-down-hexo-showcase
       - run:
-          name: Publish hexo dist
+          name: Collect hexo dist
           command: |
             pwd && ls -l
             rm -rf docs
             mv ~/project-hexo-source/notion-down-hexo-showcase/hexo-blog/public docs
             ls -l docs
+      - run:
+          name: Git push
+          command: |
+            pwd && ls -l && cd notion-down-hexo-showcase
+            pwd
+            git add *
+            git status
+            git commit -a -m "Circleci-bot deploy - ${CIRCLE_BUILD_NUM}"
+            git push --force --quiet "https://${GH_TOKEN}@github.com/kaedea/notion-down-hexo-showcase.git" master:master
+         
       

@@ -8,15 +8,15 @@ workflows:
     # Inside the workflow, you define the jobs you want to run. 
     # For more details on extending your workflow, see the configuration docs: https://circleci.com/docs/2.0/configuration-reference/#workflows 
     jobs:
-      - build-and-test:
+      - build-readme:
           branch_build: ci/build-readme
           filters:
             branches:
               only: ci/build-readme
-      - publish-github-push:
+      - publish-github-readme:
           branch_deploy: deploy/readme
           requires:
-            - build-and-test
+            - build-readme
           filters:
             branches:
               only: ci/build-readme
@@ -30,7 +30,7 @@ workflows:
               only: feature/spell-inspect
 
 jobs:
-  build-and-test: 
+  build-readme:
     parameters:
       branch_build:
         type: string
@@ -64,7 +64,7 @@ jobs:
             - ./build
 
 
-  publish-github-push:
+  publish-github-readme:
       parameters:
         branch_deploy:
           type: string

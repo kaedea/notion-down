@@ -94,3 +94,10 @@ class NotionHandlerTest(unittest.TestCase):
         text = page_toc_block.write_block()
         self.assertTrue(len(text.strip()) > 0)
 
+    def test_read_notion_page_with_hexo(self):
+        Config.set_page_titles_match([
+            "^(Hexo page -)"
+        ])
+        test_pages = NotionReader.read_all_pages()
+        self.assertTrue(len(test_pages) > 0)
+

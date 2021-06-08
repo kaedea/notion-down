@@ -1,3 +1,4 @@
+import re
 import typing
 
 from utils.utils import Utils
@@ -75,9 +76,17 @@ class NotionReader:
 
         # filter by config
         titles = Config.page_titles()
-        if len(titles) < 1 or titles == ['all']:
+        titles_match = Config.page_titles_match()
+        if titles == ['all'] and len(titles_match) == 0:
             return page_blocks
-        return [it for it in page_blocks if it.title in titles]
+
+        filter_by_titles = [it for it in page_blocks if it.title in titles]
+        filter_by_titles_match = [it for it in page_blocks if Utils.find_one(
+            titles_match,
+            lambda match: re.compile(match).match(it.title)
+        )]
+        filter_by_titles.extend([it for it in filter_by_titles_match if it not in filter_by_titles])
+        return filter_by_titles
 
     @staticmethod
     def _recurse_read_page(page_blocks: typing.List[PageBlock], page: PageBlock):

@@ -12,6 +12,12 @@ class PyUtils(unittest.TestCase):
     Tuning: https://pythex.org/
     '''
 
+    def test_regex_matching(self):
+        self.assertIsNotNone(re.compile("^Hello").match('Hello, NotionDown!'))
+        self.assertIsNone(re.compile("^NotionDown").match('Hello, NotionDown!'))
+        self.assertIsNone(re.compile("\(Hello\)").match('Hello, NotionDown!'))
+        self.assertIsNone(re.compile("\(NotionDown\)").match('Hello, NotionDown!'))
+
     def test_regex_get_letter_idx(self):
         p = re.compile("[a-z]")
         for m in p.finditer('a1b2c3d4'):

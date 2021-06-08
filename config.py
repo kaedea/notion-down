@@ -13,6 +13,7 @@ DEFAULT_ARGS = {
     'channels': ['default'],
     'blog_url': None,
     'page_titles': ['all'],
+    'page_titles_match': [],
 }
 SYS_ENV_MAP = {
     'token_v2': "NOTION_TOKEN_V2",

@@ -244,7 +244,6 @@ jobs:
     steps:
       - attach_workspace:
             at: ~/project-hexo-source
-      - checkout
       - run:
           name: Checkout hexo source repo
           command: |
@@ -261,6 +260,8 @@ jobs:
           command: |
             pwd && ls -l && cd notion-down-hexo-showcase
             pwd
+            git config --global user.email "kidhaibara@gmail.com"
+            git config --global user.name "Kaede Akatsuki"
             git add *
             git status
             git commit -a -m "Circleci-bot deploy - ${CIRCLE_BUILD_NUM}"

@@ -207,7 +207,7 @@ jobs:
       - run:
           name: Copy notion pages MD files to Hexo source dir
           command: |
-            cp -rv ~/project-hexo/build/Hexo/ notion-down-hexo-showcase/hexo-blog/source/
+            cp -rv ~/project-hexo/build/Hexo/. notion-down-hexo-showcase/hexo-blog/source/
       - run:
           name: Install Hexo CLI
           command: |

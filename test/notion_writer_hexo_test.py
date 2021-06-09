@@ -23,6 +23,13 @@ class NotionWriterHexoIntegrationTest(unittest.TestCase):
         self.assertIsNotNone(notion_page)
         NotionWriter.handle_page(notion_page)
 
+    def test_write_page_with_hexo_channel_2(self):
+        Config.set_channels(['Hexo'])
+        NotionWriter.clean_output()
+        notion_page = NotionReader.handle_page_with_title("Hexo page - elements showcase")
+        self.assertIsNotNone(notion_page)
+        NotionWriter.handle_page(notion_page)
+
     def test_write_posts_with_hexo_channel(self):
         Config.set_channels(['Hexo'])
         Config.set_page_titles_match([

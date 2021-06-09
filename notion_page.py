@@ -623,7 +623,7 @@ class NotionPage:
 
     def _parse_text(self, page_blocks: typing.List[PageBaseBlock], block):
         if len(str(block.title).strip()) == 0:
-            self.blocks.append(PageEnterBlock())
+            page_blocks.append(PageEnterBlock())
             return
         page_block = PageTextBlock()
         page_block.id = block.id
@@ -859,6 +859,8 @@ class PageBlockJoiner:
                             pass
                         else:
                             result = True
+                    elif block_pre.type in ['text'] and block.type in ['text']:
+                        pass
                     else:
                         result = True
 

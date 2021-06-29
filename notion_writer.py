@@ -139,6 +139,14 @@ class NotionWriter:
         }
 
 
+class ImageDownloader:
+    def download_image(self, image_url, image_file):
+        pass
+
+    def get_image_path(self, image_url, image_caption) -> str:
+        pass
+
+
 # noinspection PyMethodMayBeStatic
 class NotionPageWriter:
     def __init__(self):
@@ -147,6 +155,7 @@ class NotionPageWriter:
         self.post_dir = "post"
         self.draft_dir = "draft"
         self.block_joiner: PageBlockJoiner = PageBlockJoiner()
+        self.image_downloader: ImageDownloader = ImageDownloader()
 
     def is_markdown_able(self, notion_page: NotionPage):
         return notion_page.get_title() is not None  # and notion_page.get_date() is not None
@@ -161,7 +170,6 @@ class NotionPageWriter:
         page_lines = self._start_writing(notion_page)
         self._on_dump_page_content(page_lines)
 
-        root_dir = self._configure_root_dir()
         file_path = self._configure_file_path(notion_page)
         self._prepare_file(file_path)
         self._write_file("\n".join(page_lines), file_path)
@@ -174,7 +182,7 @@ class NotionPageWriter:
         )
 
         output = NotionFileOutput()
-        output.output_dir = root_dir
+        output.output_dir = self._configure_root_dir()
         output.markdown_path = file_path
         output.properties_path = properties_file_path
 
@@ -215,17 +223,31 @@ class NotionPageWriter:
             page_lines.append("")
 
         # Curr block
-        block_text = block.write_block()
-        if Utils.check_module_installed("notion"):
-            import pangu
-            text = pangu.spacing_text(block_text)
-        else:
-            text = block_text
-        page_lines.append(text)
+        page_lines.append(self._write_curr_block(block))
 
         # Check suffix-separator
         if self.block_joiner.should_add_separator_after(blocks, curr_idx):
             page_lines.append("")
+
+    def _write_curr_block(self, block: PageBaseBlock):
+        if Config.download_image():
+            # Download image to assets dir
+            if block.type == "image":
+                image_path = self.image_downloader.get_image_path(block.image_url, block.image_caption)
+                image_source = self.assets_dir + "/" + image_path
+                block.image_file = FileUtils.new_file(
+                    self._configure_root_dir(),
+                    image_source
+                )
+                self.image_downloader.download_image(block.image_url, block.image_file)
+                return block.write_image_block(image_source)
+
+        block_text = block.write_block()
+        if Utils.check_module_installed("notion"):
+            import pangu
+            return pangu.spacing_text(block_text)
+        else:
+            return block_text
 
     def _write_tail(self, page_lines: typing.List[typing.Text], notion_page: NotionPage):
         page_lines.append("\n")

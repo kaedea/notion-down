@@ -345,7 +345,10 @@ class PageImageBlock(PageBaseBlock):
         self.image_file = ''
 
     def write_block(self):
-        return "![{}]({})".format(self.image_caption, self.image_url)
+        return self.write_image_block(self.image_url)
+
+    def write_image_block(self, image_source):
+        return "![{}]({})".format(self.image_caption, image_source)
 
 
 class PageToggleBlock(PageTextBlock):

@@ -14,6 +14,7 @@ DEFAULT_ARGS = {
     'blog_url': None,
     'page_titles': ['all'],
     'page_titles_match': [],
+    'download_image': False,
 }
 SYS_ENV_MAP = {
     'token_v2': "NOTION_TOKEN_V2",

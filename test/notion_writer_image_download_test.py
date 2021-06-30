@@ -80,3 +80,13 @@ class NotionWriterImageDownloadTest(unittest.TestCase):
         NotionWriter.handle_page(md_page)
         pass
 
+    def test_handle_write_markdown_readme_page(self):
+        Config.set_download_image(True)
+        NotionWriter.clean_output()
+
+        md_page = NotionReader.handle_page_with_title("NotionDown README")
+        self.assertIsNotNone(md_page)
+
+        NotionWriter.handle_page(md_page)
+        pass
+

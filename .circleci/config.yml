@@ -97,6 +97,12 @@ jobs:
               pwd && ls -l ~/project
               echo "n--n"
 
+              # assets files
+              if [ -d '~/project/build/NotionDown/assets' ]; then
+                  cp -TRv ~/project/build/NotionDown/assets/ ~/dist/assets/
+              fi
+
+              # md file
               # find ~/project/build -name "*.md" -type f | head -1 | xargs -n1 sh -c "echo mv $0 $1 ~/dist/README.md"
               echo "mv $(find ~/project/build -name "*.md" -type f | head -1) ~/dist/README.md"
               mv $(find ~/project/build -name "*.md" -type f | head -1) ~/dist/README.md

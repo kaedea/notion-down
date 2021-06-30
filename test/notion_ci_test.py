@@ -26,6 +26,7 @@ class NotionCiTest(unittest.TestCase):
         pass
 
     def test_generate_read_me(self):
+        Config.set_download_image(True)
         NotionWriter.clean_output()
 
         md_page = NotionReader.handle_page_with_title("NotionDown README")

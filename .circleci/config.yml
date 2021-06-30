@@ -101,7 +101,10 @@ jobs:
 
               # assets files
               if [ -d '~/project/build/NotionDown/assets' ]; then
-                  cp -TRv ~/project/build/NotionDown/assets/ ~/dist/assets/
+                  echo "copy assets files"
+                  cp -rv ~/project/build/NotionDown/assets/. ~/dist/assets
+              else
+                  echo "No assets files"
               fi
 
               # md file

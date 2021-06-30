@@ -100,7 +100,7 @@ jobs:
               ls -l ~/project/build/NotionDown
 
               # assets files
-              if [ -d '~/project/build/NotionDown/assets' ]; then
+              if [ -d ~/project/build/NotionDown/assets/ ]; then
                   echo "copy assets files"
                   cp -rv ~/project/build/NotionDown/assets/. ~/dist/assets
               else

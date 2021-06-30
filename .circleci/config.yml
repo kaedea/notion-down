@@ -97,6 +97,8 @@ jobs:
               pwd && ls -l ~/project
               echo "n--n"
 
+              ls -l ~/project/build
+
               # assets files
               if [ -d '~/project/build/NotionDown/assets' ]; then
                   cp -TRv ~/project/build/NotionDown/assets/ ~/dist/assets/

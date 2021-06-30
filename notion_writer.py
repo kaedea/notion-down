@@ -1,4 +1,6 @@
 import json
+import os
+import requests
 import typing
 
 from notion.utils import slugify
@@ -141,10 +143,24 @@ class NotionWriter:
 
 class ImageDownloader:
     def download_image(self, image_url, image_file):
+        if FileUtils.exists(image_file):
+            FileUtils.delete(image_file)
+        FileUtils.create_file(image_file)
+        r = requests.get(image_url, allow_redirects=True)
+        open(image_file, 'wb').write(r.content)
         pass
 
     def get_image_path(self, image_url, image_caption) -> str:
-        pass
+        prefix = image_url
+        if '?' in image_url:
+            prefix = image_url[:image_url.find('?')]
+        file_name = prefix
+        if '/' in prefix:
+            file_name = prefix[prefix.rfind('/') + len('/'):]
+
+        if image_caption and len(image_caption) > 0:
+            file_name = image_caption + "-" + file_name
+        return slugify(file_name)
 
 
 # noinspection PyMethodMayBeStatic
@@ -239,8 +255,10 @@ class NotionPageWriter:
                     self._configure_root_dir(),
                     image_source
                 )
-                self.image_downloader.download_image(block.image_url, block.image_file)
-                return block.write_image_block(image_source)
+                # Check if downloaded before
+                if not FileUtils.exists(block.image_file):
+                    self.image_downloader.download_image(block.image_url, block.image_file)
+                return block.write_image_block("/" + image_source)
 
         block_text = block.write_block()
         if Utils.check_module_installed("notion"):

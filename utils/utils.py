@@ -169,17 +169,26 @@ class FileUtils:
 
     @staticmethod
     def clean_dir(file_path, fore=False):
-        FileUtils.delete(file_path, fore)
+        FileUtils.delete_dir(file_path, fore)
         FileUtils.create_dir(file_path, fore)
 
     @staticmethod
-    def delete(file_path, fore=False):
+    def delete_dir(file_path, fore=False):
         path = Path(file_path)
         if path.is_file():
             if not fore:
                 raise Exception("{} is file".format(file_path))
             os.remove(path.absolute())
+            return
+        if path.exists():
+            shutil.rmtree(file_path)
 
+    @staticmethod
+    def delete(file_path):
+        path = Path(file_path)
+        if path.is_file():
+            os.remove(path.absolute())
+            return
         if path.exists():
             shutil.rmtree(file_path)
 

@@ -200,7 +200,7 @@ class ArgsParser:
                     Config.load_config_file(input_value)
                 # parse cli input args
                 if type(DEFAULT_ARGS[key]) is bool:
-                    Config.set(key, True if str(input_value).lower() == 'True' else False)
+                    Config.set(key, True if str(input_value).lower() == 'true' else False)
                 elif type(DEFAULT_ARGS[key]) is int:
                     Config.set(key, int(input_value))
                 elif type(DEFAULT_ARGS[key]) is list:

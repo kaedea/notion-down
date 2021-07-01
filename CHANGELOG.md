@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [0.2.0] - 2021-06-12
+Update NotionDown features impl.
+
+### Added
+- Add Hexo integration.
+
+
 ## [0.1.0] - 2021-05-30
 Update NotionDown args config.
 

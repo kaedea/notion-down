@@ -191,6 +191,7 @@ jobs:
             PYTHONPATH=./ python jobs/parse_sample_posts_for_hexo/main.py \
                 --blog_url "https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34" \
                 --channels "Hexo" \
+                --download_image true \
                 --page_titles_match "^(Hexo page -)"
       - run:
           name: Dump outputs

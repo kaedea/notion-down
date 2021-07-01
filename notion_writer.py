@@ -144,10 +144,12 @@ class NotionWriter:
 
 
 class ImageDownloader:
-    def download_image(self, image_url, image_file):
+    def download_image(self, image_url: str, image_file):
         if FileUtils.exists(image_file):
             FileUtils.delete(image_file)
         FileUtils.create_file(image_file)
+        if image_url.startswith("https://"):
+            image_url = image_url.replace("https://", "http://")
         r = requests.get(image_url, allow_redirects=True)
         open(image_file, 'wb').write(r.content)
         pass
@@ -251,7 +253,7 @@ class NotionPageWriter:
     def _write_curr_block(self, block: PageBaseBlock):
         if Config.download_image():
             # Download image to assets dir
-            if block.type == "image":
+            if block.type == "image" and str(block.image_url).startswith("http"):
                 image_path = self.image_downloader.get_image_path(block.image_url, block.image_caption)
                 image_source = self.assets_dir + "/" + image_path
                 block.image_file = FileUtils.new_file(

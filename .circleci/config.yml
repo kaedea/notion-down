@@ -219,9 +219,23 @@ jobs:
           name: Copy notion pages MD files to Hexo source dir
           command: |
             cp -rv ~/project-hexo/build/Hexo/. notion-down-hexo-showcase/hexo-blog/source
+            set +e
             ls -l notion-down-hexo-showcase/hexo-blog/source
+            ls -l notion-down-hexo-showcase/hexo-blog/source/assets
             ls -l notion-down-hexo-showcase/hexo-blog/source/_drafts
             ls -l notion-down-hexo-showcase/hexo-blog/source/_posts
+            set -e
+      - run:
+          name: Git push posts
+          command: |
+            pwd && ls -l && cd notion-down-hexo-showcase
+            pwd
+            git config --global user.email "kidhaibara@gmail.com"
+            git config --global user.name "Kaede Akatsuki"
+            git add *
+            git status
+            git commit -a -m "Circleci-bot update posts - ${CIRCLE_BUILD_NUM}"
+            git push --force --quiet "https://${GH_TOKEN}@github.com/kaedea/notion-down-hexo-showcase.git" master:master
       - run:
           name: Install Hexo CLI
           command: |
@@ -267,7 +281,7 @@ jobs:
             mv ~/project-hexo-source/notion-down-hexo-showcase/hexo-blog/public docs
             ls -l docs
       - run:
-          name: Git push
+          name: Git push hexo dist
           command: |
             pwd && ls -l && cd notion-down-hexo-showcase
             pwd

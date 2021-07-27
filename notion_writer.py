@@ -239,6 +239,12 @@ class NotionPageWriter:
 
         block = blocks[curr_idx]
 
+        # Skip not configured channels' blocks
+        if block.type == 'channel_block':
+            if str(block.channel).lower() not in [str(it).lower() for it in Config.channels()]:
+                print("Skip channel block: {}".format(block.channel))
+                return
+
         # Check prefix-separator
         if self.block_joiner.should_add_separator_before(blocks, curr_idx):
             page_lines.append("")

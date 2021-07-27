@@ -55,4 +55,24 @@ class NotionWriterCustomConfigTest(unittest.TestCase):
         NotionWriter.handle_page(md_page)
         pass
 
+    def test_write_markdown_test_page_with_channel_1(self):
+        Config.set_channels(['Notion'])
+        NotionWriter.clean_output()
+
+        md_page = NotionReader.handle_page_with_title("NotionDown ShortCode")
+        self.assertIsNotNone(md_page)
+
+        NotionWriter.handle_page(md_page)
+        pass
+
+    def test_write_markdown_test_page_with_channel_2(self):
+        Config.set_channels(['Blog'])
+        NotionWriter.clean_output()
+
+        md_page = NotionReader.handle_page_with_title("NotionDown ShortCode")
+        self.assertIsNotNone(md_page)
+
+        NotionWriter.handle_page(md_page)
+        pass
+
 

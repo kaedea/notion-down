@@ -62,13 +62,12 @@ class NotionWriter:
     def get_page_writer(channel=None):
         if not channel or str(channel).lower() == "default":
             return NotionPageWriter()
-        if str(channel).lower() == "github":
-            return GitHubWriter()
         if str(channel).lower() == "spellinspect":
             return SpellInspectWriter()
         if str(channel).lower() == "hexo":
             return HexoWriter()
-        raise Exception("Unsupported channel: {}".format(channel))
+
+        return ChannelWriter(channel)
 
     @staticmethod
     def clean_output():
@@ -331,11 +330,19 @@ class NotionPageWriter:
         FileUtils.write_text(content, file_path)
 
 
-class GitHubWriter(NotionPageWriter):
+# class GitHubWriter(NotionPageWriter):
+#
+#     def __init__(self):
+#         super().__init__()
+#         self.root_dir = "GitHub"
 
-    def __init__(self):
+
+class ChannelWriter(NotionPageWriter):
+
+    def __init__(self, channel):
         super().__init__()
-        self.root_dir = "GitHub"
+        self.root_dir = channel
+        self.channel = channel
 
 
 class SpellInspectWriter(NotionPageWriter):

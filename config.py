@@ -10,6 +10,7 @@ DEFAULT_ARGS = {
     'workspace': Utils.get_workspace(),
     'output': os.path.join(Utils.get_workspace(), "build"),
     'token_v2': None,
+    'writer': 'notion',
     'channels': ['default'],
     'blog_url': None,
     'page_titles': ['all'],

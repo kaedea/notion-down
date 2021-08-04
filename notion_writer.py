@@ -59,15 +59,15 @@ class NotionFileOutput(NotionDirOutput):
 class NotionWriter:
 
     @staticmethod
-    def get_page_writer(channel=None):
-        if not channel or str(channel).lower() == "default":
+    def get_page_writer(writer=None):
+        if not writer or str(writer).lower() == "notion":
             return NotionPageWriter()
-        if str(channel).lower() == "spellinspect":
-            return SpellInspectWriter()
-        if str(channel).lower() == "hexo":
-            return HexoWriter()
 
-        return ChannelWriter(channel)
+        if str(writer).lower() == "spellinspect":
+            return SpellInspectWriter()
+        if str(writer).lower() == "hexo":
+            return HexoWriter()
+        return ChannelWriter(writer)
 
     @staticmethod
     def clean_output():
@@ -77,7 +77,7 @@ class NotionWriter:
     @staticmethod
     def handle_page(notion_page: NotionPage) -> typing.Dict[str, NotionFileOutput]:
         print("Write page: " + notion_page.get_identify())
-        if not Config.channels():
+        if not Config.writer():
             page_writer = NotionWriter.get_page_writer()
             if not page_writer.is_markdown_able(notion_page):
                 print("Skip non-markdownable page: " + notion_page.get_identify())
@@ -94,19 +94,20 @@ class NotionWriter:
 
         else:
             outputs = {}
-            for channel in Config.channels():
-                page_writer = NotionWriter.get_page_writer(channel)
+            # FIXME: fix return structure
+            for writer in [Config.writer()]:
+                page_writer = NotionWriter.get_page_writer(writer)
                 if not page_writer.is_markdown_able(notion_page):
                     print("Skip non-markdownable page: " + notion_page.get_identify())
-                    outputs[channel] = {}
+                    outputs[writer] = {}
                     continue
                 if not page_writer.is_output_able(notion_page):
                     print("Skip non-outputable page: " + notion_page.get_identify())
-                    outputs[channel] = {}
+                    outputs[writer] = {}
                     continue
 
                 output = page_writer.write_page(notion_page)
-                outputs[channel] = output
+                outputs[writer] = output
             print("\n----------\n")
             return outputs
 

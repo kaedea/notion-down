@@ -160,6 +160,11 @@ class ImageDownloader:
         file_name = prefix
         if '/' in prefix:
             file_name = prefix[prefix.rfind('/') + len('/'):]
+            if len(file_name) <= 0 or str(file_name).lower().startswith('untitled.'):
+                prefix = image_url[:image_url.rfind('/')]
+                if '/' in prefix:
+                    file_name = "{}-{}".format(prefix[prefix.rfind('/') + len('/'):], file_name)
+                    pass
 
         if image_caption and len(image_caption) > 0:
             file_name = image_caption + "-" + file_name

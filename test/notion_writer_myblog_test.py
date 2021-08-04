@@ -17,10 +17,21 @@ class NotionBlogParseTest(unittest.TestCase):
         Config.check_required_args()
 
     def test_parse_blog_page(self):
-        # Config.set_download_image(True)
+        Config.set_download_image(True)
         Config.set_channels(['default'])
         NotionWriter.clean_output()
         md_page = NotionReader.handle_page_with_title("Android App 电量统计原理与优化")
+        self.assertIsNotNone(md_page)
+
+        NotionWriter.handle_page(md_page)
+        pass
+
+    def test_parse_blog_page_2(self):
+        Config.set_download_image(True)
+        Config.set_writer('Hexo')
+        Config.set_channels(['default'])
+        NotionWriter.clean_output()
+        md_page = NotionReader.handle_page_with_title("增量静态检查（SPA）在代码合入检查里的应用")
         self.assertIsNotNone(md_page)
 
         NotionWriter.handle_page(md_page)

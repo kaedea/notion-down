@@ -16,18 +16,22 @@ class NotionBlogParseTest(unittest.TestCase):
         Config.set_blog_url('https://www.notion.so/Android-0fa32fcec416498da779f91166f0a0f5')
         Config.check_required_args()
 
-    def test_parse_blog_page(self):
-        Config.set_download_image(True)
+
+    def test_parse_blog_pages(self):
+        # Config.set_download_image(True)
+        Config.set_writer('Hexo')
         Config.set_channels(['default'])
         NotionWriter.clean_output()
-        md_page = NotionReader.handle_page_with_title("Android App 电量统计原理与优化")
-        self.assertIsNotNone(md_page)
+        md_pages = NotionReader.handle_post()
+        self.assertIsNotNone(md_pages)
 
-        NotionWriter.handle_page(md_page)
-        pass
+        for md_page in md_pages:
+            self.assertIsNotNone(md_page)
+            NotionWriter.handle_page(md_page)
+            pass
 
-    def test_parse_blog_page_2(self):
-        Config.set_download_image(True)
+    def test_parse_blog_page_1(self):
+        # Config.set_download_image(True)
         Config.set_writer('Hexo')
         Config.set_channels(['default'])
         NotionWriter.clean_output()
@@ -36,4 +40,16 @@ class NotionBlogParseTest(unittest.TestCase):
 
         NotionWriter.handle_page(md_page)
         pass
+
+    def test_parse_blog_page_2(self):
+        # Config.set_download_image(True)
+        Config.set_writer('Hexo')
+        Config.set_channels(['default', 'WXG'])
+        NotionWriter.clean_output()
+        md_page = NotionReader.handle_page_with_title("Android App 电量统计原理与优化")
+        self.assertIsNotNone(md_page)
+
+        NotionWriter.handle_page(md_page)
+        pass
+
 

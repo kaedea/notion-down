@@ -318,7 +318,7 @@ class NotionPageWriter:
 
         page_path = FileUtils.new_file(
             notion_page.get_file_dir() if notion_page.get_file_dir() else "",
-            slugify(notion_page.get_file_name())
+            notion_page.get_file_name()
         )
 
         file_path = FileUtils.new_file(base_dir, page_path + ".md")

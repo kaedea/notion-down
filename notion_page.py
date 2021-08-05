@@ -3,6 +3,8 @@ import re
 import typing
 import urllib
 
+from notion.utils import slugify
+
 from config import Config
 from utils.utils import Utils
 
@@ -490,7 +492,7 @@ class NotionPage:
                 print(e)
 
         if len(self.get_title()) > 0:
-            return self.get_title()
+            return slugify(self.get_title())
         if len(self.id) > 0:
             return self.id
         return None

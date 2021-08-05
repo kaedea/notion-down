@@ -435,6 +435,9 @@ class HexoWriter(NotionPageWriter):
         self.post_dir = "_posts"
         self.draft_dir = "_drafts"
 
+    def is_output_able(self, notion_page: NotionPage):
+        return super().is_output_able(notion_page) and len(notion_page.properties) > 0
+
     def write_page(self, notion_page: NotionPage) -> NotionFileOutput:
         print("#write_page")
         print("page identify = " + notion_page.get_identify())

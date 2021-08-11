@@ -242,13 +242,10 @@ class NotionPageWriter:
             blocks: typing.List[PageBaseBlock],
             curr_idx):
 
-        block = blocks[curr_idx]
+        if self._on_write_block(page_lines, blocks, curr_idx):
+            return
 
-        # Skip not configured channels' blocks
-        if block.type == 'channel_block':
-            if str(block.channel).lower() not in [str(it).lower() for it in Config.channels()]:
-                print("Skip channel block: {}".format(block.channel))
-                return
+        block = blocks[curr_idx]
 
         # Check prefix-separator
         if self.block_joiner.should_add_separator_before(blocks, curr_idx):
@@ -260,6 +257,18 @@ class NotionPageWriter:
         # Check suffix-separator
         if self.block_joiner.should_add_separator_after(blocks, curr_idx):
             page_lines.append("")
+
+    def _on_write_block(
+            self,
+            page_lines: typing.List[typing.Text],
+            blocks: typing.List[PageBaseBlock],
+            curr_idx):
+        block = blocks[curr_idx]
+        if block.type == 'channel_block':
+            if str(block.channel).lower() not in [str(it).lower() for it in Config.channels()]:
+                print("Skip channel block: {}".format(block.channel))
+                return True
+        return False
 
     def _write_curr_block(self, block: PageBaseBlock):
         if Config.download_image():
@@ -437,6 +446,19 @@ class HexoWriter(NotionPageWriter):
 
     def is_output_able(self, notion_page: NotionPage):
         return super().is_output_able(notion_page) and len(notion_page.properties) > 0
+
+    def _on_write_block(
+            self,
+            page_lines: typing.List[typing.Text],
+            blocks: typing.List[PageBaseBlock],
+            curr_idx):
+        if super()._on_write_block(page_lines, blocks, curr_idx):
+            return True
+
+        block = blocks[curr_idx]
+        if block.type == 'table_of_contents':
+            return True
+        return False
 
     def write_page(self, notion_page: NotionPage) -> NotionFileOutput:
         print("#write_page")

@@ -2,7 +2,7 @@ import os
 import unittest
 from pprint import pprint
 
-from notion_client import Client
+from notion_client import Client, client
 
 from utils.utils import Utils
 
@@ -30,7 +30,21 @@ class NotionCiTest(unittest.TestCase):
         pass
 
     def test_search_page(self):
-        search_database = self.notion.search(filter={"property": "object", "value": "page"})
-        pprint(search_database)
-        self.assertIsNotNone(search_database)
+        rsp = self.notion.search(filter={"property": "object", "value": "page"})
+        pprint(rsp)
+        self.assertIsNotNone(rsp)
+        self.assertEqual('list', rsp['object'])
+        pages = rsp['results']
+        self.assertTrue(len(pages) >= 0)
+        pass
+
+    def test_list_page(self):
+        rsp = self.notion.search(filter={"property": "object", "value": "page"})
+        pprint(rsp)
+        self.assertEqual('list', rsp['object'])
+        pages = rsp['results']
+        self.assertTrue(len(pages) >= 0)
+
+        blocks = self.notion.blocks.children.list(pages[0]['id'])
+        self.assertIsNotNone(blocks)
         pass

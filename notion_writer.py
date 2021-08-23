@@ -150,8 +150,11 @@ class ImageDownloader:
         FileUtils.create_file(image_file)
         if image_url.startswith("https://"):
             image_url = image_url.replace("https://", "http://")
-        r = requests.get(image_url, allow_redirects=True)
-        open(image_file, 'wb').write(r.content)
+        try:
+            r = requests.get(image_url, allow_redirects=True, timeout=(5, 10))
+            open(image_file, 'wb').write(r.content)
+        except requests.exceptions.RequestException as e:
+            print(e)
         pass
 
     def get_image_path(self, image_url, image_caption) -> str:
@@ -271,19 +274,27 @@ class NotionPageWriter:
         return False
 
     def _write_curr_block(self, block: PageBaseBlock):
-        if Config.download_image():
+        def need_download_image(block) -> bool:
+            if not Config.download_image():
+                return False
+            if block.type != "image":
+                return False
+            if not str(block.image_url).startswith("http"):
+                return False
+            return 'keep-url-source=true' not in str(block.image_url).lower()
+
+        if need_download_image(block):
             # Download image to assets dir
-            if block.type == "image" and str(block.image_url).startswith("http"):
-                image_path = self.image_downloader.get_image_path(block.image_url, block.image_caption)
-                image_source = self.assets_dir + "/" + image_path
-                block.image_file = FileUtils.new_file(
-                    self._configure_root_dir(),
-                    image_source
-                )
-                # Check if downloaded before
-                if not FileUtils.exists(block.image_file):
-                    self.image_downloader.download_image(block.image_url, block.image_file)
-                return block.write_image_block("/" + image_source)
+            image_path = self.image_downloader.get_image_path(block.image_url, block.image_caption)
+            image_source = self.assets_dir + "/" + image_path
+            block.image_file = FileUtils.new_file(
+                self._configure_root_dir(),
+                image_source
+            )
+            # Check if downloaded before
+            if not FileUtils.exists(block.image_file):
+                self.image_downloader.download_image(block.image_url, block.image_file)
+            return block.write_image_block("/" + image_source)
 
         block_text = block.write_block()
         if Utils.check_module_installed("notion"):

@@ -297,11 +297,17 @@ class NotionPageWriter:
             return block.write_image_block("/" + image_source)
 
         block_text = block.write_block()
-        if Utils.check_module_installed("notion"):
-            import pangu
-            return pangu.spacing_text(block_text)
+        if block.type in ['text', 'header', 'sub_header', 'sub_sub_header', 'numbered_list', 'bulleted_list', 'quote', 'callout']:
+            return self._polish_text(block_text)
         else:
             return block_text
+
+    def _polish_text(self, text):
+        if Utils.check_module_installed("pangu"):
+            import pangu
+            return pangu.spacing_text(text)
+        else:
+            return text
 
     def _write_tail(self, page_lines: typing.List[typing.Text], notion_page: NotionPage):
         page_lines.append("\n")
@@ -552,6 +558,9 @@ class HexoWriter(NotionPageWriter):
             if front_matter[key]:
                 if type(front_matter[key]) is not list:
                     front_matter[key] = [front_matter[key]]
+
+        if front_matter['title']:
+            front_matter['title'] = self._polish_text(front_matter['title'])
 
         # Write front matter
         lines = ['---']

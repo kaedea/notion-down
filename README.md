@@ -22,8 +22,8 @@
 
 ## Example
 
-[kaedea.com](http://www.kaedea.com)
-[hexo.kaedea.com](http://hexo.kaedea.com)
+[kaedea.com](http://www.kaedea.com)  
+[hexo.kaedea.com](http://hexo.kaedea.com)  
 [基于 Notion 的笔记写作和博客分享自动化方案](https://www.kaedea.com/2021/05/20/devops/notion-to-markdown-file-automating-solution/)
 
 ## Features

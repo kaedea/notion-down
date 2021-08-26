@@ -464,6 +464,22 @@ class HexoWriter(NotionPageWriter):
     def is_output_able(self, notion_page: NotionPage):
         return super().is_output_able(notion_page) and len(notion_page.properties) > 0
 
+    def _configure_file_path(self, notion_page: NotionPage) -> typing.Text:
+        if 'hexo.page' in notion_page.properties \
+                and notion_page.properties['hexo.page'] == 'true' \
+                and notion_page.is_published():
+            print("#_configure_file_path for hexo page")
+            base_dir = self._configure_root_dir()
+            page_path = FileUtils.new_file(
+                notion_page.get_file_dir() if notion_page.get_file_dir() else "",
+                notion_page.get_file_name()
+            )
+            file_path = FileUtils.new_file(base_dir, page_path + ".md")
+            print("file_path = " + file_path)
+            return file_path
+
+        return super()._configure_file_path(notion_page)
+
     def _on_write_block(
             self,
             page_lines: typing.List[typing.Text],

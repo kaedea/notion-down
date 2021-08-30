@@ -5,9 +5,10 @@
 
 ![](/assets/notion_down.svg)
 
-[Notion Down](https://github.com/kaedea/notion-down), python tools that convert Notion blog pages into Markdown files, along with intergation to build static webpages such as Hexo.  It's inspiration and goal is to __avoid separation  of writting__ by keep writting drafts or posts within [notion.so](http://notion.so) and then publish them into MD webpages automatically. 
+[Notion Down](https://github.com/kaedea/notion-down), python tools that convert Notion blog pages into Markdown files, along with integration to build static webpages such as Hexo.  Its inspiration and goal is to __avoid separation  of writing__ by keep writing drafts or posts within [notion.so](http://notion.so) and then publish them into MD webpages automatically. 
 
  * [Notion Down](#notion-down)
+ * &nbsp;&nbsp;&nbsp;&nbsp;[Example](#example)
  * &nbsp;&nbsp;&nbsp;&nbsp;[Features](#features)
  * &nbsp;&nbsp;&nbsp;&nbsp;[Hot It Works](#hot-it-works)
  * &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Basic usage](#basic-usage)
@@ -19,6 +20,12 @@
  * &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Showcase Jobs](#showcase-jobs)
  * &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[UnitTest Examples](#unittest-examples)
 
+## Example
+
+[kaedea.com](http://www.kaedea.com)  
+[hexo.kaedea.com](http://hexo.kaedea.com)  
+[基于 Notion 的笔记写作和博客分享自动化方案](https://www.kaedea.com/2021/05/20/devops/notion-to-markdown-file-automating-solution/)
+
 ## Features
 
 What can NotionDown do now:
@@ -29,11 +36,11 @@ What can NotionDown do now:
      - ~~Notion nested list blocks~~
      - ~~Notion obfuscated-links parsing~~
      - ~~Notion table block (Collection)~~
-     - Notion subpage link parsing
+     - Notion subpage / alias link parsing
  - Advanced Notion PageBlocks support
      - ~~Pullquote Blocks (Notion ColumnList)~~
      - Image source replacing 
-         - Replace notion image url with image file
+         - ~~Replace notion image url with image file~~
          - Replace notion image url with other CDN urls
      - Notion page embed blocks
  - Writing optimized integration
@@ -44,6 +51,10 @@ What can NotionDown do now:
      - ~~HEXO page properties config~~
      - ~~HEXO generate~~
      - HEXO tags plugin
+ - PyPI Publish
+ - Notion APIs
+     - ~~notion-py (3rd party)~~
+     - notion-sdk (official)
 
 ## Hot It Works
 

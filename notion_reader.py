@@ -55,7 +55,13 @@ class NotionReader:
     @staticmethod
     def read_main_page() -> typing.Optional[PageBlock]:
         print("#read_main_page")
-        return NotionReader.get_client().get_block(Config.blog_url())
+        try:
+            return NotionReader.get_client().get_block(Config.blog_url())
+        except Exception as e:
+            if '401 Client Error: Unauthorized' in str(e):
+                raise Exception('Please make sure your notion_token_v2 is up-to-date!')
+            else:
+                raise e
 
     @staticmethod
     def read_all_pages() -> typing.List[PageBlock]:

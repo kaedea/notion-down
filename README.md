@@ -3,6 +3,8 @@
 
 # Notion Down
 
+[🇨🇳](https://www.kaedea.com/2021/05/01/devops/project-notion-down/) [🇯🇵](https://preview.kaedea.com/2021/05/01/devops/project-notion-down-jp/)
+
 ![](/assets/notion_down.svg)
 
 [Notion Down](https://github.com/kaedea/notion-down), python tools that convert Notion blog pages into Markdown files, along with integration to build static webpages such as Hexo.  Its inspiration and goal is to __avoid separation  of writing__ by keep writing drafts or posts within [notion.so](http://notion.so) and then publish them into MD webpages automatically. 

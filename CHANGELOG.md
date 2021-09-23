@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [0.2.0] - 2021-06-12
 Update NotionDown features impl.
+Update README.
 
 ### Added
 - Add Hexo integration.

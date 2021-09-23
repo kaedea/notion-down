@@ -144,6 +144,15 @@ class NotionWriter:
 
 
 class ImageDownloader:
+    def need_download_image(self, block) -> bool:
+        if not Config.download_image():
+            return False
+        if block.type != "image":
+            return False
+        if not str(block.image_url).startswith("http"):
+            return False
+        return 'keep-url-source=true' not in str(block.image_url).lower()
+
     def download_image(self, image_url: str, image_file):
         if FileUtils.exists(image_file):
             FileUtils.delete(image_file)
@@ -274,16 +283,7 @@ class NotionPageWriter:
         return False
 
     def _write_curr_block(self, block: PageBaseBlock):
-        def need_download_image(block) -> bool:
-            if not Config.download_image():
-                return False
-            if block.type != "image":
-                return False
-            if not str(block.image_url).startswith("http"):
-                return False
-            return 'keep-url-source=true' not in str(block.image_url).lower()
-
-        if need_download_image(block):
+        if self.image_downloader.need_download_image(block):
             # Download image to assets dir
             image_path = self.image_downloader.get_image_path(block.image_url, block.image_caption)
             image_source = self.assets_dir + "/" + image_path

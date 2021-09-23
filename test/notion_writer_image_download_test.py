@@ -1,11 +1,11 @@
 import os
-import requests
 import unittest
 
 from notion.block import ImageBlock
 from notion.client import NotionClient
 
 from config import Config
+from notion_page import PageImageBlock, PageTextBlock
 from notion_reader import NotionReader
 from notion_writer import NotionWriter, ImageDownloader
 from utils.utils import Utils, FileUtils
@@ -54,6 +54,20 @@ class NotionWriterImageDownloadTest(unittest.TestCase):
         image_caption = ""
         path = image_downloader.get_image_path(image_url, image_caption)
         self.assertEqual('19e02336_b567_42a8_8bff_b5b8a9d0f361_untitled.png', path.lower())
+        pass
+
+    def test_need_download_image(self):
+        image_downloader = ImageDownloader()
+        self.assertFalse(image_downloader.need_download_image(PageTextBlock()))
+        Config.set_download_image(False)
+        self.assertFalse(image_downloader.need_download_image(PageImageBlock()))
+        Config.set_download_image(True)
+        self.assertFalse(image_downloader.need_download_image(PageImageBlock()))
+        block = PageImageBlock()
+        block.image_url = "https://circleci.com/gh/kaedea/notion-down.svg?style=shield&circle-token=9f4dc656e94d8deccd362e52400c96e709c7e8b3"
+        self.assertTrue(image_downloader.need_download_image(block))
+        block.image_url = "https://circleci.com/gh/kaedea/notion-down.svg?style=shield&circle-token=9f4dc656e94d8deccd362e52400c96e709c7e8b3&keep-url-source=true"
+        self.assertFalse(image_downloader.need_download_image(block))
         pass
 
     def test_download_image(self):

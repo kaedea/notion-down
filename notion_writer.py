@@ -166,7 +166,7 @@ class ImageDownloader:
             print(e)
         pass
 
-    def get_image_path(self, image_url, image_caption) -> str:
+    def get_image_path(self, image_url, image_caption, def_ext='.jpg') -> str:
         prefix = image_url
         if '?' in image_url:
             prefix = image_url[:image_url.find('?')]
@@ -182,7 +182,7 @@ class ImageDownloader:
         if image_caption and len(image_caption) > 0:
             file_name = image_caption + "-" + file_name
         splitext = os.path.splitext(file_name)
-        return slugify(splitext[0]) + splitext[1]
+        return slugify(splitext[0]) + (splitext[1] if splitext[1] else def_ext)
 
 
 # noinspection PyMethodMayBeStatic

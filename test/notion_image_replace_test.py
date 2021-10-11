@@ -2,6 +2,7 @@ import os
 import unittest
 from urllib.request import quote
 
+import requests
 from notion.block import ImageBlock
 from notion.client import NotionClient
 from notion.settings import BASE_URL
@@ -11,6 +12,13 @@ from utils.utils import Utils, FileUtils
 
 
 class NotionClientMarkDownPageTest(unittest.TestCase):
+
+    def test_download_youdao_note_image(self):
+        url = "https://note.youdao.com/yws/public/resource/ad40842fd256ef2f9998badec2f7e88a/xmlnote/3EAA391F35FF4FF19B060EAD3C93D58F/11830"
+        temp_file = FileUtils.new_file(Utils.get_temp_dir(), "temp.jpg")
+        print("download file, path = {}, url = {}".format(temp_file, url))
+        self.__download_file(url, temp_file)
+        pass
 
     def test_replace_page_image_source(self):
         token = os.environ['NOTION_TOKEN_V2']
@@ -30,20 +38,21 @@ class NotionClientMarkDownPageTest(unittest.TestCase):
         self.assertIsNotNone(md_pages)
 
         for md_page in md_pages:
-            new_url = None
-
             for block in md_page.children:
                 if type(block) is ImageBlock:
                     image_caption = str(block.caption)
                     image_url = str(block.source)
+                    if "amazonaws.com" in image_url:
+                        print("skip notion image source, url = {}".format(image_url))
+                        continue
 
                     image_downloader = ImageDownloader()
                     path = image_downloader.get_image_path(image_url, image_caption)
                     temp_file = FileUtils.new_file(Utils.get_temp_dir(), path)
 
 
-                    print("Download image to : " + temp_file)
-                    self.__download_file(client, block.id, image_url, temp_file)
+                    print("download file, path = {}, url = {}".format(temp_file, image_url))
+                    self.__download_file(image_url, temp_file)
 
                     self.assertTrue(os.path.exists(temp_file))
 
@@ -63,7 +72,13 @@ class NotionClientMarkDownPageTest(unittest.TestCase):
                     continue
         pass
 
-    def __download_file(self, client, block_id, source, path):
+    def __download_file(self, source, path):
+        r = requests.get(source, allow_redirects=True)  # to get content after redirection
+        with open(path, 'wb') as f:
+            f.write(r.content)
+        pass
+
+    def __download_notion_file(self, client, block_id, source, path):
 
         # "oneliner" helper to safely unwrap lists, see: https://bit.ly/35SUfMK
         unwrap = lambda x: unwrap(next(iter(x), None)) \

@@ -2,7 +2,7 @@ import os
 import unittest
 
 from config import Config
-from notion_page import PageTextBlock, NotionPage, PageTocBlock
+from notion_page import PageTextBlock, NotionPage, PageTocBlock, PageTableBlock
 from notion_reader import NotionReader
 from utils.utils import Utils
 
@@ -92,6 +92,18 @@ class NotionHandlerTest(unittest.TestCase):
 
         self.assertIsNotNone(page_toc_block)
         text = page_toc_block.write_block()
+        self.assertTrue(len(text.strip()) > 0)
+
+    def test_parse_notion_page_with_table(self):
+        test_page = NotionReader.read_page_with_title("NotionDown Table")
+        self.assertIsNotNone(test_page)
+
+        notion_page = NotionPage()
+        notion_page.parse(test_page)
+        page_table_block: PageTableBlock = Utils.find_one(notion_page.blocks, lambda it: type(it) == PageTableBlock)
+
+        self.assertIsNotNone(page_table_block)
+        text = page_table_block.write_block()
         self.assertTrue(len(text.strip()) > 0)
 
     def test_read_notion_page_with_hexo(self):

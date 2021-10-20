@@ -46,7 +46,17 @@ class NotionBlogParseTest(unittest.TestCase):
         Config.set_writer('Hexo')
         Config.set_channels(['default', 'WXG'])
         NotionWriter.clean_output()
-        md_page = NotionReader.handle_page_with_title("Android App 电量统计原理与优化")
+        md_page = NotionReader.handle_page_with_title("一种 Android 应用内全局获取 Context 实例的装置")
+        self.assertIsNotNone(md_page)
+
+        NotionWriter.handle_page(md_page)
+        pass
+
+    def test_parse_blog_page_3(self):
+        Config.set_writer('Hexo')
+        Config.set_channels(['default', 'WXG'])
+        NotionWriter.clean_output()
+        md_page = NotionReader.handle_page_with_title("Kaede Akatsuki")
         self.assertIsNotNone(md_page)
 
         NotionWriter.handle_page(md_page)

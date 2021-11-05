@@ -76,9 +76,11 @@ class PageChannelBlock(PageGroupBlock):
         self.group = 'Channel'
         self.channel = ''
 
-    def write_block(self):
-        lines = [it.write_block() for it in self.children]
-        return "<!-- For channel only: {} -->\n{}".format(self.channel, "\n".join(lines))
+    def write_begin(self):
+        return "<!-- For {} only BGN: {} -->".format(self.group, self.channel)
+
+    def write_end(self):
+        return "<!-- For {} only END: {} -->".format(self.group, self.channel)
 
 
 class PageColumnListBlock(PageGroupBlock):

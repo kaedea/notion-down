@@ -32,7 +32,8 @@ class PageGroupBlock(PageBaseBlock):
     def __init__(self):
         super().__init__()
         self.type = 'group_block'
-        self.name = 'unknown'
+        self.group = 'Group'
+        self.name = ''
         self.children: typing.List[PageBaseBlock] = []
         self.on_write_children_handler: typing.Callable[[typing.List[PageBaseBlock]], str] = None
 
@@ -50,16 +51,17 @@ class PageGroupBlock(PageBaseBlock):
         return "{}\n{}\n{}".format(self.write_begin(), text, self.write_end())
 
     def write_begin(self):
-        return "<!-- Group BGN: {} -->".format(self.name)
+        return "<!-- {} BGN{} -->".format(self.group, '' if len(self.name) == 0 else ' ' + self.name)
 
     def write_end(self):
-        return "<!-- Group END: {} -->".format(self.name)
+        return "<!-- {} END{} -->".format(self.group, '' if len(self.name) == 0 else ' ' + self.name)
 
 
 class PageShortCodeBlock(PageGroupBlock):
     def __init__(self):
         super().__init__()
         self.type = 'short_code_block'
+        self.group = 'ShortCode'
         self.children: typing.List[PageBaseBlock] = []
 
     def write_block(self):
@@ -71,6 +73,7 @@ class PageChannelBlock(PageGroupBlock):
     def __init__(self):
         super().__init__()
         self.type = 'channel_block'
+        self.group = 'Channel'
         self.channel = ''
 
     def write_block(self):
@@ -82,6 +85,7 @@ class PageColumnListBlock(PageGroupBlock):
     def __init__(self):
         super().__init__()
         self.type = 'column_list'
+        self.group = 'ColumnList'
         self.children: typing.List[PageColumnBlock] = []
 
     def write_block(self):
@@ -100,17 +104,12 @@ class PageColumnListBlock(PageGroupBlock):
             self.on_write_children_handler = handler
         return super().write_block()
 
-    def write_begin(self):
-        return "<!-- ColumnList BGN: {} -->".format(self.name)
-
-    def write_end(self):
-        return "<!-- ColumnList END: {} -->".format(self.name)
-
 
 class PageColumnBlock(PageGroupBlock):
     def __init__(self):
         super().__init__()
         self.type = 'column'
+        self.group = 'Column'
         self.children: typing.List[PageBaseBlock] = []
         self.block_joiner: PageBlockJoiner = PageBlockJoiner()
 

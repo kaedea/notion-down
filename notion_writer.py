@@ -252,7 +252,8 @@ class NotionPageWriter:
             self,
             page_lines: typing.List[typing.Text],
             blocks: typing.List[PageBaseBlock],
-            curr_idx):
+            curr_idx,
+            depth=0):
 
         if self._on_write_block(page_lines, blocks, curr_idx):
             return
@@ -264,7 +265,7 @@ class NotionPageWriter:
             page_lines.append("")
 
         # Curr block
-        page_lines.append(self._write_curr_block(block))
+        page_lines.append(self._write_curr_block(block, depth))
 
         # Check suffix-separator
         if self.block_joiner.should_add_separator_after(blocks, curr_idx):
@@ -282,10 +283,10 @@ class NotionPageWriter:
                 return True
         return False
 
-    def _write_curr_block(self, block: PageBaseBlock):
+    def _write_curr_block(self, block: PageBaseBlock, depth):
         if block.is_group():
             def handler(blocks: typing.List[PageBaseBlock])->str:
-                lines = [self._write_curr_block(it) for it in blocks]
+                lines = [self._write_curr_block(it, depth + 1) for it in blocks]
                 return "\n".join(lines)
             block.on_write_children(handler)
             return block.write_block()

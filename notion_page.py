@@ -13,6 +13,7 @@ class PageBaseBlock:
     def __init__(self):
         self.id = 'unknown'
         self.type = 'unknown'
+        self.children: typing.List[PageBaseBlock] = None
 
     def write_block(self):
         return """<!-- unsupported page block
@@ -23,23 +24,44 @@ type: {}
     def _wip_msg(self):
         return "notion id: " + self.id
 
+    def is_group(self):
+        return self.children is not None
+
 
 class PageGroupBlock(PageBaseBlock):
     def __init__(self):
         super().__init__()
         self.type = 'group_block'
-        self.name = 'unknown'
+        self.group = 'Group'
+        self.name = ''
         self.children: typing.List[PageBaseBlock] = []
+        self.on_write_children_handler: typing.Callable[[typing.List[PageBaseBlock]], str] = None
+
+    def on_write_children(self, handler: typing.Callable[[typing.List[PageBaseBlock]], str]):
+        self.on_write_children_handler = handler
+        pass
 
     def write_block(self):
-        lines = [it.write_block() for it in self.children]
-        return "<!-- Group start: {} -->\n{}\n<!-- Group end -->".format(self.name, "\n".join(lines))
+        if not self.on_write_children_handler:
+            def handler(blocks: typing.List[PageBaseBlock])->str:
+                lines = [it.write_block() for it in blocks]
+                return "\n".join(lines)
+            self.on_write_children_handler = handler
+        text = self.on_write_children_handler(self.children)
+        return "{}\n{}\n{}".format(self.write_begin(), text, self.write_end())
+
+    def write_begin(self):
+        return "<!-- {} BGN{} -->".format(self.group, '' if len(self.name) == 0 else ' ' + self.name)
+
+    def write_end(self):
+        return "<!-- {} END{} -->".format(self.group, '' if len(self.name) == 0 else ' ' + self.name)
 
 
 class PageShortCodeBlock(PageGroupBlock):
     def __init__(self):
         super().__init__()
         self.type = 'short_code_block'
+        self.group = 'ShortCode'
         self.children: typing.List[PageBaseBlock] = []
 
     def write_block(self):
@@ -51,54 +73,62 @@ class PageChannelBlock(PageGroupBlock):
     def __init__(self):
         super().__init__()
         self.type = 'channel_block'
+        self.group = 'Channel'
         self.channel = ''
 
-    def write_block(self):
-        lines = [it.write_block() for it in self.children]
-        return "<!-- For channel only: {} -->\n{}".format(self.channel, "\n".join(lines))
+    def write_begin(self):
+        return "<!-- For {} only BGN: {} -->".format(self.group, self.channel)
+
+    def write_end(self):
+        return "<!-- For {} only END: {} -->".format(self.group, self.channel)
 
 
 class PageColumnListBlock(PageGroupBlock):
     def __init__(self):
         super().__init__()
         self.type = 'column_list'
+        self.group = 'ColumnList'
         self.children: typing.List[PageColumnBlock] = []
 
     def write_block(self):
-        column_lines = []
-        for idx, column_block in enumerate(self.children):
-            column_lines.append(
-                "{}<!-- Column {} start -->\n{}\n<!-- Column end -->" .format(
-                    "\n" if idx > 0 else "",
-                    idx,
-                    column_block.write_block()
-                )
-            )
-
-        return "<!-- ColumnList start -->\n{}\n<!-- ColumnList end -->".format("\n".join(column_lines))
+        if not self.on_write_children_handler:
+            def handler(blocks: typing.List[PageBaseBlock])->str:
+                column_lines = []
+                for idx, column_block in enumerate(blocks):
+                    column_lines.append(
+                        "{}<!-- Column {} start -->\n{}\n<!-- Column end -->".format(
+                            "\n" if idx > 0 else "",
+                            idx,
+                            column_block.write_block()
+                        )
+                    )
+                return "\n".join(column_lines)
+            self.on_write_children_handler = handler
+        return super().write_block()
 
 
 class PageColumnBlock(PageGroupBlock):
     def __init__(self):
         super().__init__()
         self.type = 'column'
+        self.group = 'Column'
         self.children: typing.List[PageBaseBlock] = []
         self.block_joiner: PageBlockJoiner = PageBlockJoiner()
 
     def write_block(self):
-        lines = []
-        for idx in range(len(self.children)):
-            block = self.children[idx]
-
-            if self.block_joiner.should_add_separator_before(self.children, idx):
-                lines.append("")
-
-            lines.append(block.write_block())
-
-            if self.block_joiner.should_add_separator_after(self.children, idx):
-                lines.append("")
-
-        return "\n".join(lines)
+        if not self.on_write_children_handler:
+            def handler(blocks: typing.List[PageBaseBlock])->str:
+                lines = []
+                for idx in range(len(blocks)):
+                    block = self.children[idx]
+                    if self.block_joiner.should_add_separator_before(self.children, idx):
+                        lines.append("")
+                    lines.append(block.write_block())
+                    if self.block_joiner.should_add_separator_after(self.children, idx):
+                        lines.append("")
+                return "\n".join(lines)
+            self.on_write_children_handler = handler
+        return super().write_block()
 
 
 class PageTocBlock(PageBaseBlock):

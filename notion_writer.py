@@ -243,7 +243,7 @@ class NotionPageWriter:
             page_lines.append("")
         pass
 
-    def _write_blocks(self, page_lines: typing.List[typing.Text], blocks: typing.List[PageBaseBlock]):
+    def _write_blocks(self, page_lines: typing.List[typing.Text], blocks: typing.List[PageBaseBlock] , depth=0):
         for idx in range(len(blocks)):
             self._write_block(page_lines, blocks, idx)
         pass
@@ -283,6 +283,13 @@ class NotionPageWriter:
         return False
 
     def _write_curr_block(self, block: PageBaseBlock):
+        if block.is_group():
+            def handler(blocks: typing.List[PageBaseBlock])->str:
+                lines = [self._write_curr_block(it) for it in blocks]
+                return "\n".join(lines)
+            block.on_write_children(handler)
+            return block.write_block()
+
         if self.image_downloader.need_download_image(block):
             # Download image to assets dir
             image_path = self.image_downloader.get_image_path(block.image_url, block.image_caption)

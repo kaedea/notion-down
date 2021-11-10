@@ -57,6 +57,26 @@ class PageGroupBlock(PageBaseBlock):
         return "<!-- {} END{} -->".format(self.group, '' if len(self.name) == 0 else ' ' + self.name)
 
 
+class PageSyncedSourceBlock(PageGroupBlock):
+    def __init__(self):
+        super().__init__()
+        self.type = 'transclusion_container'
+        self.group = 'SyncedSourceBlock'
+        self.children: typing.List[PageBaseBlock] = []
+
+
+class PageSyncedCopyBlock(PageGroupBlock):
+    def __init__(self):
+        super().__init__()
+        self.type = 'transclusion_reference'
+        self.group = 'SyncedCopyBlock'
+        self.children: typing.List[PageBaseBlock] = []
+
+    def write_block(self):
+        lines = [it.write_block() for it in self.children]
+        return "<!-- SyncedBlock: {}\nThis is a reference block. {}\n-->".format(self.name, "\n".join(lines))
+
+
 class PageShortCodeBlock(PageGroupBlock):
     def __init__(self):
         super().__init__()
@@ -434,6 +454,8 @@ class NotionPage:
             "column_list": self._parse_column_list,
             "column": self._parse_column,
             "page": self._parse_sub_page,
+            "transclusion_container": self._parse_synced_source,
+            "transclusion_reference": self._parse_synced_copy,
         }
 
     def is_markdown_able(self):
@@ -847,6 +869,34 @@ class NotionPage:
 
     def _parse_column(self, page_blocks: typing.List[PageColumnBlock], block):
         page_block = PageColumnBlock()
+        page_block.id = block.id
+        page_block.type = block.type
+
+        column_blocks: typing.List[PageBaseBlock] = []
+        page_block.children = column_blocks
+
+        if block.children:
+            for child in block.children:
+                self._parse_page_blocks_flatt(column_blocks, child)
+
+        page_blocks.append(page_block)
+
+    def _parse_synced_source(self, page_blocks: typing.List[PageColumnBlock], block):
+        page_block = PageSyncedSourceBlock()
+        page_block.id = block.id
+        page_block.type = block.type
+
+        column_blocks: typing.List[PageBaseBlock] = []
+        page_block.children = column_blocks
+
+        if block.children:
+            for child in block.children:
+                self._parse_page_blocks_flatt(column_blocks, child)
+
+        page_blocks.append(page_block)
+
+    def _parse_synced_copy(self, page_blocks: typing.List[PageColumnBlock], block):
+        page_block = PageSyncedCopyBlock()
         page_block.id = block.id
         page_block.type = block.type
 

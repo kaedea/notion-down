@@ -53,10 +53,8 @@ class NotionBlogParseTest(unittest.TestCase):
         pass
 
     def test_parse_blog_page_3(self):
-        Config.set_writer('Hexo')
-        Config.set_channels(['default', 'WXG'])
         NotionWriter.clean_output()
-        md_page = NotionReader.handle_page_with_title("Kaede Akatsuki")
+        md_page = NotionReader.handle_page_with_title("Copy of Resume")
         self.assertIsNotNone(md_page)
 
         NotionWriter.handle_page(md_page)

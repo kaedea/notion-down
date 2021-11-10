@@ -2,7 +2,8 @@ import os
 import unittest
 
 from config import Config
-from notion_page import PageTextBlock, NotionPage, PageTocBlock, PageTableBlock
+from notion_page import PageTextBlock, NotionPage, PageTocBlock, PageTableBlock, \
+    PageSyncedSourceBlock, PageSyncedCopyBlock
 from notion_reader import NotionReader
 from utils.utils import Utils
 
@@ -104,6 +105,23 @@ class NotionHandlerTest(unittest.TestCase):
 
         self.assertIsNotNone(page_table_block)
         text = page_table_block.write_block()
+        self.assertTrue(len(text.strip()) > 0)
+
+    def test_parse_notion_page_with_synced_block(self):
+        test_page = NotionReader.read_page_with_title("NotionDown Synchronic Block")
+        self.assertIsNotNone(test_page)
+
+        notion_page = NotionPage()
+        notion_page.parse(test_page)
+
+        page_block: PageSyncedSourceBlock = Utils.find_one(notion_page.blocks, lambda it: type(it) == PageSyncedSourceBlock)
+        self.assertIsNotNone(page_block)
+        text = page_block.write_block()
+        self.assertTrue(len(text.strip()) > 0)
+
+        page_block: PageSyncedCopyBlock = Utils.find_one(notion_page.blocks, lambda it: type(it) == PageSyncedCopyBlock)
+        self.assertIsNotNone(page_block)
+        text = page_block.write_block()
         self.assertTrue(len(text.strip()) > 0)
 
     def test_read_notion_page_with_hexo(self):

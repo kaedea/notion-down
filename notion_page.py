@@ -64,6 +64,15 @@ class PageSyncedSourceBlock(PageGroupBlock):
         self.group = 'SyncedSourceBlock'
         self.children: typing.List[PageBaseBlock] = []
 
+    def write_block(self):
+        if not self.on_write_children_handler:
+            def handler(blocks: typing.List[PageBaseBlock])->str:
+                lines = [it.write_block() for it in blocks]
+                return "\n".join(lines)
+            self.on_write_children_handler = handler
+        text = self.on_write_children_handler(self.children)
+        return text
+
 
 class PageSyncedCopyBlock(PageGroupBlock):
     def __init__(self):
@@ -147,8 +156,8 @@ class PageColumnBlock(PageGroupBlock):
                     if self.block_joiner.should_add_separator_after(self.children, idx):
                         lines.append("")
                 return "\n".join(lines)
-            self.on_write_children_handler = handler
-        return super().write_block()
+        text = self.on_write_children_handler(self.children)
+        return text
 
 
 class PageTocBlock(PageBaseBlock):

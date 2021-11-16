@@ -9,7 +9,7 @@
 <!-- ColumnList END -->
 
 <!-- ColumnList BGN -->
-![](/assets/notiondown.png)
+![BANNER-02](/assets/banner_02_notiondown.png)
 
 <!-- ColumnList END -->
 

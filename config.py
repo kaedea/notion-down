@@ -10,6 +10,7 @@ DEFAULT_ARGS = {
     'workspace': Utils.get_workspace(),
     'output': os.path.join(Utils.get_workspace(), "build"),
     'token_v2': None,
+    'writer': 'notion',
     'channels': ['default'],
     'blog_url': None,
     'page_titles': ['all'],
@@ -152,7 +153,7 @@ class Config:
 
     @staticmethod
     def notion_down_version():
-        return "0.1.0"
+        return "0.2.2"
 
     @staticmethod
     def notion_down_revision():
@@ -200,7 +201,7 @@ class ArgsParser:
                     Config.load_config_file(input_value)
                 # parse cli input args
                 if type(DEFAULT_ARGS[key]) is bool:
-                    Config.set(key, True if str(input_value).lower() == 'True' else False)
+                    Config.set(key, True if str(input_value).lower() == 'true' else False)
                 elif type(DEFAULT_ARGS[key]) is int:
                     Config.set(key, int(input_value))
                 elif type(DEFAULT_ARGS[key]) is list:

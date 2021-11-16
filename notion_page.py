@@ -3,6 +3,8 @@ import re
 import typing
 import urllib
 
+from notion.utils import slugify
+
 from config import Config
 from utils.utils import Utils
 
@@ -11,6 +13,7 @@ class PageBaseBlock:
     def __init__(self):
         self.id = 'unknown'
         self.type = 'unknown'
+        self.children: typing.List[PageBaseBlock] = None
 
     def write_block(self):
         return """<!-- unsupported page block
@@ -21,23 +24,73 @@ type: {}
     def _wip_msg(self):
         return "notion id: " + self.id
 
+    def is_group(self):
+        return self.children is not None
+
 
 class PageGroupBlock(PageBaseBlock):
     def __init__(self):
         super().__init__()
         self.type = 'group_block'
-        self.name = 'unknown'
+        self.group = 'Group'
+        self.name = ''
+        self.children: typing.List[PageBaseBlock] = []
+        self.on_write_children_handler: typing.Callable[[typing.List[PageBaseBlock]], str] = None
+
+    def on_write_children(self, handler: typing.Callable[[typing.List[PageBaseBlock]], str]):
+        self.on_write_children_handler = handler
+        pass
+
+    def write_block(self):
+        if not self.on_write_children_handler:
+            def handler(blocks: typing.List[PageBaseBlock])->str:
+                lines = [it.write_block() for it in blocks]
+                return "\n".join(lines)
+            self.on_write_children_handler = handler
+        text = self.on_write_children_handler(self.children)
+        return "{}\n{}\n{}".format(self.write_begin(), text, self.write_end())
+
+    def write_begin(self):
+        return "<!-- {} BGN{} -->".format(self.group, '' if len(self.name) == 0 else ' ' + self.name)
+
+    def write_end(self):
+        return "<!-- {} END{} -->".format(self.group, '' if len(self.name) == 0 else ' ' + self.name)
+
+
+class PageSyncedSourceBlock(PageGroupBlock):
+    def __init__(self):
+        super().__init__()
+        self.type = 'transclusion_container'
+        self.group = 'SyncedSourceBlock'
+        self.children: typing.List[PageBaseBlock] = []
+
+    def write_block(self):
+        if not self.on_write_children_handler:
+            def handler(blocks: typing.List[PageBaseBlock])->str:
+                lines = [it.write_block() for it in blocks]
+                return "\n".join(lines)
+            self.on_write_children_handler = handler
+        text = self.on_write_children_handler(self.children)
+        return text
+
+
+class PageSyncedCopyBlock(PageGroupBlock):
+    def __init__(self):
+        super().__init__()
+        self.type = 'transclusion_reference'
+        self.group = 'SyncedCopyBlock'
         self.children: typing.List[PageBaseBlock] = []
 
     def write_block(self):
         lines = [it.write_block() for it in self.children]
-        return "<!-- Group start: {} -->\n{}\n<!-- Group end -->".format(self.name, "\n".join(lines))
+        return "<!-- SyncedBlock: {}\nThis is a reference block. {}\n-->".format(self.name, "\n".join(lines))
 
 
 class PageShortCodeBlock(PageGroupBlock):
     def __init__(self):
         super().__init__()
         self.type = 'short_code_block'
+        self.group = 'ShortCode'
         self.children: typing.List[PageBaseBlock] = []
 
     def write_block(self):
@@ -49,54 +102,62 @@ class PageChannelBlock(PageGroupBlock):
     def __init__(self):
         super().__init__()
         self.type = 'channel_block'
+        self.group = 'Channel'
         self.channel = ''
 
-    def write_block(self):
-        lines = [it.write_block() for it in self.children]
-        return "<!-- For channel only: {} -->\n{}".format(self.channel, "\n".join(lines))
+    def write_begin(self):
+        return "<!-- For {} only BGN: {} -->".format(self.group, self.channel)
+
+    def write_end(self):
+        return "<!-- For {} only END: {} -->".format(self.group, self.channel)
 
 
 class PageColumnListBlock(PageGroupBlock):
     def __init__(self):
         super().__init__()
         self.type = 'column_list'
+        self.group = 'ColumnList'
         self.children: typing.List[PageColumnBlock] = []
 
     def write_block(self):
-        column_lines = []
-        for idx, column_block in enumerate(self.children):
-            column_lines.append(
-                "{}<!-- Column {} start -->\n{}\n<!-- Column end -->" .format(
-                    "\n" if idx > 0 else "",
-                    idx,
-                    column_block.write_block()
-                )
-            )
-
-        return "<!-- ColumnList start -->\n{}\n<!-- ColumnList end -->".format("\n".join(column_lines))
+        if not self.on_write_children_handler:
+            def handler(blocks: typing.List[PageBaseBlock])->str:
+                column_lines = []
+                for idx, column_block in enumerate(blocks):
+                    column_lines.append(
+                        "{}<!-- Column {} start -->\n{}\n<!-- Column end -->".format(
+                            "\n" if idx > 0 else "",
+                            idx,
+                            column_block.write_block()
+                        )
+                    )
+                return "\n".join(column_lines)
+            self.on_write_children_handler = handler
+        return super().write_block()
 
 
 class PageColumnBlock(PageGroupBlock):
     def __init__(self):
         super().__init__()
         self.type = 'column'
+        self.group = 'Column'
         self.children: typing.List[PageBaseBlock] = []
         self.block_joiner: PageBlockJoiner = PageBlockJoiner()
 
     def write_block(self):
-        lines = []
-        for idx in range(len(self.children)):
-            block = self.children[idx]
-
-            if self.block_joiner.should_add_separator_before(self.children, idx):
-                lines.append("")
-
-            lines.append(block.write_block())
-
-            if self.block_joiner.should_add_separator_after(self.children, idx):
-                lines.append("")
-
-        return "\n".join(lines)
+        if not self.on_write_children_handler:
+            def handler(blocks: typing.List[PageBaseBlock])->str:
+                lines = []
+                for idx in range(len(blocks)):
+                    block = self.children[idx]
+                    if self.block_joiner.should_add_separator_before(self.children, idx):
+                        lines.append("")
+                    lines.append(block.write_block())
+                    if self.block_joiner.should_add_separator_after(self.children, idx):
+                        lines.append("")
+                return "\n".join(lines)
+        text = self.on_write_children_handler(self.children)
+        return text
 
 
 class PageTocBlock(PageBaseBlock):
@@ -402,6 +463,8 @@ class NotionPage:
             "column_list": self._parse_column_list,
             "column": self._parse_column,
             "page": self._parse_sub_page,
+            "transclusion_container": self._parse_synced_source,
+            "transclusion_reference": self._parse_synced_copy,
         }
 
     def is_markdown_able(self):
@@ -490,7 +553,7 @@ class NotionPage:
                 print(e)
 
         if len(self.get_title()) > 0:
-            return self.get_title()
+            return slugify(self.get_title())
         if len(self.id) > 0:
             return self.id
         return None
@@ -815,6 +878,34 @@ class NotionPage:
 
     def _parse_column(self, page_blocks: typing.List[PageColumnBlock], block):
         page_block = PageColumnBlock()
+        page_block.id = block.id
+        page_block.type = block.type
+
+        column_blocks: typing.List[PageBaseBlock] = []
+        page_block.children = column_blocks
+
+        if block.children:
+            for child in block.children:
+                self._parse_page_blocks_flatt(column_blocks, child)
+
+        page_blocks.append(page_block)
+
+    def _parse_synced_source(self, page_blocks: typing.List[PageColumnBlock], block):
+        page_block = PageSyncedSourceBlock()
+        page_block.id = block.id
+        page_block.type = block.type
+
+        column_blocks: typing.List[PageBaseBlock] = []
+        page_block.children = column_blocks
+
+        if block.children:
+            for child in block.children:
+                self._parse_page_blocks_flatt(column_blocks, child)
+
+        page_blocks.append(page_block)
+
+    def _parse_synced_copy(self, page_blocks: typing.List[PageColumnBlock], block):
+        page_block = PageSyncedCopyBlock()
         page_block.id = block.id
         page_block.type = block.type
 

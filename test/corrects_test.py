@@ -79,12 +79,12 @@ class CorrectsApiTest(unittest.TestCase):
 
     def test_pycorrector_spelling_inspect_writer(self):
         md_page = self._get_test_page()
-        Config.set_channels(['SpellInspect'])
+        Config.set_writer(['SpellInspect'])
         NotionWriter.clean_output()
         NotionWriter.handle_page(md_page)
 
     def test_pycorrector_spelling_inspect_writer_r2(self):
         md_pages = self._get_test_pages()
-        Config.set_channels(['SpellInspect'])
+        Config.set_writer(['SpellInspect'])
         NotionWriter.clean_output()
         NotionWriter.handle_pages(md_pages)

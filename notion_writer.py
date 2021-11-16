@@ -59,16 +59,15 @@ class NotionFileOutput(NotionDirOutput):
 class NotionWriter:
 
     @staticmethod
-    def get_page_writer(channel=None):
-        if not channel or str(channel).lower() == "default":
+    def get_page_writer(writer=None):
+        if not writer or str(writer).lower() == "notion":
             return NotionPageWriter()
-        if str(channel).lower() == "github":
-            return GitHubWriter()
-        if str(channel).lower() == "spellinspect":
+
+        if str(writer).lower() == "spellinspect":
             return SpellInspectWriter()
-        if str(channel).lower() == "hexo":
+        if str(writer).lower() == "hexo":
             return HexoWriter()
-        raise Exception("Unsupported channel: {}".format(channel))
+        return ChannelWriter(writer)
 
     @staticmethod
     def clean_output():
@@ -78,7 +77,7 @@ class NotionWriter:
     @staticmethod
     def handle_page(notion_page: NotionPage) -> typing.Dict[str, NotionFileOutput]:
         print("Write page: " + notion_page.get_identify())
-        if not Config.channels():
+        if not Config.writer():
             page_writer = NotionWriter.get_page_writer()
             if not page_writer.is_markdown_able(notion_page):
                 print("Skip non-markdownable page: " + notion_page.get_identify())
@@ -95,19 +94,20 @@ class NotionWriter:
 
         else:
             outputs = {}
-            for channel in Config.channels():
-                page_writer = NotionWriter.get_page_writer(channel)
+            # FIXME: fix return structure
+            for writer in [Config.writer()]:
+                page_writer = NotionWriter.get_page_writer(writer)
                 if not page_writer.is_markdown_able(notion_page):
                     print("Skip non-markdownable page: " + notion_page.get_identify())
-                    outputs[channel] = {}
+                    outputs[writer] = {}
                     continue
                 if not page_writer.is_output_able(notion_page):
                     print("Skip non-outputable page: " + notion_page.get_identify())
-                    outputs[channel] = {}
+                    outputs[writer] = {}
                     continue
 
                 output = page_writer.write_page(notion_page)
-                outputs[channel] = output
+                outputs[writer] = output
             print("\n----------\n")
             return outputs
 
@@ -144,26 +144,45 @@ class NotionWriter:
 
 
 class ImageDownloader:
-    def download_image(self, image_url, image_file):
+    def need_download_image(self, block) -> bool:
+        if not Config.download_image():
+            return False
+        if block.type != "image":
+            return False
+        if not str(block.image_url).startswith("http"):
+            return False
+        return 'keep-url-source=true' not in str(block.image_url).lower()
+
+    def download_image(self, image_url: str, image_file):
         if FileUtils.exists(image_file):
             FileUtils.delete(image_file)
         FileUtils.create_file(image_file)
-        r = requests.get(image_url, allow_redirects=True)
-        open(image_file, 'wb').write(r.content)
+        if image_url.startswith("https://"):
+            image_url = image_url.replace("https://", "http://")
+        try:
+            r = requests.get(image_url, allow_redirects=True, timeout=(5, 10))
+            open(image_file, 'wb').write(r.content)
+        except requests.exceptions.RequestException as e:
+            print(e)
         pass
 
-    def get_image_path(self, image_url, image_caption) -> str:
+    def get_image_path(self, image_url, image_caption, def_ext='.jpg') -> str:
         prefix = image_url
         if '?' in image_url:
             prefix = image_url[:image_url.find('?')]
         file_name = prefix
         if '/' in prefix:
             file_name = prefix[prefix.rfind('/') + len('/'):]
+            if len(file_name) <= 0 or str(file_name).lower().startswith('untitled.'):
+                prefix = image_url[:image_url.rfind('/')]
+                if '/' in prefix:
+                    file_name = "{}-{}".format(prefix[prefix.rfind('/') + len('/'):], file_name)
+                    pass
 
         if image_caption and len(image_caption) > 0:
             file_name = image_caption + "-" + file_name
         splitext = os.path.splitext(file_name)
-        return slugify(splitext[0]) + splitext[1]
+        return slugify(splitext[0]) + (splitext[1] if splitext[1] else def_ext)
 
 
 # noinspection PyMethodMayBeStatic
@@ -224,7 +243,7 @@ class NotionPageWriter:
             page_lines.append("")
         pass
 
-    def _write_blocks(self, page_lines: typing.List[typing.Text], blocks: typing.List[PageBaseBlock]):
+    def _write_blocks(self, page_lines: typing.List[typing.Text], blocks: typing.List[PageBaseBlock] , depth=0):
         for idx in range(len(blocks)):
             self._write_block(page_lines, blocks, idx)
         pass
@@ -233,7 +252,11 @@ class NotionPageWriter:
             self,
             page_lines: typing.List[typing.Text],
             blocks: typing.List[PageBaseBlock],
-            curr_idx):
+            curr_idx,
+            depth=0):
+
+        if self._on_write_block(page_lines, blocks, curr_idx):
+            return
 
         block = blocks[curr_idx]
 
@@ -242,33 +265,57 @@ class NotionPageWriter:
             page_lines.append("")
 
         # Curr block
-        page_lines.append(self._write_curr_block(block))
+        page_lines.append(self._write_curr_block(block, depth))
 
         # Check suffix-separator
         if self.block_joiner.should_add_separator_after(blocks, curr_idx):
             page_lines.append("")
 
-    def _write_curr_block(self, block: PageBaseBlock):
-        if Config.download_image():
+    def _on_write_block(
+            self,
+            page_lines: typing.List[typing.Text],
+            blocks: typing.List[PageBaseBlock],
+            curr_idx):
+        block = blocks[curr_idx]
+        if block.type == 'channel_block':
+            if str(block.channel).lower() not in [str(it).lower() for it in Config.channels()]:
+                print("Skip channel block: {}".format(block.channel))
+                return True
+        return False
+
+    def _write_curr_block(self, block: PageBaseBlock, depth):
+        if block.is_group():
+            def handler(blocks: typing.List[PageBaseBlock])->str:
+                lines = [self._write_curr_block(it, depth + 1) for it in blocks]
+                return "\n".join(lines)
+            block.on_write_children(handler)
+            return block.write_block()
+
+        if self.image_downloader.need_download_image(block):
             # Download image to assets dir
-            if block.type == "image":
-                image_path = self.image_downloader.get_image_path(block.image_url, block.image_caption)
-                image_source = self.assets_dir + "/" + image_path
-                block.image_file = FileUtils.new_file(
-                    self._configure_root_dir(),
-                    image_source
-                )
-                # Check if downloaded before
-                if not FileUtils.exists(block.image_file):
-                    self.image_downloader.download_image(block.image_url, block.image_file)
-                return block.write_image_block("/" + image_source)
+            image_path = self.image_downloader.get_image_path(block.image_url, block.image_caption)
+            image_source = self.assets_dir + "/" + image_path
+            block.image_file = FileUtils.new_file(
+                self._configure_root_dir(),
+                image_source
+            )
+            # Check if downloaded before
+            if not FileUtils.exists(block.image_file):
+                self.image_downloader.download_image(block.image_url, block.image_file)
+            return block.write_image_block("/" + image_source)
 
         block_text = block.write_block()
-        if Utils.check_module_installed("notion"):
-            import pangu
-            return pangu.spacing_text(block_text)
+        if block.type in ['text', 'header', 'sub_header', 'sub_sub_header', 'numbered_list', 'bulleted_list', 'quote', 'callout']:
+            return self._polish_text(block_text)
         else:
             return block_text
+
+    def _polish_text(self, text):
+        if Utils.check_module_installed("pangu"):
+            import pangu
+            return pangu.spacing_text(text)
+        else:
+            return text
 
     def _write_tail(self, page_lines: typing.List[typing.Text], notion_page: NotionPage):
         page_lines.append("\n")
@@ -305,7 +352,7 @@ class NotionPageWriter:
 
         page_path = FileUtils.new_file(
             notion_page.get_file_dir() if notion_page.get_file_dir() else "",
-            slugify(notion_page.get_file_name())
+            notion_page.get_file_name()
         )
 
         file_path = FileUtils.new_file(base_dir, page_path + ".md")
@@ -323,11 +370,19 @@ class NotionPageWriter:
         FileUtils.write_text(content, file_path)
 
 
-class GitHubWriter(NotionPageWriter):
+# class GitHubWriter(NotionPageWriter):
+#
+#     def __init__(self):
+#         super().__init__()
+#         self.root_dir = "GitHub"
 
-    def __init__(self):
+
+class ChannelWriter(NotionPageWriter):
+
+    def __init__(self, channel):
         super().__init__()
-        self.root_dir = "GitHub"
+        self.root_dir = channel
+        self.channel = channel
 
 
 class SpellInspectWriter(NotionPageWriter):
@@ -414,6 +469,38 @@ class HexoWriter(NotionPageWriter):
         self.post_dir = "_posts"
         self.draft_dir = "_drafts"
 
+    def is_output_able(self, notion_page: NotionPage):
+        return super().is_output_able(notion_page) and len(notion_page.properties) > 0
+
+    def _configure_file_path(self, notion_page: NotionPage) -> typing.Text:
+        if 'hexo.page' in notion_page.properties \
+                and notion_page.properties['hexo.page'] == 'true' \
+                and notion_page.is_published():
+            print("#_configure_file_path for hexo page")
+            base_dir = self._configure_root_dir()
+            page_path = FileUtils.new_file(
+                notion_page.get_file_dir() if notion_page.get_file_dir() else "",
+                notion_page.get_file_name()
+            )
+            file_path = FileUtils.new_file(base_dir, page_path + ".md")
+            print("file_path = " + file_path)
+            return file_path
+
+        return super()._configure_file_path(notion_page)
+
+    def _on_write_block(
+            self,
+            page_lines: typing.List[typing.Text],
+            blocks: typing.List[PageBaseBlock],
+            curr_idx):
+        if super()._on_write_block(page_lines, blocks, curr_idx):
+            return True
+
+        block = blocks[curr_idx]
+        if block.type == 'table_of_contents':
+            return True
+        return False
+
     def write_page(self, notion_page: NotionPage) -> NotionFileOutput:
         print("#write_page")
         print("page identify = " + notion_page.get_identify())
@@ -495,6 +582,9 @@ class HexoWriter(NotionPageWriter):
             if front_matter[key]:
                 if type(front_matter[key]) is not list:
                     front_matter[key] = [front_matter[key]]
+
+        if front_matter['title']:
+            front_matter['title'] = self._polish_text(front_matter['title'])
 
         # Write front matter
         lines = ['---']

@@ -35,12 +35,11 @@ workflows:
             branches:
               only: ci/build-hexo
       - build-hexo-generate:
-            requires:
-              - build-hexo
+          requires:
+            - build-hexo
       - publish-github-hexo:
-            requires:
-              - build-hexo-generate
-
+          requires:
+            - build-hexo-generate
 
 jobs:
   build-readme:
@@ -53,91 +52,90 @@ jobs:
       - image: cimg/python:3.8
     steps:
       - attach_workspace:
-            at: ~/project
+          at: ~/project
       - checkout
       - run:
           name: pip install
           command: |
-              pip install notion
-              pip install pangu
+            pip install notion
+            pip install pangu
       - run:
           name: Run tests
           command: |
-              python -m unittest test.notion_ci_test.NotionCiTest.test_generate_read_me 
+            python -m unittest test.notion_ci_test.NotionCiTest.test_generate_read_me
       - run:
           name: Dump outputs
           command: |
-              echo "Generated MD file:\n" | 
-              cat "$(find ~/project/build -name "*.md" -type f | head -1)"
-              echo "\n---\n"
-              pwd && ls -l
+            echo "Generated MD file:\n" | 
+            cat "$(find ~/project/build -name "*.md" -type f | head -1)"
+            echo "\n---\n"
+            pwd && ls -l
       - persist_to_workspace:
           root: ~/project
           paths:
             - ./build
 
   publish-github-readme:
-      parameters:
-        branch_deploy:
-          type: string
-          default: master
-      working_directory: ~/dist
-      docker:
-        - image: cibuilds/github:0.10
-      steps:
-        - attach_workspace:
-            at: ~/project
-        - checkout
-        - run: git checkout << parameters.branch_deploy >>
-        # - run: git submodule sync
-        # - run: git submodule update --init
-        - run:
-            name: "Dump files"
-            command: |
-              pwd && ls -l ~/project
-              echo "n--n"
+    parameters:
+      branch_deploy:
+        type: string
+        default: master
+    working_directory: ~/dist
+    docker:
+      - image: cibuilds/github:0.10
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - checkout
+      - run: git checkout << parameters.branch_deploy >>
+      # - run: git submodule sync
+      # - run: git submodule update --init
+      - run:
+          name: "Dump files"
+          command: |
+            pwd && ls -l ~/project
+            echo "n--n"
 
-              ls -l ~/project/build/NotionDown
+            ls -l ~/project/build/NotionDown
 
-              # assets files
-              if [ -d ~/project/build/NotionDown/assets/ ]; then
-                  echo "copy assets files"
-                  cp -rv ~/project/build/NotionDown/assets/. ~/dist/assets
-              else
-                  echo "No assets files"
-              fi
+            # assets files
+            if [ -d ~/project/build/NotionDown/assets/ ]; then
+                echo "copy assets files"
+                cp -rv ~/project/build/NotionDown/assets/. ~/dist/assets
+            else
+                echo "No assets files"
+            fi
 
-              # md file
-              # find ~/project/build -name "*.md" -type f | head -1 | xargs -n1 sh -c "echo mv $0 $1 ~/dist/README.md"
-              echo "mv $(find ~/project/build -name "*.md" -type f | head -1) ~/dist/README.md"
-              mv $(find ~/project/build -name "*.md" -type f | head -1) ~/dist/README.md
-              cat ~/dist/README.md
-        - run:
-            name: "Push"
-            command: |
-              pwd
-              echo "\n--\n"
+            # md file
+            # find ~/project/build -name "*.md" -type f | head -1 | xargs -n1 sh -c "echo mv $0 $1 ~/dist/README.md"
+            echo "mv $(find ~/project/build -name "*.md" -type f | head -1) ~/dist/README.md"
+            mv $(find ~/project/build -name "*.md" -type f | head -1) ~/dist/README.md
+            cat ~/dist/README.md
+      - run:
+          name: "Push"
+          command: |
+            pwd
+            echo "\n--\n"
 
-              # git ls-files -m
-              # has_modified=$(git ls-files -m)
+            # git ls-files -m
+            # has_modified=$(git ls-files -m)
 
-              # git diff HEAD --name-only --diff-filter=ACMR --ignore-space-at-eol -M100%
-              has_modified="$(git diff HEAD --name-only --diff-filter=ACMR --ignore-space-at-eol -M100%)"
+            # git diff HEAD --name-only --diff-filter=ACMR --ignore-space-at-eol -M100%
+            has_modified="$(git diff HEAD --name-only --diff-filter=ACMR --ignore-space-at-eol -M100%)"
 
-              if [ -z "$has_modified" ] ; then
-                  echo "not modified"
-              else
-                  echo "has modified, try git push"
-                  git config user.name "Kaede"
-                  git config user.email "kidhaibara@gmail.com"
-                  # git pull origin << parameters.branch_deploy >>
-                  git add *
-                  git status
-                  git commit -a -m "Update README via CircleciBot - ${CIRCLE_BUILD_NUM}"
-                  git status
-                  git push --quiet "https://${GH_TOKEN}@github.com/kaedea/notion-down.git" << parameters.branch_deploy >>:<< parameters.branch_deploy >>
-              fi
-
+            if [ -z "$has_modified" ] ; then
+                echo "not modified"
+            else
+                echo "has modified, try git push"
+                git config user.name "Kaede"
+                git config user.email "kidhaibara@gmail.com"
+                # git pull origin << parameters.branch_deploy >>
+                git add *
+                git status
+                git commit -a -m "Update README via CircleciBot - ${CIRCLE_BUILD_NUM}"
+                git status
+                git push --quiet "https://${GH_TOKEN}@github.com/kaedea/notion-down.git" << parameters.branch_deploy >>:<< parameters.branch_deploy >>
+            fi
 
   build-pycorrector-test:
     parameters:
@@ -149,24 +147,23 @@ jobs:
       - image: cimg/python:3.8
     steps:
       - attach_workspace:
-            at: ~/spell-inspect
+          at: ~/spell-inspect
       - checkout
       - run:
           name: pip install
           command: |
-              pip install notion
-              pip install pangu
-              pip install pycorrector
-              pip install https://github.com/kpu/kenlm/archive/master.zip
-              # pip install -r requirements.txt
+            pip install notion
+            pip install pangu
+            pip install pycorrector
+            pip install https://github.com/kpu/kenlm/archive/master.zip
+            # pip install -r requirements.txt
       - run:
           name: Run tests
           command: |
-              python -m unittest test.corrects_test.CorrectsApiTest.test_pycorrector_spelling_inspect_writer_r2
+            python -m unittest test.corrects_test.CorrectsApiTest.test_pycorrector_spelling_inspect_writer_r2
 
       - store_artifacts:
           path: ~/spell-inspect/build/SpellInspect
-
 
   build-hexo:
     parameters:
@@ -191,6 +188,7 @@ jobs:
             PYTHONPATH=./ python jobs/parse_sample_posts_for_hexo/main.py \
                 --blog_url "https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34" \
                 --channels "Hexo" \
+                --download_image true \
                 --page_titles_match "^(Hexo page -)"
       - run:
           name: Dump outputs
@@ -219,9 +217,23 @@ jobs:
           name: Copy notion pages MD files to Hexo source dir
           command: |
             cp -rv ~/project-hexo/build/Hexo/. notion-down-hexo-showcase/hexo-blog/source
+            set +e
             ls -l notion-down-hexo-showcase/hexo-blog/source
+            ls -l notion-down-hexo-showcase/hexo-blog/source/assets
             ls -l notion-down-hexo-showcase/hexo-blog/source/_drafts
             ls -l notion-down-hexo-showcase/hexo-blog/source/_posts
+            set -e
+      - run:
+          name: Git push posts
+          command: |
+            pwd && ls -l && cd notion-down-hexo-showcase
+            pwd
+            git config --global user.email "kidhaibara@gmail.com"
+            git config --global user.name "Kaede Akatsuki"
+            git add *
+            git status
+            git commit -a -m "Circleci-bot update posts - ${CIRCLE_BUILD_NUM}"
+            git push --force --quiet "https://${GH_TOKEN}@github.com/kaedea/notion-down-hexo-showcase.git" master:master
       - run:
           name: Install Hexo CLI
           command: |
@@ -254,7 +266,7 @@ jobs:
       - image: cibuilds/github:0.10
     steps:
       - attach_workspace:
-            at: ~/project-hexo-source
+          at: ~/project-hexo-source
       - run:
           name: Checkout hexo source repo
           command: |
@@ -266,8 +278,13 @@ jobs:
             rm -rf docs
             mv ~/project-hexo-source/notion-down-hexo-showcase/hexo-blog/public docs
             ls -l docs
+            echo "Configure CNAME"
+            if [ -f "docs/CNAME" ]; then
+                rm docs/CNAME
+            fi
+            echo "hexo.kaedea.com" > docs/CNAME
       - run:
-          name: Git push
+          name: Git push hexo dist
           command: |
             pwd && ls -l && cd notion-down-hexo-showcase
             pwd
@@ -277,5 +294,3 @@ jobs:
             git status
             git commit -a -m "Circleci-bot deploy - ${CIRCLE_BUILD_NUM}"
             git push --force --quiet "https://${GH_TOKEN}@github.com/kaedea/notion-down-hexo-showcase.git" master:master
-         
-      

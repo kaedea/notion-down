@@ -10,6 +10,8 @@ DEFAULT_ARGS = {
     'workspace': Utils.get_workspace(),
     'output': os.path.join(Utils.get_workspace(), "build"),
     'token_v2': None,
+    'username': None,
+    'password': None,
     'writer': 'notion',
     'channels': ['default'],
     'blog_url': None,
@@ -18,12 +20,18 @@ DEFAULT_ARGS = {
     'download_image': False,
 }
 SYS_ENV_MAP = {
-    'token_v2': "NOTION_TOKEN_V2",
     'blog_url': "NOTION_TOKEN_BLOG_URL",
+    'token_v2': "NOTION_TOKEN_V2",
+    'username': "NOTION_USERNAME",
+    'password': "NOTION_PASSWORD",
 }
 REQUIRED_ARGS = [
-    'token_v2',
     'blog_url',
+]
+PRIVATE_ARGS = [
+    'username',
+    'password',
+    'token_v2',
 ]
 REQUIRED_MODULES = [
     'notion',
@@ -75,62 +83,6 @@ class Config:
             return Config.get(name)
         setattr(Config, 'set_' + name, set_block)
 
-    # @staticmethod
-    # def debuggable():
-    #     return Config.get("debuggable", False)
-
-    # @staticmethod
-    # def set_debuggable(value):
-    #     Config.set("debuggable", value)
-
-    # @staticmethod
-    # def workspace():
-    #     return Config.get("workspace", None)
-    #
-    # @staticmethod
-    # def set_workspace(value):
-    #     Config.set("workspace", value)
-
-    # @staticmethod
-    # def output():
-    #     return Config.get("output", None)
-    #
-    # @staticmethod
-    # def set_output(value):
-    #     Config.set("output", value)
-
-    # @staticmethod
-    # def token_v2():
-    #     return Config.get("token_v2", None)
-    #
-    # @staticmethod
-    # def set_token_v2(value):
-    #     Config.set("token_v2", value)
-
-    # @staticmethod
-    # def blog_url():
-    #     return Config.get("blog_url", None)
-    #
-    # @staticmethod
-    # def set_blog_url(value):
-    #     Config.set("blog_url", value)
-    #
-    # @staticmethod
-    # def channels():
-    #     return Config.get("channels", [])
-    #
-    # @staticmethod
-    # def set_channels(value: typing.List):
-    #     Config.set("channels", value)
-    #
-    # @staticmethod
-    # def page_titles():
-    #     return Config.get("page_titles", [])
-    #
-    # @staticmethod
-    # def set_page_titles(value: typing.List):
-    #     Config.set("page_titles", value)
-
     @staticmethod
     def parse_configs():
         ArgsParser.parse()
@@ -149,7 +101,10 @@ class Config:
 
     @staticmethod
     def to_string():
-        return json.dumps(PROPERTIES, indent=2)
+        args = dict(PROPERTIES)
+        for key in PRIVATE_ARGS:
+            args[key] = "*" * 10
+        return json.dumps(args, indent=2)
 
     @staticmethod
     def notion_down_version():

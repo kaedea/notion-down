@@ -1,6 +1,7 @@
 import re
 import typing
 
+from notion_token import NotionToken
 from utils.utils import Utils
 
 if not Utils.check_module_installed("notion"):
@@ -21,6 +22,15 @@ class NotionReader:
     def get_client() -> NotionClient:
         global NOTION_CLIENT
         if not NOTION_CLIENT:
+            if not Config.username() and not Config.password() and not Config.token_v2():
+                raise Exception('username|password or token_v2 should be presented!')
+
+            if Config.username() and Config.password():
+                new_token = NotionToken.getNotionToken(Config.username(), Config.password())
+                if len(new_token) > 0:
+                    print("Use new token fetched by username-password.")
+                    Config.set_token_v2(new_token)
+
             NOTION_CLIENT = NotionClient(token_v2=Config.token_v2())
         return NOTION_CLIENT
 

@@ -16,6 +16,8 @@ def start():
 # python main.py \
 #     --blog_url 'https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34' \
 #     --token_v2 <token_v2>
+#     --username <username>  # Only when token_v2 is not presented
+#     --password <password>  # Only when token_v2 is not presented
 # or
 # python main.py \
 #     --config_file '.config_file.json'

@@ -5,7 +5,7 @@ from pathlib import Path
 import requests
 import typing
 
-from notion.utils import slugify
+from slugify import slugify
 
 from config import Config
 from notion_page import NotionPage, PageBaseBlock, PageImageBlock, PageBlockJoiner

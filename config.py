@@ -10,6 +10,7 @@ DEFAULT_ARGS = {
     'workspace': Utils.get_workspace(),
     'output': os.path.join(Utils.get_workspace(), "build"),
     'token_v2': None,
+    'notion_token': None,
     'username': None,
     'password': None,
     'writer': 'notion',
@@ -22,6 +23,7 @@ DEFAULT_ARGS = {
 SYS_ENV_MAP = {
     'blog_url': "NOTION_TOKEN_BLOG_URL",
     'token_v2': "NOTION_TOKEN_V2",
+    'notion_token': "NOTION_TOKEN",
     'username': "NOTION_USERNAME",
     'password': "NOTION_PASSWORD",
 }
@@ -32,9 +34,10 @@ PRIVATE_ARGS = [
     'username',
     'password',
     'token_v2',
+    'notion_token',
 ]
 REQUIRED_MODULES = [
-    'notion',
+    'notion_client',
 ]
 PROPERTIES = {}
 

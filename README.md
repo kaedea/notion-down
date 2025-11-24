@@ -62,7 +62,7 @@ What can NotionDown do now:
  - PyPI Publish
  - Notion APIs
      - ~~notion-py (3rd party)~~
-     - notion-sdk (official)
+     - ~~notion-sdk (official)~~
 
 ## Hot It Works
 
@@ -84,13 +84,14 @@ NotionDown read Notion pages data using [notion-py](https://github.com/jamalex/n
 
 To get started with NotionDown, you should:
 
-1. Prepare your Notion username(email) and password, or directly use `notion_token_v2`.
+1. Prepare your Notion Integration Token (`notion_token`).
 1. Prepare `public notion blog_url` as root post for NotionDown to get the pages you want to handle.
 1. Run `notion-down/main.py` with your configs.
 
-Check [here](https://github.com/kaedea/notion-down/blob/master/dist/parse_readme/notiondown_gettokenv2.md) to get `notion_token_v2`. 
+To get `notion_token`, create an integration at [Notion My Integrations](https://www.notion.so/my-integrations).
+Share your target pages with the integration.
 
-Duplicate [NotionDown Posts Template](https://www.notion.so/kaedea/NotionDown-Posts-Template-f77f3322915a4ab48caa0f2e76e9d733) to your own notion and take it as `blog_url` (or you can just use your existing blog post url). Note that, for now the root page should be public  as well as placed in root path of notion workspace.
+Duplicate [NotionDown Posts Template](https://www.notion.so/kaedea/NotionDown-Posts-Template-f77f3322915a4ab48caa0f2e76e9d733) to your own notion and take it as `blog_url` (or you can just use your existing blog post url).
 
 
 ### Run NotionDown
@@ -101,9 +102,7 @@ Basically just run `notion-down/main.py` :
 # Run with cli cmd
 PYTHONPATH=./ python main.py \
     --blog_url <Notion Post Url> \
-    --token_v2 <token_v2>
-    --username <username>  # Only when token_v2 is not presented
-    --password <password>  # Only when token_v2 is not presented
+    --notion_token <notion_token>
 
 # or
 PYTHONPATH=./ python main.py \

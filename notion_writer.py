@@ -5,7 +5,7 @@ from pathlib import Path
 import requests
 import typing
 
-from notion.utils import slugify
+# from notion.utils import slugify
 
 from config import Config
 from notion_page import NotionPage, PageBaseBlock, PageImageBlock, PageBlockJoiner
@@ -182,7 +182,7 @@ class ImageDownloader:
         if image_caption and len(image_caption) > 0:
             file_name = image_caption + "-" + file_name
         splitext = os.path.splitext(file_name)
-        return slugify(splitext[0]) + (splitext[1] if splitext[1] else def_ext)
+        return Utils.slugify(splitext[0]) + (splitext[1] if splitext[1] else def_ext)
 
 
 # noinspection PyMethodMayBeStatic

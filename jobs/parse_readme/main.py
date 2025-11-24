@@ -13,12 +13,16 @@ def start():
     channel = 'default'
     NotionWriter.clean_output()
 
-    main_page = NotionReader.read_main_page()
-    source_pages = Utils.find(main_page.children, lambda it: it.type == 'page' and str(it.title) in [
+    titles = [
         "NotionDown README",
         "NotionDown GetTokenV2",
         "NotionDown Custom Config",
-    ])
+    ]
+    source_pages = []
+    for title in titles:
+        page = NotionReader.read_page_with_title(title)
+        if page:
+            source_pages.append(page)
 
     for source_page in source_pages:
         md_page = NotionReader._parse_page(source_page)

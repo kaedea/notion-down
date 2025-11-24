@@ -9,9 +9,21 @@ import tempfile
 from pathlib import Path
 
 import pkg_resources
+import unicodedata
+import re
 
 
 class Utils:
+
+    @staticmethod
+    def slugify(value):
+        """
+        Normalizes string, converts to lowercase, removes non-alpha characters,
+        and converts spaces to hyphens.
+        """
+        value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode('ascii')
+        value = re.sub(r'[^\w\s-]', '', value).strip().lower()
+        return re.sub(r'[-\s]+', '-', value)
 
     def __init__(self):
         pass

@@ -9,9 +9,8 @@ DEFAULT_ARGS = {
     'debuggable': True,
     'workspace': Utils.get_workspace(),
     'output': os.path.join(Utils.get_workspace(), "build"),
-    'token_v2': None,
-    'username': None,
-    'password': None,
+    'output': os.path.join(Utils.get_workspace(), "build"),
+    'notion_token': None,
     'writer': 'notion',
     'channels': ['default'],
     'blog_url': None,
@@ -21,20 +20,16 @@ DEFAULT_ARGS = {
 }
 SYS_ENV_MAP = {
     'blog_url': "NOTION_TOKEN_BLOG_URL",
-    'token_v2': "NOTION_TOKEN_V2",
-    'username': "NOTION_USERNAME",
-    'password': "NOTION_PASSWORD",
+    'notion_token': "NOTION_TOKEN",
 }
 REQUIRED_ARGS = [
     'blog_url',
 ]
 PRIVATE_ARGS = [
-    'username',
-    'password',
-    'token_v2',
+    'notion_token',
 ]
 REQUIRED_MODULES = [
-    'notion',
+    'notion_client',
 ]
 PROPERTIES = {}
 

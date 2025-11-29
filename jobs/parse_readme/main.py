@@ -10,7 +10,7 @@ from utils.utils import Utils, FileUtils
 
 def start():
     print('\nHello, readme page!\n')
-    channel = 'default'
+    channel = 'notion'
     NotionWriter.clean_output()
 
     main_page = NotionReader.read_main_page()
@@ -58,6 +58,7 @@ def start():
 if __name__ == '__main__':
     Config.parse_configs()
     Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
+    # Config.set_download_image(True)
 
     print("")
     print("Run with configs:")

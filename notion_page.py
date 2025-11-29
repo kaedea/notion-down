@@ -3,6 +3,8 @@ import re
 import typing
 import urllib
 
+from slugify import slugify
+
 from notion_client import Client
 from config import Config
 from utils.utils import Utils
@@ -427,6 +429,10 @@ class PageToggleBlock(PageTextBlock):
 </code></pre>
 </details>'''.format(self.status, self.text, "\n".join(self.children))
 
+    def is_group(self):
+        # Flatt ToggleBlock as NonGroupBlock, because its writing is simple and no need to traversal.
+        return False
+
 
 # noinspection PyBroadException,PyMethodMayBeStatic
 class NotionPage:
@@ -559,7 +565,7 @@ class NotionPage:
                 print(e)
 
         if len(self.get_title()) > 0:
-            return slugify(self.get_title())
+            return slugify(self.get_title(), separator='_')
         if len(self.id) > 0:
             return self.id
         return None

@@ -157,8 +157,8 @@ class ImageDownloader:
         if FileUtils.exists(image_file):
             FileUtils.delete(image_file)
         FileUtils.create_file(image_file)
-        if image_url.startswith("https://"):
-            image_url = image_url.replace("https://", "http://")
+        # if image_url.startswith("https://"):
+        #     image_url = image_url.replace("https://", "http://")
         try:
             r = requests.get(image_url, allow_redirects=True, timeout=(5, 10))
             open(image_file, 'wb').write(r.content)

@@ -30,6 +30,7 @@ PRIVATE_ARGS = [
 ]
 REQUIRED_MODULES = [
     'notion_client',
+    'slugify',
 ]
 PROPERTIES = {}
 

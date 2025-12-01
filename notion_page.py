@@ -194,72 +194,31 @@ class PageTableBlock(PageBaseBlock):
     def __init__(self):
         super().__init__()
         self.type = 'collection_view'
-        self.block = None
+        self.headers = [] # List of column names
+        self.rows = []    # List of rows (each row is a list of cell values)
 
     def write_block(self):
-        if not self.block:
+        if not self.headers:
             return ''
+        
         block_lines = []
-
-        column_properties = self.block.collection.get_schema_properties()
-        ordered_column_ids = self.block.views[0].get("format.table_properties")
-
-        ordered_column_properties = []
-        for id in ordered_column_ids:
-            ordered_column_properties.append(Utils.find_one(
-                column_properties,
-                lambda it: it['id'] == id['property']
-            ))
-
-        slugs = [it['slug'] for it in ordered_column_properties]
-        types = [it['type'] for it in ordered_column_properties]
-
-        block_lines.append("{}".format(" | ".join([str(it['name']).replace('|', '&#124;') for it in ordered_column_properties])))
-        block_lines.append("{}".format(" | ".join([':---:' for it in ordered_column_properties])))
-
-        for row in self.block.collection.get_rows():
-            contents = []
-            for idx, slug in enumerate(slugs):
-                item_type = types[idx]
-                item_value = getattr(row, slug)
-                contents.append(str(self.__parse_collection_item(item_type, item_value)).replace('|', '&#124;'))
-            block_lines.append("{}".format(" | ".join(contents)))
+        
+        # Header
+        block_lines.append("{}".format(" | ".join([str(h).replace('|', '&#124;') for h in self.headers])))
+        # Separator
+        block_lines.append("{}".format(" | ".join([':---:' for _ in self.headers])))
+        
+        # Rows
+        for row in self.rows:
+            # Ensure row has same length as headers
+            cells = row + [''] * (len(self.headers) - len(row))
+            block_lines.append("{}".format(" | ".join([str(c).replace('|', '&#124;') for c in cells[:len(self.headers)]])))
 
         return "\n".join(block_lines)
 
-    def __parse_collection_item(self, collection_type, item):
-        if item is None:
-            return str(item)
-
-        if collection_type == "date":
-            if item.end:
-                return "{} - {}".format(item.start, item.end)
-            return "{}".format(item.start)
-
-        if collection_type == 'person':
-            users = []
-            for user in item:
-                if user.email:
-                    users.append("{} <{}>".format(user.full_name, user.email))
-                else:
-                    users.append("{}".format(user.full_name))
-            return ", ".join(users)
-
-        if collection_type == "file":
-            urls = []
-            for url in item:
-                file_name = None
-                if '/' in url:
-                    file_name = url[url.rfind('/') + len('/'):]
-                    if '?' in file_name:
-                        file_name = file_name[:file_name.find('?')]
-                if file_name:
-                    urls.append("[{}]({})".format(file_name, url))
-                else:
-                    urls.append(url)
-            return ", ".join(urls)
-
-        return str(item)
+    def set_data(self, headers, rows):
+        self.headers = headers
+        self.rows = rows
 
 
 class PageTextBlock(PageBaseBlock):
@@ -462,6 +421,7 @@ class NotionPage:
             "toggle": self._parse_toggle,
             "child_page": self._parse_sub_page,
             "child_database": self._parse_collection,
+            "linked_database": self._parse_collection,
             "embed": self._parse_embed,
             "image": self._parse_image,
             "video": self._parse_video,
@@ -1041,17 +1001,167 @@ class NotionPage:
         pass
 
     def _parse_collection(self, page_blocks: typing.List[PageBaseBlock], block):
-        # TODO: Implement database parsing using official API
-        # block.type is 'child_database'
-        # We need to query the database to get rows.
-        print(f"Database block {block.get('id')} not fully supported yet.")
-        page_block = PageBaseBlock()
-        page_block.id = block.get('id')
-        page_block.type = 'collection_view' # Keep type for now or change?
-        # We can't easily render it without querying.
-        # Let's just append a placeholder or nothing.
-        # page_blocks.append(page_block)
-        pass
+        db_id = None
+        if block.get('type') == 'child_database':
+            db_id = block.get('id')
+        elif block.get('type') == 'linked_database':
+            db_id = block.get('linked_database', {}).get('database_id')
+        
+        if not db_id:
+            return
+
+        try:
+            client = Client(auth=Config.notion_token())
+            # Check for SSL Ignore flag
+            ignore_ssl = os.environ.get('NOTION_IGNORE_SSL', 'false').lower() == 'true'
+            if ignore_ssl:
+                import httpx
+                http_client = httpx.Client(verify=False)
+                client = Client(auth=Config.notion_token(), client=http_client)
+
+            # 1. Retrieve Database Schema (for headers)
+            database = client.databases.retrieve(database_id=db_id)
+            properties = database.get('properties', {})
+            # Sort properties? Notion API doesn't guarantee order, but usually we want them.
+            # Let's just use keys for now.
+            headers = list(properties.keys())
+            
+            # 2. Query Database Rows
+            # Use httpx directly if client.databases.query is missing or problematic
+            # But we can try client.request first? No, test showed client.request failed with 400.
+            # So we use client.client.post (httpx)
+            
+            url = f"https://api.notion.com/v1/databases/{db_id}/query"
+            headers_http = {
+                "Authorization": f"Bearer {Config.notion_token()}",
+                "Notion-Version": "2022-06-28",
+                "Content-Type": "application/json"
+            }
+            
+            # Use the client's internal http client to respect SSL settings
+            response = client.client.post(url, headers=headers_http, json={})
+            response.raise_for_status()
+            results = response.json().get('results', [])
+            
+            if not headers and results:
+                # Infer headers from the first row if schema properties are empty
+                first_row_props = results[0].get('properties', {})
+                headers = list(first_row_props.keys())
+            
+            # Reorder headers: title column should be first (matches Notion UI)
+            if headers:
+                title_col = None
+                other_cols = []
+                for h in headers:
+                    # Check if this is the title column
+                    if results and h in results[0].get('properties', {}):
+                        prop = results[0]['properties'][h]
+                        if prop.get('type') == 'title' or prop.get('id') == 'title':
+                            title_col = h
+                        else:
+                            other_cols.append(h)
+                    else:
+                        other_cols.append(h)
+                
+                # Rebuild headers with title first
+                if title_col:
+                    headers = [title_col] + other_cols
+            
+            rows = []
+            for page in results:
+                row_data = []
+                page_props = page.get('properties', {})
+                for header in headers:
+                    prop = page_props.get(header, {})
+                    row_data.append(self._parse_property_value(prop))
+                rows.append(row_data)
+            
+            page_block = PageTableBlock()
+            page_block.id = block.get('id')
+            page_block.set_data(headers, rows)
+            page_blocks.append(page_block)
+            
+        except Exception as e:
+            print(f"Failed to parse database {db_id}: {e}")
+            page_block = PageBaseBlock()
+            page_block.id = block.get('id')
+            page_block.type = 'collection_view_error'
+            page_block.text = f"Error parsing database: {e}"
+            page_blocks.append(page_block)
+
+    def _parse_property_value(self, prop_value):
+        """Parse various property types to string"""
+        prop_type = prop_value.get('type')
+        
+        if prop_type == 'title':
+            return NotionUtils.get_plain_text(prop_value.get('title', []))
+        
+        elif prop_type == 'rich_text':
+            return NotionUtils.get_plain_text(prop_value.get('rich_text', []))
+        
+        elif prop_type == 'number':
+            return str(prop_value.get('number', ''))
+        
+        elif prop_type == 'select':
+            return prop_value.get('select', {}).get('name', '') if prop_value.get('select') else ''
+        
+        elif prop_type == 'multi_select':
+            return ', '.join([item.get('name', '') for item in prop_value.get('multi_select', [])])
+        
+        elif prop_type == 'date':
+            date = prop_value.get('date')
+            if date:
+                start = date.get('start')
+                end = date.get('end')
+                return f"{start} -> {end}" if end else start
+            return ''
+        
+        elif prop_type == 'checkbox':
+            return 'Yes' if prop_value.get('checkbox') else 'No'
+        
+        elif prop_type == 'url':
+            return prop_value.get('url', '') or ''
+        
+        elif prop_type == 'email':
+            return prop_value.get('email', '') or ''
+        
+        elif prop_type == 'phone_number':
+            return prop_value.get('phone_number', '') or ''
+        
+        elif prop_type == 'status':
+            return prop_value.get('status', {}).get('name', '') if prop_value.get('status') else ''
+        
+        elif prop_type == 'people':
+            return ', '.join([person.get('name', '') for person in prop_value.get('people', [])])
+        
+        elif prop_type == 'files':
+            return ', '.join([file.get('name', '') for file in prop_value.get('files', [])])
+        
+        elif prop_type == 'relation':
+            return f"{len(prop_value.get('relation', []))} related"
+            
+        elif prop_type == 'formula':
+            formula = prop_value.get('formula', {})
+            f_type = formula.get('type')
+            if f_type == 'string':
+                return formula.get('string', '')
+            elif f_type == 'number':
+                return str(formula.get('number', ''))
+            elif f_type == 'boolean':
+                return 'Yes' if formula.get('boolean') else 'No'
+            elif f_type == 'date':
+                date = formula.get('date')
+                if date:
+                    return date.get('start', '')
+                return ''
+                
+        elif prop_type == 'created_time':
+            return prop_value.get('created_time', '')
+            
+        elif prop_type == 'last_edited_time':
+            return prop_value.get('last_edited_time', '')
+            
+        return ''
 
     def _parse_toggle(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageToggleBlock()

@@ -9,7 +9,7 @@ from utils.utils import Utils, FileUtils
 def start():
     print('\nHello, NotionDown sample posts\n')
     NotionWriter.clean_output()
-    channel = 'default'
+    channel = 'notion'
 
     notion_pages = NotionReader.handle_post()
     dir_outputs = NotionWriter.handle_pages(notion_pages)

@@ -721,7 +721,7 @@ class NotionPage:
         page_blocks.append(page_block)
 
     def _parse_text(self, page_blocks: typing.List[PageBaseBlock], block):
-        text = NotionUtils.get_plain_text(block.get('paragraph', {}).get('rich_text', []))
+        text = NotionUtils.get_markdown_text(block.get('paragraph', {}).get('rich_text', []))
         if len(str(text).strip()) == 0:
             page_blocks.append(PageEnterBlock())
             return
@@ -797,7 +797,7 @@ class NotionPage:
         page_block = PageNumberedListBlock()
         page_block.id = block.get('id')
         page_block.type = 'numbered_list'
-        page_block.text = NotionUtils.get_plain_text(block.get('numbered_list_item', {}).get('rich_text', []))
+        page_block.text = NotionUtils.get_markdown_text(block.get('numbered_list_item', {}).get('rich_text', []))
         page_block.level = 0
         page_blocks.append(page_block)
 
@@ -814,7 +814,7 @@ class NotionPage:
             # Check if it's actually a numbered list item, otherwise treat as text or whatever
             # But usually nested list items are same type.
             if block.get('type') == 'numbered_list_item':
-                page_block.text = NotionUtils.get_plain_text(block.get('numbered_list_item', {}).get('rich_text', []))
+                page_block.text = NotionUtils.get_markdown_text(block.get('numbered_list_item', {}).get('rich_text', []))
             else:
                 # Handle mixed content in list? For now just try to extract text if possible or ignore
                 # Or maybe we should parse it properly?
@@ -822,7 +822,7 @@ class NotionPage:
                 # Let's try to get text if it's a paragraph or list item.
                 type_ = block.get('type')
                 if type_ in ['paragraph', 'bulleted_list_item', 'numbered_list_item']:
-                     page_block.text = NotionUtils.get_plain_text(block.get(type_, {}).get('rich_text', []))
+                     page_block.text = NotionUtils.get_markdown_text(block.get(type_, {}).get('rich_text', []))
                 else:
                      page_block.text = f"[{type_}]"
 
@@ -838,7 +838,7 @@ class NotionPage:
         page_block = PageBulletedListBlock()
         page_block.id = block.get('id')
         page_block.type = 'bulleted_list'
-        page_block.text = NotionUtils.get_plain_text(block.get('bulleted_list_item', {}).get('rich_text', []))
+        page_block.text = NotionUtils.get_markdown_text(block.get('bulleted_list_item', {}).get('rich_text', []))
         page_block.level = 0
         page_blocks.append(page_block)
 
@@ -855,9 +855,9 @@ class NotionPage:
             
             type_ = block.get('type')
             if type_ == 'bulleted_list_item':
-                page_block.text = NotionUtils.get_plain_text(block.get('bulleted_list_item', {}).get('rich_text', []))
+                page_block.text = NotionUtils.get_markdown_text(block.get('bulleted_list_item', {}).get('rich_text', []))
             elif type_ in ['paragraph', 'numbered_list_item']:
-                 page_block.text = NotionUtils.get_plain_text(block.get(type_, {}).get('rich_text', []))
+                 page_block.text = NotionUtils.get_markdown_text(block.get(type_, {}).get('rich_text', []))
             else:
                  page_block.text = f"[{type_}]"
 
@@ -873,35 +873,35 @@ class NotionPage:
         page_block = PageQuoteBlock()
         page_block.id = block.get('id')
         page_block.type = 'quote'
-        page_block.text = NotionUtils.get_plain_text(block.get('quote', {}).get('rich_text', []))
+        page_block.text = NotionUtils.get_markdown_text(block.get('quote', {}).get('rich_text', []))
         page_blocks.append(page_block)
 
     def _parse_callout(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageCalloutBlock()
         page_block.id = block.get('id')
         page_block.type = 'callout'
-        page_block.text = NotionUtils.get_plain_text(block.get('callout', {}).get('rich_text', []))
+        page_block.text = NotionUtils.get_markdown_text(block.get('callout', {}).get('rich_text', []))
         page_blocks.append(page_block)
 
     def _parse_header(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageHeaderBlock()
         page_block.id = block.get('id')
         page_block.type = 'header'
-        page_block.text = NotionUtils.get_plain_text(block.get('heading_1', {}).get('rich_text', []))
+        page_block.text = NotionUtils.get_markdown_text(block.get('heading_1', {}).get('rich_text', []))
         page_blocks.append(page_block)
 
     def _parse_sub_header(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageSubHeaderBlock()
         page_block.id = block.get('id')
         page_block.type = 'sub_header'
-        page_block.text = NotionUtils.get_plain_text(block.get('heading_2', {}).get('rich_text', []))
+        page_block.text = NotionUtils.get_markdown_text(block.get('heading_2', {}).get('rich_text', []))
         page_blocks.append(page_block)
 
     def _parse_sub_sub_header(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageSubSubHeaderBlock()
         page_block.id = block.get('id')
         page_block.type = 'sub_sub_header'
-        page_block.text = NotionUtils.get_plain_text(block.get('heading_3', {}).get('rich_text', []))
+        page_block.text = NotionUtils.get_markdown_text(block.get('heading_3', {}).get('rich_text', []))
         page_blocks.append(page_block)
 
     def _parse_to_do(self, page_blocks: typing.List[PageBaseBlock], block):
@@ -910,7 +910,7 @@ class NotionPage:
         # Or just treat as text with checkbox.
         # Let's create a simple text representation for now: "[ ] Task" or "[x] Task"
         checked = block.get('to_do', {}).get('checked', False)
-        text = NotionUtils.get_plain_text(block.get('to_do', {}).get('rich_text', []))
+        text = NotionUtils.get_markdown_text(block.get('to_do', {}).get('rich_text', []))
         prefix = "[x] " if checked else "[ ] "
         
         page_block.id = block.get('id')
@@ -958,7 +958,7 @@ class NotionPage:
         elif file_info.get('type') == 'file':
             url = file_info.get('file', {}).get('url')
         
-        caption = NotionUtils.get_plain_text(file_info.get('caption', []))
+        caption = NotionUtils.get_markdown_text(file_info.get('caption', []))
         text = caption if caption else "File"
         
         page_block = PageTextBlock()
@@ -1167,7 +1167,7 @@ class NotionPage:
         page_block = PageToggleBlock()
         page_block.id = block.get('id')
         page_block.type = 'toggle'
-        page_block.text = NotionUtils.get_plain_text(block.get('toggle', {}).get('rich_text', []))
+        page_block.text = NotionUtils.get_markdown_text(block.get('toggle', {}).get('rich_text', []))
         
         if block.get('has_children'):
             children = self._get_children(block.get('id'))

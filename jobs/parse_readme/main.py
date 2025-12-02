@@ -10,7 +10,7 @@ from utils.utils import Utils, FileUtils
 
 def start():
     print('\nHello, readme page!\n')
-    channel = 'notion'
+    channel = Config.writer() or 'default'
     NotionWriter.clean_output()
 
     main_page = NotionReader.read_main_page()

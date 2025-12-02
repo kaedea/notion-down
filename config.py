@@ -9,7 +9,6 @@ DEFAULT_ARGS = {
     'debuggable': True,
     'workspace': Utils.get_workspace(),
     'output': os.path.join(Utils.get_workspace(), "build"),
-    'output': os.path.join(Utils.get_workspace(), "build"),
     'notion_token': None,
     'writer': 'notion',
     'channels': ['default'],

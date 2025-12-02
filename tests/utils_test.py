@@ -78,5 +78,6 @@ class PyUtils(unittest.TestCase):
         self.assertTrue(Utils.check_module_installed("notion"))
         self.assertTrue(Utils.check_module_installed("pangu"))
         self.assertFalse(Utils.check_module_installed("panguxx"))
-        self.assertFalse(Utils.check_module_installed("pycorrector"))
+        self.assertTrue(Utils.check_module_installed("pycorrector"))
+        self.assertFalse(Utils.check_module_installed("kenlm"))
 

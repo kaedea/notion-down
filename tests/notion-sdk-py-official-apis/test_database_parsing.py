@@ -5,7 +5,7 @@ import httpx
 from notion_client import Client
 
 # Add project root to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from utils.notion_utils import NotionUtils
 from notion_page import NotionPage, PageTableBlock

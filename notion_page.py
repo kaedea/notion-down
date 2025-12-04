@@ -3,10 +3,12 @@ import re
 import typing
 import urllib
 
-from notion.utils import slugify
+from slugify import slugify
 
+from notion_client import Client
 from config import Config
 from utils.utils import Utils
+from utils.notion_utils import NotionUtils
 
 
 class PageBaseBlock:
@@ -192,72 +194,31 @@ class PageTableBlock(PageBaseBlock):
     def __init__(self):
         super().__init__()
         self.type = 'collection_view'
-        self.block = None
+        self.headers = [] # List of column names
+        self.rows = []    # List of rows (each row is a list of cell values)
 
     def write_block(self):
-        if not self.block:
+        if not self.headers:
             return ''
+        
         block_lines = []
-
-        column_properties = self.block.collection.get_schema_properties()
-        ordered_column_ids = self.block.views[0].get("format.table_properties")
-
-        ordered_column_properties = []
-        for id in ordered_column_ids:
-            ordered_column_properties.append(Utils.find_one(
-                column_properties,
-                lambda it: it['id'] == id['property']
-            ))
-
-        slugs = [it['slug'] for it in ordered_column_properties]
-        types = [it['type'] for it in ordered_column_properties]
-
-        block_lines.append("{}".format(" | ".join([str(it['name']).replace('|', '&#124;') for it in ordered_column_properties])))
-        block_lines.append("{}".format(" | ".join([':---:' for it in ordered_column_properties])))
-
-        for row in self.block.collection.get_rows():
-            contents = []
-            for idx, slug in enumerate(slugs):
-                item_type = types[idx]
-                item_value = getattr(row, slug)
-                contents.append(str(self.__parse_collection_item(item_type, item_value)).replace('|', '&#124;'))
-            block_lines.append("{}".format(" | ".join(contents)))
+        
+        # Header
+        block_lines.append("{}".format(" | ".join([str(h).replace('|', '&#124;') for h in self.headers])))
+        # Separator
+        block_lines.append("{}".format(" | ".join([':---:' for _ in self.headers])))
+        
+        # Rows
+        for row in self.rows:
+            # Ensure row has same length as headers
+            cells = row + [''] * (len(self.headers) - len(row))
+            block_lines.append("{}".format(" | ".join([str(c).replace('|', '&#124;') for c in cells[:len(self.headers)]])))
 
         return "\n".join(block_lines)
 
-    def __parse_collection_item(self, collection_type, item):
-        if item is None:
-            return str(item)
-
-        if collection_type == "date":
-            if item.end:
-                return "{} - {}".format(item.start, item.end)
-            return "{}".format(item.start)
-
-        if collection_type == 'person':
-            users = []
-            for user in item:
-                if user.email:
-                    users.append("{} <{}>".format(user.full_name, user.email))
-                else:
-                    users.append("{}".format(user.full_name))
-            return ", ".join(users)
-
-        if collection_type == "file":
-            urls = []
-            for url in item:
-                file_name = None
-                if '/' in url:
-                    file_name = url[url.rfind('/') + len('/'):]
-                    if '?' in file_name:
-                        file_name = file_name[:file_name.find('?')]
-                if file_name:
-                    urls.append("[{}]({})".format(file_name, url))
-                else:
-                    urls.append(url)
-            return ", ".join(urls)
-
-        return str(item)
+    def set_data(self, headers, rows):
+        self.headers = headers
+        self.rows = rows
 
 
 class PageTextBlock(PageBaseBlock):
@@ -427,6 +388,10 @@ class PageToggleBlock(PageTextBlock):
 </code></pre>
 </details>'''.format(self.status, self.text, "\n".join(self.children))
 
+    def is_group(self):
+        # Flatt ToggleBlock as NonGroupBlock, because its writing is simple and no need to traversal.
+        return False
+
 
 # noinspection PyBroadException,PyMethodMayBeStatic
 class NotionPage:
@@ -446,25 +411,32 @@ class NotionPage:
         self.properties = {}
 
         self.mapping = {
-            "text": self._parse_text,
-            "image": self._parse_image,
-            "divider": self._parse_divider,
-            "numbered_list": self._parse_numbered_list,
-            "bulleted_list": self._parse_bulleted_list,
-            "quote": self._parse_quote,
-            "callout": self._parse_callout,
-            "header": self._parse_header,
-            "sub_header": self._parse_sub_header,
-            "sub_sub_header": self._parse_sub_sub_header,
-            "code": self._parse_code,
-            "table_of_contents": self._parse_toc,
-            "collection_view": self._parse_collection,
+            "paragraph": self._parse_text,
+            "heading_1": self._parse_header,
+            "heading_2": self._parse_sub_header,
+            "heading_3": self._parse_sub_sub_header,
+            "bulleted_list_item": self._parse_bulleted_list,
+            "numbered_list_item": self._parse_numbered_list,
+            "to_do": self._parse_to_do,
             "toggle": self._parse_toggle,
+            "child_page": self._parse_sub_page,
+            "child_database": self._parse_collection,
+            "linked_database": self._parse_collection,
+            "embed": self._parse_embed,
+            "image": self._parse_image,
+            "video": self._parse_video,
+            "file": self._parse_file,
+            "pdf": self._parse_pdf,
+            "bookmark": self._parse_bookmark,
+            "callout": self._parse_callout,
+            "quote": self._parse_quote,
+            "equation": self._parse_equation,
+            "divider": self._parse_divider,
+            "table_of_contents": self._parse_toc,
             "column_list": self._parse_column_list,
             "column": self._parse_column,
-            "page": self._parse_sub_page,
-            "transclusion_container": self._parse_synced_source,
-            "transclusion_reference": self._parse_synced_copy,
+            "code": self._parse_code,
+            "synced_block": self._parse_synced_block,
         }
 
     def is_markdown_able(self):
@@ -553,24 +525,82 @@ class NotionPage:
                 print(e)
 
         if len(self.get_title()) > 0:
-            return slugify(self.get_title())
+            return slugify(self.get_title(), separator='_')
         if len(self.id) > 0:
             return self.id
         return None
 
     def parse(self, page):
-        self.id = str(page.id)
-        self.title = str(page.title)
-        page_cover = page.get("format.page_cover")
-        if page_cover:
-            if str(page_cover).startswith("http"):
-                self.cover = str(page_cover)
-            else:
-                self.cover = "https://www.notion.so/image/" \
-                             + urllib.parse.quote("https://www.notion.so{}".format(page_cover).replace("/", "%2F"))
+        self.id = page.get('id')
+        # Title extraction depends on whether it's a page or a block, but usually page
+        self.title = self._get_title(page)
+        
+        cover = page.get('cover')
+        if cover:
+            if cover.get('type') == 'external':
+                self.cover = cover.get('external', {}).get('url')
+            elif cover.get('type') == 'file':
+                self.cover = cover.get('file', {}).get('url')
 
         # parse page blocks
-        self.blocks = self._parse_page_blocks(page.children)
+        # We need to fetch children blocks
+        children = self._get_children(self.id)
+        self.blocks = self._parse_page_blocks(children)
+        
+        # Parse properties (for Hexo front-matter)
+        # In official API, properties are in page['properties']
+        # But we also support [notion-down-properties] in code blocks.
+        # We should check for that during block parsing.
+        self._parse_page_properties(page)
+
+    def _get_title(self, page):
+        properties = page.get('properties', {})
+        for key, value in properties.items():
+            if value.get('type') == 'title':
+                return NotionUtils.get_plain_text(value.get('title', []))
+        return "Untitled"
+
+    def _get_children(self, block_id):
+        # TODO: Reuse client from NotionReader or create new?
+        # Creating new for now to avoid circular import issues
+        client = Client(auth=Config.notion_token())
+        children = []
+        has_more = True
+        start_cursor = None
+        while has_more:
+            response = client.blocks.children.list(block_id=block_id, start_cursor=start_cursor)
+            children.extend(response.get('results', []))
+            has_more = response.get('has_more')
+            start_cursor = response.get('next_cursor')
+        return children
+
+    def _parse_page_properties(self, page):
+        # Parse native Notion properties
+        properties = page.get('properties', {})
+        for key, value in properties.items():
+            # Map Notion properties to self.properties
+            # This is different from [notion-down-properties] which are custom overrides
+            # But we might want to use them as defaults?
+            # For now, let's just store them if needed, but the original code 
+            # relied on [notion-down-properties] block or page properties.
+            # The original code:
+            # if 'Title' in self.properties: ...
+            # Let's try to extract some common ones.
+            if value.get('type') == 'date':
+                date = value.get('date')
+                if date:
+                    self.properties['Date'] = date.get('start')
+            elif value.get('type') == 'multi_select':
+                options = value.get('multi_select', [])
+                self.properties['Tag'] = [opt.get('name') for opt in options]
+            elif value.get('type') == 'select':
+                opt = value.get('select')
+                if opt:
+                    self.properties['Category'] = opt.get('name')
+            elif value.get('type') == 'checkbox':
+                self.properties['Published'] = str(value.get('checkbox')).lower()
+        
+        pass
 
     def _parse_page_blocks(self, blocks):
         page_blocks: typing.List[PageBaseBlock] = []
@@ -597,10 +627,10 @@ class NotionPage:
         '''
         Only parse non-group block here.
         '''
-
+        block_type = block.get('type')
         # Mapping for parse
-        if block.type in self.mapping:
-            self.mapping[block.type].__call__(page_blocks, block)
+        if block_type in self.mapping:
+            self.mapping[block_type].__call__(page_blocks, block)
         else:
             # Basic Block Parsing
             self._parse_basic(page_blocks, block)
@@ -608,14 +638,16 @@ class NotionPage:
         return page_blocks
 
     def _is_short_code_start(self, block):
-        if block.type == "text":
-            if str(block.title).startswith("<!-- SHORT_CODE_"):
+        if block.get('type') == "paragraph":
+            text = NotionUtils.get_plain_text(block.get('paragraph', {}).get('rich_text', []))
+            if str(text).startswith("<!-- SHORT_CODE_"):
                 return True
         return False
 
     def _is_short_code_end(self, block):
-        if block.type == "text":
-            if str(block.title).startswith("SHORT_CODE_END -->"):
+        if block.get('type') == "paragraph":
+            text = NotionUtils.get_plain_text(block.get('paragraph', {}).get('rich_text', []))
+            if str(text).startswith("SHORT_CODE_END -->"):
                 return True
         return False
 
@@ -626,8 +658,8 @@ class NotionPage:
         if not self._is_short_code_start(blocks[idx_start]):
             return -1
 
-        start_line = str(blocks[idx_start].title)
-        block_id = blocks[idx_start].id
+        start_line = NotionUtils.get_plain_text(blocks[idx_start].get('paragraph', {}).get('rich_text', []))
+        block_id = blocks[idx_start].get('id')
 
         group_block: PageGroupBlock = PageGroupBlock()
         group_block.id = block_id
@@ -665,8 +697,9 @@ class NotionPage:
                 break
 
             # Mapping for parse
-            if block.type in self.mapping:
-                self.mapping[block.type].__call__(channel_blocks, block)
+            block_type = block.get('type')
+            if block_type in self.mapping:
+                self.mapping[block_type].__call__(channel_blocks, block)
                 idx += 1
                 continue
 
@@ -683,30 +716,40 @@ class NotionPage:
 
     def _parse_basic(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageBaseBlock()
-        page_block.id = block.id
-        page_block.type = block.type
+        page_block.id = block.get('id')
+        page_block.type = block.get('type')
         page_blocks.append(page_block)
 
     def _parse_text(self, page_blocks: typing.List[PageBaseBlock], block):
-        if len(str(block.title).strip()) == 0:
+        text = NotionUtils.get_markdown_text(block.get('paragraph', {}).get('rich_text', []))
+        if len(str(text).strip()) == 0:
             page_blocks.append(PageEnterBlock())
             return
         page_block = PageTextBlock()
-        page_block.id = block.id
-        page_block.type = block.type
-        page_block.text = block.title
+        page_block.id = block.get('id')
+        page_block.type = 'text' # internal type
+        page_block.text = text
         page_blocks.append(page_block)
         pass
 
     def _parse_image(self, page_blocks: typing.List[PageBaseBlock], block):
-        image_id = block.id
-        image_caption = str(block.caption)
-        image_url = str(block.source)
+        image_id = block.get('id')
+        image_info = block.get('image', {})
+        # Caption
+        image_caption = NotionUtils.get_plain_text(image_info.get('caption', []))
+        
+        # URL
+        image_url = ""
+        if image_info.get('type') == 'external':
+            image_url = image_info.get('external', {}).get('url')
+        elif image_info.get('type') == 'file':
+            image_url = image_info.get('file', {}).get('url')
+
         temp_file = os.path.join(Config.output(), "assets/image", image_id + "_" + image_caption, ".jpg")
 
         page_block = PageImageBlock()
-        page_block.type = block.id
-        page_block.type = block.type
+        page_block.id = image_id
+        page_block.type = 'image'
         page_block.image_caption = image_caption
         page_block.image_url = image_url
         page_block.image_file = temp_file
@@ -714,12 +757,13 @@ class NotionPage:
 
     def _parse_divider(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageDividerBlock()
-        page_block.id = block.id
-        page_block.type = block.type
+        page_block.id = block.get('id')
+        page_block.type = 'divider'
         page_blocks.append(page_block)
 
     def _parse_properties(self, block):
-        content = block.title
+        # Properties in code block [notion-down-properties]
+        content = NotionUtils.get_plain_text(block.get('code', {}).get('rich_text', []))
         symbol = '[notion-down-properties]'
         if symbol in content:
             content_properties = content[content.rfind(symbol) + len(symbol):]
@@ -736,187 +780,508 @@ class NotionPage:
                     self.properties[key] = value
 
     def _parse_code(self, page_blocks: typing.List[PageBaseBlock], block):
-        content = block.title
+        content = NotionUtils.get_plain_text(block.get('code', {}).get('rich_text', []))
         symbol = '[notion-down-properties]'
         if symbol in content:
             self._parse_properties(block)
             return
 
         page_block = PageCodeBlock()
-        page_block.id = block.id
-        page_block.type = block.type
-        page_block.text = block.title
-        page_block.lang = block.language
+        page_block.id = block.get('id')
+        page_block.type = 'code'
+        page_block.text = content
+        page_block.lang = block.get('code', {}).get('language', 'plain text')
         page_blocks.append(page_block)
 
     def _parse_numbered_list(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageNumberedListBlock()
-        page_block.id = block.id
-        page_block.type = block.type
-        page_block.text = block.title
+        page_block.id = block.get('id')
+        page_block.type = 'numbered_list'
+        page_block.text = NotionUtils.get_markdown_text(block.get('numbered_list_item', {}).get('rich_text', []))
         page_block.level = 0
         page_blocks.append(page_block)
 
-        if block.children:
-            self.__recursive_parse_numbered_list(page_blocks, block.children, page_block.level + 1)
+        if block.get('has_children'):
+            children = self._get_children(block.get('id'))
+            self.__recursive_parse_numbered_list(page_blocks, children, page_block.level + 1)
             pass
 
     def __recursive_parse_numbered_list(self, page_blocks: typing.List[PageBaseBlock], blocks, level):
         for block in blocks:
             page_block = PageNumberedListBlock()
-            page_block.id = block.id
-            page_block.type = block.type
-            page_block.text = block.title
+            page_block.id = block.get('id')
+            page_block.type = 'numbered_list'
+            # Check if it's actually a numbered list item, otherwise treat as text or whatever
+            # But usually nested list items are same type.
+            if block.get('type') == 'numbered_list_item':
+                page_block.text = NotionUtils.get_markdown_text(block.get('numbered_list_item', {}).get('rich_text', []))
+            else:
+                # Handle mixed content in list? For now just try to extract text if possible or ignore
+                # Or maybe we should parse it properly?
+                # The original code assumed children are list items.
+                # Let's try to get text if it's a paragraph or list item.
+                type_ = block.get('type')
+                if type_ in ['paragraph', 'bulleted_list_item', 'numbered_list_item']:
+                     page_block.text = NotionUtils.get_markdown_text(block.get(type_, {}).get('rich_text', []))
+                else:
+                     page_block.text = f"[{type_}]"
+
             page_block.level = level
             page_blocks.append(page_block)
 
-            if block.children:
-                self.__recursive_parse_numbered_list(page_blocks, block.children, level + 1)
+            if block.get('has_children'):
+                children = self._get_children(block.get('id'))
+                self.__recursive_parse_numbered_list(page_blocks, children, level + 1)
                 pass
 
     def _parse_bulleted_list(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageBulletedListBlock()
-        page_block.id = block.id
-        page_block.type = block.type
-        page_block.text = block.title
+        page_block.id = block.get('id')
+        page_block.type = 'bulleted_list'
+        page_block.text = NotionUtils.get_markdown_text(block.get('bulleted_list_item', {}).get('rich_text', []))
         page_block.level = 0
         page_blocks.append(page_block)
 
-        if block.children:
-            self.__recursive_parse_bulleted_list(page_blocks, block.children, page_block.level + 1)
+        if block.get('has_children'):
+            children = self._get_children(block.get('id'))
+            self.__recursive_parse_bulleted_list(page_blocks, children, page_block.level + 1)
             pass
 
     def __recursive_parse_bulleted_list(self, page_blocks: typing.List[PageBaseBlock], blocks, level):
         for block in blocks:
             page_block = PageBulletedListBlock()
-            page_block.id = block.id
-            page_block.type = block.type
-            page_block.text = block.title
+            page_block.id = block.get('id')
+            page_block.type = 'bulleted_list'
+            
+            type_ = block.get('type')
+            if type_ == 'bulleted_list_item':
+                page_block.text = NotionUtils.get_markdown_text(block.get('bulleted_list_item', {}).get('rich_text', []))
+            elif type_ in ['paragraph', 'numbered_list_item']:
+                 page_block.text = NotionUtils.get_markdown_text(block.get(type_, {}).get('rich_text', []))
+            else:
+                 page_block.text = f"[{type_}]"
+
             page_block.level = level
             page_blocks.append(page_block)
 
-            if block.children:
-                self.__recursive_parse_bulleted_list(page_blocks, block.children, level + 1)
+            if block.get('has_children'):
+                children = self._get_children(block.get('id'))
+                self.__recursive_parse_bulleted_list(page_blocks, children, level + 1)
                 pass
 
     def _parse_quote(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageQuoteBlock()
-        page_block.id = block.id
-        page_block.type = block.type
-        page_block.text = block.title
+        page_block.id = block.get('id')
+        page_block.type = 'quote'
+        page_block.text = NotionUtils.get_markdown_text(block.get('quote', {}).get('rich_text', []))
         page_blocks.append(page_block)
 
     def _parse_callout(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageCalloutBlock()
-        page_block.id = block.id
-        page_block.type = block.type
-        page_block.text = block.title
+        page_block.id = block.get('id')
+        page_block.type = 'callout'
+        page_block.text = NotionUtils.get_markdown_text(block.get('callout', {}).get('rich_text', []))
         page_blocks.append(page_block)
 
     def _parse_header(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageHeaderBlock()
-        page_block.id = block.id
-        page_block.type = block.type
-        page_block.text = block.title
+        page_block.id = block.get('id')
+        page_block.type = 'header'
+        page_block.text = NotionUtils.get_markdown_text(block.get('heading_1', {}).get('rich_text', []))
         page_blocks.append(page_block)
 
     def _parse_sub_header(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageSubHeaderBlock()
-        page_block.id = block.id
-        page_block.type = block.type
-        page_block.text = block.title
+        page_block.id = block.get('id')
+        page_block.type = 'sub_header'
+        page_block.text = NotionUtils.get_markdown_text(block.get('heading_2', {}).get('rich_text', []))
         page_blocks.append(page_block)
 
     def _parse_sub_sub_header(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageSubSubHeaderBlock()
-        page_block.id = block.id
-        page_block.type = block.type
-        page_block.text = block.title
+        page_block.id = block.get('id')
+        page_block.type = 'sub_sub_header'
+        page_block.text = NotionUtils.get_markdown_text(block.get('heading_3', {}).get('rich_text', []))
+        page_blocks.append(page_block)
+
+    def _parse_to_do(self, page_blocks: typing.List[PageBaseBlock], block):
+        page_block = PageBaseBlock() # Use generic for now or create PageToDoBlock
+        # We can reuse PageBulletedListBlock or similar if we don't have a specific class
+        # Or just treat as text with checkbox.
+        # Let's create a simple text representation for now: "[ ] Task" or "[x] Task"
+        checked = block.get('to_do', {}).get('checked', False)
+        text = NotionUtils.get_markdown_text(block.get('to_do', {}).get('rich_text', []))
+        prefix = "[x] " if checked else "[ ] "
+        
+        page_block.id = block.get('id')
+        page_block.type = 'to_do' # internal type
+        # We don't have PageToDoBlock, so let's use PageTextBlock but with modified text?
+        # Or just append to page_blocks as a text block.
+        # Actually, let's use PageBulletedListBlock but change type to 'to_do' if we want specific rendering,
+        # but for Markdown, it's `- [ ]`.
+        # Let's use PageTextBlock and format it manually for now.
+        page_block = PageTextBlock()
+        page_block.id = block.get('id')
+        page_block.type = 'to_do'
+        page_block.text = prefix + text
+        page_blocks.append(page_block)
+
+    def _parse_embed(self, page_blocks: typing.List[PageBaseBlock], block):
+        # Generic embed
+        url = block.get('embed', {}).get('url', '')
+        page_block = PageTextBlock()
+        page_block.id = block.get('id')
+        page_block.type = 'embed'
+        page_block.text = f"<{url}>"
+        page_blocks.append(page_block)
+
+    def _parse_video(self, page_blocks: typing.List[PageBaseBlock], block):
+        # Video
+        video = block.get('video', {})
+        url = ""
+        if video.get('type') == 'external':
+            url = video.get('external', {}).get('url')
+        elif video.get('type') == 'file':
+            url = video.get('file', {}).get('url')
+        
+        page_block = PageTextBlock()
+        page_block.id = block.get('id')
+        page_block.type = 'video'
+        page_block.text = f"Video: <{url}>"
+        page_blocks.append(page_block)
+
+    def _parse_file(self, page_blocks: typing.List[PageBaseBlock], block):
+        file_info = block.get('file', {})
+        url = ""
+        if file_info.get('type') == 'external':
+            url = file_info.get('external', {}).get('url')
+        elif file_info.get('type') == 'file':
+            url = file_info.get('file', {}).get('url')
+        
+        caption = NotionUtils.get_markdown_text(file_info.get('caption', []))
+        text = caption if caption else "File"
+        
+        page_block = PageTextBlock()
+        page_block.id = block.get('id')
+        page_block.type = 'file'
+        page_block.text = f"[{text}]({url})"
+        page_blocks.append(page_block)
+
+    def _parse_pdf(self, page_blocks: typing.List[PageBaseBlock], block):
+        self._parse_file(page_blocks, block)
+
+    def _parse_bookmark(self, page_blocks: typing.List[PageBaseBlock], block):
+        url = block.get('bookmark', {}).get('url', '')
+        page_block = PageTextBlock()
+        page_block.id = block.get('id')
+        page_block.type = 'bookmark'
+        page_block.text = f"<{url}>"
+        page_blocks.append(page_block)
+
+    def _parse_equation(self, page_blocks: typing.List[PageBaseBlock], block):
+        expression = block.get('equation', {}).get('expression', '')
+        page_block = PageTextBlock()
+        page_block.id = block.get('id')
+        page_block.type = 'equation'
+        page_block.text = f"$$ {expression} $$"
         page_blocks.append(page_block)
 
     def _parse_toc(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageTocBlock()
-        page_block.id = block.id
-        page_block.type = block.type
+        page_block.id = block.get('id')
+        page_block.type = 'table_of_contents'
         page_block.page_blocks = page_blocks
         page_blocks.append(page_block)
 
     # noinspection PyUnusedLocal
     def _parse_sub_page(self, page_blocks: typing.List[PageBaseBlock], block):
         print("Ignore subpage block within page")
+        # In official API, child_page is a block.
+        # We might want to link to it?
+        pass
 
     def _parse_collection(self, page_blocks: typing.List[PageBaseBlock], block):
-        page_block = PageTableBlock()
-        page_block.id = block.id
-        page_block.type = block.type
-        page_block.block = block
-        page_blocks.append(page_block)
+        db_id = None
+        if block.get('type') == 'child_database':
+            db_id = block.get('id')
+        elif block.get('type') == 'linked_database':
+            db_id = block.get('linked_database', {}).get('database_id')
+        
+        if not db_id:
+            return
+
+        try:
+            client = Client(auth=Config.notion_token())
+            # Check for SSL Ignore flag
+            ignore_ssl = os.environ.get('NOTION_IGNORE_SSL', 'false').lower() == 'true'
+            if ignore_ssl:
+                import httpx
+                http_client = httpx.Client(verify=False)
+                client = Client(auth=Config.notion_token(), client=http_client)
+
+            # 1. Retrieve Database Schema (for headers)
+            database = client.databases.retrieve(database_id=db_id)
+            properties = database.get('properties', {})
+            # Sort properties? Notion API doesn't guarantee order, but usually we want them.
+            # Let's just use keys for now.
+            headers = list(properties.keys())
+            
+            # 2. Query Database Rows
+            # Use httpx directly if client.databases.query is missing or problematic
+            # But we can try client.request first? No, test showed client.request failed with 400.
+            # So we use client.client.post (httpx)
+            
+            url = f"https://api.notion.com/v1/databases/{db_id}/query"
+            headers_http = {
+                "Authorization": f"Bearer {Config.notion_token()}",
+                "Notion-Version": "2022-06-28",
+                "Content-Type": "application/json"
+            }
+            
+            # Use the client's internal http client to respect SSL settings
+            response = client.client.post(url, headers=headers_http, json={})
+            response.raise_for_status()
+            results = response.json().get('results', [])
+            
+            if not headers and results:
+                # Infer headers from the first row if schema properties are empty
+                first_row_props = results[0].get('properties', {})
+                headers = list(first_row_props.keys())
+            
+            # Reorder headers: title column should be first (matches Notion UI)
+            if headers:
+                title_col = None
+                other_cols = []
+                for h in headers:
+                    # Check if this is the title column
+                    if results and h in results[0].get('properties', {}):
+                        prop = results[0]['properties'][h]
+                        if prop.get('type') == 'title' or prop.get('id') == 'title':
+                            title_col = h
+                        else:
+                            other_cols.append(h)
+                    else:
+                        other_cols.append(h)
+                
+                # Rebuild headers with title first
+                if title_col:
+                    headers = [title_col] + other_cols
+            
+            rows = []
+            for page in results:
+                row_data = []
+                page_props = page.get('properties', {})
+                for header in headers:
+                    prop = page_props.get(header, {})
+                    row_data.append(self._parse_property_value(prop))
+                rows.append(row_data)
+            
+            page_block = PageTableBlock()
+            page_block.id = block.get('id')
+            page_block.set_data(headers, rows)
+            page_blocks.append(page_block)
+            
+        except Exception as e:
+            print(f"Failed to parse database {db_id}: {e}")
+            page_block = PageBaseBlock()
+            page_block.id = block.get('id')
+            page_block.type = 'collection_view_error'
+            page_block.text = f"Error parsing database: {e}"
+            page_blocks.append(page_block)
+
+    def _parse_property_value(self, prop_value):
+        """Parse various property types to string"""
+        prop_type = prop_value.get('type')
+        
+        if prop_type == 'title':
+            return NotionUtils.get_plain_text(prop_value.get('title', []))
+        
+        elif prop_type == 'rich_text':
+            return NotionUtils.get_plain_text(prop_value.get('rich_text', []))
+        
+        elif prop_type == 'number':
+            return str(prop_value.get('number', ''))
+        
+        elif prop_type == 'select':
+            return prop_value.get('select', {}).get('name', '') if prop_value.get('select') else ''
+        
+        elif prop_type == 'multi_select':
+            return ', '.join([item.get('name', '') for item in prop_value.get('multi_select', [])])
+        
+        elif prop_type == 'date':
+            date = prop_value.get('date')
+            if date:
+                start = date.get('start')
+                end = date.get('end')
+                return f"{start} -> {end}" if end else start
+            return ''
+        
+        elif prop_type == 'checkbox':
+            return 'Yes' if prop_value.get('checkbox') else 'No'
+        
+        elif prop_type == 'url':
+            return prop_value.get('url', '') or ''
+        
+        elif prop_type == 'email':
+            return prop_value.get('email', '') or ''
+        
+        elif prop_type == 'phone_number':
+            return prop_value.get('phone_number', '') or ''
+        
+        elif prop_type == 'status':
+            return prop_value.get('status', {}).get('name', '') if prop_value.get('status') else ''
+        
+        elif prop_type == 'people':
+            return ', '.join([person.get('name', '') for person in prop_value.get('people', [])])
+        
+        elif prop_type == 'files':
+            return ', '.join([file.get('name', '') for file in prop_value.get('files', [])])
+        
+        elif prop_type == 'relation':
+            return f"{len(prop_value.get('relation', []))} related"
+            
+        elif prop_type == 'formula':
+            formula = prop_value.get('formula', {})
+            f_type = formula.get('type')
+            if f_type == 'string':
+                return formula.get('string', '')
+            elif f_type == 'number':
+                return str(formula.get('number', ''))
+            elif f_type == 'boolean':
+                return 'Yes' if formula.get('boolean') else 'No'
+            elif f_type == 'date':
+                date = formula.get('date')
+                if date:
+                    return date.get('start', '')
+                return ''
+                
+        elif prop_type == 'created_time':
+            return prop_value.get('created_time', '')
+            
+        elif prop_type == 'last_edited_time':
+            return prop_value.get('last_edited_time', '')
+            
+        return ''
 
     def _parse_toggle(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageToggleBlock()
-        page_block.id = block.id
-        page_block.type = block.type
-        page_block.text = block.title
-        for child in block.children:
-            page_block.children.append(child.title)
+        page_block.id = block.get('id')
+        page_block.type = 'toggle'
+        page_block.text = NotionUtils.get_markdown_text(block.get('toggle', {}).get('rich_text', []))
+        
+        if block.get('has_children'):
+            children = self._get_children(block.get('id'))
+            # We need to parse children and add their text/content to page_block.children
+            # But PageToggleBlock.children expects strings (lines)? 
+            # Original code: for child in block.children: page_block.children.append(child.title)
+            # This seems to assume children are text blocks.
+            # Let's try to parse them properly.
+            # But PageToggleBlock implementation writes: <pre><code>...</code></pre>
+            # It seems it expects code or text.
+            # Let's just extract text from children.
+            for child in children:
+                # Try to get text from common blocks
+                type_ = child.get('type')
+                text = ""
+                if type_ == 'paragraph':
+                    text = NotionUtils.get_plain_text(child.get('paragraph', {}).get('rich_text', []))
+                elif type_ == 'code':
+                     text = NotionUtils.get_plain_text(child.get('code', {}).get('rich_text', []))
+                
+                if text:
+                    page_block.children.append(text)
 
         page_blocks.append(page_block)
 
     def _parse_column_list(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageColumnListBlock()
-        page_block.id = block.id
-        page_block.type = block.type
+        page_block.id = block.get('id')
+        page_block.type = 'column_list'
 
         page_column_blocks: typing.List[PageColumnBlock] = []
         page_block.children = page_column_blocks
 
-        if block.children:
-            for child in block.children:
-                self._parse_column(page_column_blocks, child)
+        if block.get('has_children'):
+            children = self._get_children(block.get('id'))
+            for child in children:
+                if child.get('type') == 'column':
+                    self._parse_column(page_column_blocks, child)
 
         page_blocks.append(page_block)
 
     def _parse_column(self, page_blocks: typing.List[PageColumnBlock], block):
         page_block = PageColumnBlock()
-        page_block.id = block.id
-        page_block.type = block.type
+        page_block.id = block.get('id')
+        page_block.type = 'column'
 
         column_blocks: typing.List[PageBaseBlock] = []
         page_block.children = column_blocks
 
-        if block.children:
-            for child in block.children:
+        if block.get('has_children'):
+            children = self._get_children(block.get('id'))
+            for child in children:
                 self._parse_page_blocks_flatt(column_blocks, child)
 
         page_blocks.append(page_block)
+
+    def _parse_synced_block(self, page_blocks: typing.List[PageBaseBlock], block):
+        # synced_block can be source or reference.
+        # If synced_from is None, it's source.
+        synced_from = block.get('synced_block', {}).get('synced_from')
+        
+        if synced_from is None:
+            # Source
+            page_block = PageSyncedSourceBlock()
+            page_block.id = block.get('id')
+            page_block.type = 'transclusion_container' # Keep internal type
+            
+            column_blocks: typing.List[PageBaseBlock] = []
+            page_block.children = column_blocks
+            
+            if block.get('has_children'):
+                children = self._get_children(block.get('id'))
+                for child in children:
+                    self._parse_page_blocks_flatt(column_blocks, child)
+            
+            page_blocks.append(page_block)
+        else:
+            # Reference (Copy)
+            page_block = PageSyncedCopyBlock()
+            page_block.id = block.get('id')
+            page_block.type = 'transclusion_reference' # Keep internal type
+            
+            # For reference, we might need to fetch the original block?
+            # Or does the API return children for reference too?
+            # API says: "The synced_block request will return the block content... 
+            # If it's a duplicate, it will have a synced_from property... 
+            # To get the content, you need to retrieve the original block's children."
+            # But `has_children` might be true?
+            # Actually, for synced block copy, we usually want to render the content.
+            # If `has_children` is true, we can just fetch them.
+            
+            column_blocks: typing.List[PageBaseBlock] = []
+            page_block.children = column_blocks
+            
+            if block.get('has_children'):
+                children = self._get_children(block.get('id'))
+                for child in children:
+                    self._parse_page_blocks_flatt(column_blocks, child)
+            elif synced_from:
+                 # Fetch from source
+                 source_id = synced_from.get('block_id')
+                 children = self._get_children(source_id)
+                 for child in children:
+                    self._parse_page_blocks_flatt(column_blocks, child)
+
+            page_blocks.append(page_block)
 
     def _parse_synced_source(self, page_blocks: typing.List[PageColumnBlock], block):
-        page_block = PageSyncedSourceBlock()
-        page_block.id = block.id
-        page_block.type = block.type
-
-        column_blocks: typing.List[PageBaseBlock] = []
-        page_block.children = column_blocks
-
-        if block.children:
-            for child in block.children:
-                self._parse_page_blocks_flatt(column_blocks, child)
-
-        page_blocks.append(page_block)
+        # Deprecated, mapped to _parse_synced_block
+        pass
 
     def _parse_synced_copy(self, page_blocks: typing.List[PageColumnBlock], block):
-        page_block = PageSyncedCopyBlock()
-        page_block.id = block.id
-        page_block.type = block.type
-
-        column_blocks: typing.List[PageBaseBlock] = []
-        page_block.children = column_blocks
-
-        if block.children:
-            for child in block.children:
-                self._parse_page_blocks_flatt(column_blocks, child)
-
-        page_blocks.append(page_block)
+        # Deprecated, mapped to _parse_synced_block
+        pass
 
     def _parse_stub(self, page_blocks: typing.List[PageBaseBlock], block):
         page_block = PageBaseBlock()

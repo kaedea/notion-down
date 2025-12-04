@@ -64,7 +64,7 @@ class NotionClientMarkDownPageTest(unittest.TestCase):
         for block in md_page.children:
             if type(block) is CodeBlock:
                 content = block.title
-                symbol = '[properties]'
+                symbol = '[notion-down-properties]'
                 if symbol in content:
                     content_properties = content[content.rfind(symbol) + len(symbol):]
                     lines = str(content_properties).split("\n")

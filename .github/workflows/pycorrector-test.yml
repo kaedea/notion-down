@@ -29,6 +29,9 @@ jobs:
           pip install https://github.com/kpu/kenlm/archive/master.zip
       
       - name: Run pycorrector tests
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_TOKEN_BLOG_URL: ${{ secrets.NOTION_TOKEN_BLOG_URL }}
         run: |
           python -m unittest tests.corrects_test.CorrectsApiTest.test_pycorrector_spelling_inspect_writer_r2
       

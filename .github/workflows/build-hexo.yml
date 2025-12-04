@@ -27,6 +27,8 @@ jobs:
           pip install requests
       
       - name: Parse Notion pages for Hexo
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
         run: |
           PYTHONPATH=./ python jobs/parse_sample_posts_for_hexo/main.py \
               --blog_url "https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34" \

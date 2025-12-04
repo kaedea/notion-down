@@ -533,19 +533,24 @@ class HexoWriter(NotionPageWriter):
         if len(notion_page.properties) <= 0:
             return []
 
-        front_matter = {
-            'layout': None,
-            'title': None,
-            'date': None,
-            'updated': None,
-            'comments': None,
-            'tags': None,
-            'categories': None,
-            'permalink': None,
-            'texcerptags': None,
-            'disableNunjucks': None,
-            'lang': None,
+        # Define front_matter fields with their expected types
+        # 'string' fields will join list values with ', '
+        # 'list' fields will remain as lists
+        front_matter_schema = {
+            'layout': 'string',
+            'title': 'string',
+            'date': 'string',
+            'updated': 'string',
+            'comments': 'string',
+            'tags': 'list',
+            'categories': 'list',
+            'permalink': 'string',
+            'texcerptags': 'string',
+            'disableNunjucks': 'string',
+            'lang': 'string',
         }
+        
+        front_matter = {key: None for key in front_matter_schema.keys()}
 
         for key in notion_page.properties.keys():
             symbol = "hexo."
@@ -576,17 +581,24 @@ class HexoWriter(NotionPageWriter):
                 if not front_matter[mapping[key]]:
                     front_matter[mapping[key]] = notion_page.properties[key]
 
-        # List type checking
-        list_key = ['categories', 'tags']
-        for key in list_key:
-            if front_matter[key]:
-                if type(front_matter[key]) is not list:
+        # Type normalization based on schema
+        for key, expected_type in front_matter_schema.items():
+            if front_matter[key] is None:
+                continue
+                
+            if expected_type == 'list':
+                # Ensure list fields are lists
+                if not isinstance(front_matter[key], list):
                     front_matter[key] = [front_matter[key]]
+            elif expected_type == 'string':
+                # Ensure string fields are strings
+                if isinstance(front_matter[key], list):
+                    # Join list with comma separator
+                    front_matter[key] = ', '.join(str(item) for item in front_matter[key])
+                else:
+                    front_matter[key] = str(front_matter[key])
 
         if front_matter['title']:
-            # Ensure title is a string (it might be a list from properties)
-            if isinstance(front_matter['title'], list):
-                front_matter['title'] = str(front_matter['title'])
             front_matter['title'] = self._polish_text(front_matter['title'])
 
         # Write front matter

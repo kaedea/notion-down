@@ -48,7 +48,7 @@ class CorrectsApiTest(unittest.TestCase):
         Config.set_page_titles([
             "NotionDown Spelling Inspect",
             "MarkDown Test Page - SPA",
-            "MarkDown Test Page - NotionDown",
+            "Hexo page -  NotionDown",
         ])
 
         md_pages = NotionReader.handle_post()

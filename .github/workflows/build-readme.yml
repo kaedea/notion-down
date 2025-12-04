@@ -23,6 +23,8 @@ jobs:
         run: |
           pip install notion-client
           pip install pangu
+          pip install python-slugify
+          pip install requests
       
       - name: Run tests to generate README
         run: |

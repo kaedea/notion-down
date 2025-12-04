@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/spell-inspect
+  workflow_dispatch:
 
 jobs:
   build-pycorrector-test:

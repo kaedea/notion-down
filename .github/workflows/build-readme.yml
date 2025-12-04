@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - ci/build-readme
+  workflow_dispatch:
 
 jobs:
   build-readme:

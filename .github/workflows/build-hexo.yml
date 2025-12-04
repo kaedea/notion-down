@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - ci/build-hexo
+  workflow_dispatch:
 
 jobs:
   build-hexo:

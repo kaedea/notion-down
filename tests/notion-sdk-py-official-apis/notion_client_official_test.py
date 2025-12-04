@@ -121,87 +121,104 @@ class NotionClientOfficialTest(unittest.TestCase):
         """
         CANNOT BE MIGRATED: Test uploading an image to Notion.
         
-        The official Notion API does NOT support uploading files or images.
+        Limitation: The current notion-client Python SDK does NOT support file uploads.
+        
+        Note: The official Notion API added file upload support in 2024, but the
+        notion-client SDK may not have implemented this feature yet. The SDK would
+        need a 'files' endpoint or similar functionality.
         
         Original test workflow:
         1. Download an existing image ✅ (supported)
-        2. Upload it as a new image block ❌ (NOT supported)
+        2. Upload it as a new image block ❌ (SDK limitation)
         
-        To upload images to Notion, you must:
+        To upload images to Notion, you can:
         - Use the unofficial token_v2 approach (original test), OR
-        - Manually upload through the Notion UI, OR
-        - Use a third-party service
+        - Wait for notion-client SDK to add file upload support, OR
+        - Use direct HTTP requests to Notion's file upload API, OR
+        - Manually upload through the Notion UI
         """
         assert False, (
-            "This test cannot be migrated to official API. "
-            "The official Notion API does not support uploading images. "
-            "Use token_v2 approach if you need to upload images programmatically."
+            "This test cannot be migrated with current notion-client SDK. "
+            "The SDK does not yet support file uploads (no 'files' endpoint). "
+            "Use token_v2 approach or wait for SDK update."
         )
 
     def test_replace_image(self):
         """
         CANNOT BE MIGRATED: Test replacing an existing image.
         
-        The official Notion API does NOT support:
-        - Uploading files/images
-        - Modifying existing blocks
+        Limitation: File upload not supported in current notion-client SDK.
+        
+        Note: The official API supports blocks.update() for modifying blocks,
+        but uploading new image files requires file upload functionality which
+        is not yet available in the notion-client Python SDK.
         
         Original test workflow:
         1. Download an existing image ✅ (supported)
-        2. Re-upload it to replace the original ❌ (NOT supported)
+        2. Re-upload it to replace the original ❌ (SDK limitation - no file upload)
         """
         assert False, (
-            "This test cannot be migrated to official API. "
-            "The official Notion API does not support uploading or modifying images. "
-            "Use token_v2 approach if you need to replace images programmatically."
+            "This test cannot be migrated with current notion-client SDK. "
+            "File upload functionality not yet implemented in SDK. "
+            "Use token_v2 approach or wait for SDK update."
         )
 
     def test_replace_image_r2(self):
         """
         CANNOT BE MIGRATED: Test replacing image via temporary upload.
         
-        The official Notion API does NOT support:
-        - Uploading files/images
-        - Creating new blocks
-        - Removing blocks
-        - Modifying block properties
+        Limitation: File upload not supported in current notion-client SDK.
+        
+        Note: The official API DOES support:
+        - ✅ Creating new blocks (blocks.children.append)
+        - ✅ Removing blocks (blocks.delete)
+        - ✅ Modifying block properties (blocks.update)
+        
+        But does NOT support (in current SDK):
+        - ❌ Uploading files/images (no 'files' endpoint in SDK)
         
         Original test workflow:
         1. Download image ✅ (supported)
-        2. Create temporary image block ❌ (NOT supported)
-        3. Upload to temporary block ❌ (NOT supported)
-        4. Copy URL to target block ❌ (NOT supported)
-        5. Remove temporary block ❌ (NOT supported)
+        2. Create temporary image block ✅ (supported - blocks.children.append)
+        3. Upload to temporary block ❌ (SDK limitation - no file upload)
+        4. Copy URL to target block ✅ (supported - blocks.update)
+        5. Remove temporary block ✅ (supported - blocks.delete)
         """
         assert False, (
-            "This test cannot be migrated to official API. "
-            "The official Notion API does not support creating, uploading, or removing blocks. "
-            "Use token_v2 approach if you need this functionality."
+            "This test cannot be migrated with current notion-client SDK. "
+            "While block manipulation is supported, file upload is not yet available in SDK. "
+            "Use token_v2 approach or wait for SDK update."
         )
 
     def test_replace_image_r3(self):
         """
         CANNOT BE MIGRATED: Test replacing image with block manipulation.
         
-        The official Notion API does NOT support:
-        - Uploading files/images
-        - Creating new blocks
-        - Moving blocks
-        - Removing blocks
-        - Modifying text blocks
+        Limitations:
+        1. File upload not supported in current notion-client SDK
+        2. Moving blocks not supported by Notion API itself
+        
+        Note: The official API DOES support:
+        - ✅ Creating new blocks (blocks.children.append)
+        - ✅ Removing blocks (blocks.delete)
+        - ✅ Modifying text blocks (blocks.update)
+        
+        But does NOT support:
+        - ❌ Uploading files/images (SDK limitation)
+        - ❌ Moving blocks to change order (API limitation)
         
         Original test workflow:
         1. Download image ✅ (supported)
-        2. Create new image block ❌ (NOT supported)
-        3. Upload image ❌ (NOT supported)
-        4. Move new block after old block ❌ (NOT supported)
-        5. Remove old block ❌ (NOT supported)
-        6. Update text blocks with timestamp ❌ (NOT supported)
+        2. Create new image block ✅ (supported - blocks.children.append)
+        3. Upload image ❌ (SDK limitation - no file upload)
+        4. Move new block after old block ❌ (API limitation - no block reordering)
+        5. Remove old block ✅ (supported - blocks.delete)
+        6. Update text blocks with timestamp ✅ (supported - blocks.update)
         """
         assert False, (
-            "This test cannot be migrated to official API. "
-            "The official Notion API does not support any write operations. "
-            "Use token_v2 approach if you need to manipulate Notion content."
+            "This test cannot be migrated due to two limitations: "
+            "1) File upload not in SDK, 2) Block reordering not in API. "
+            "Use token_v2 approach for full functionality."
         )
 
     def test_get_md_page_table(self):

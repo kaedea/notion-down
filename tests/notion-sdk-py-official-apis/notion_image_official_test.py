@@ -38,29 +38,35 @@ class NotionImageOfficialTest(unittest.TestCase):
         """
         CANNOT BE MIGRATED: Test replacing image sources in Notion pages.
         
-        This test cannot be migrated to the official API because:
-        1. The official API does NOT support uploading files/images to Notion
-        2. The official API does NOT support modifying existing blocks
-        3. The official API does NOT support creating new blocks
-        4. The official API does NOT support moving or removing blocks
+        Limitation: File upload not supported in current notion-client SDK.
+        
+        Note: The official Notion API DOES support:
+        - ✅ Reading pages and blocks
+        - ✅ Creating new blocks (blocks.children.append)
+        - ✅ Modifying blocks (blocks.update)
+        - ✅ Removing blocks (blocks.delete)
+        
+        But the current notion-client Python SDK does NOT support:
+        - ❌ Uploading files/images (no 'files' endpoint in SDK)
+        - ❌ Moving blocks to change order (API limitation)
         
         Original test workflow:
         1. Read pages from Notion ✅ (supported)
         2. Find image blocks ✅ (supported)
         3. Download images from external URLs ✅ (supported)
-        4. Upload images to Notion ❌ (NOT supported)
-        5. Replace old image blocks with new ones ❌ (NOT supported)
+        4. Upload images to Notion ❌ (SDK limitation - no file upload)
+        5. Replace old image blocks with new ones ✅ (supported - blocks.update)
         
-        The official Notion API is read-only for content. To perform image
-        replacement, you would need to:
+        To perform image replacement, you would need to:
         - Use the unofficial token_v2 approach (original test), OR
-        - Manually update images through the Notion UI, OR
-        - Use a third-party service that supports Notion modifications
+        - Wait for notion-client SDK to add file upload support, OR
+        - Use direct HTTP requests to Notion's file upload API, OR
+        - Manually update images through the Notion UI
         """
         assert False, (
-            "This test cannot be migrated to official API. "
-            "The official Notion API does not support uploading images or modifying blocks. "
-            "Use token_v2 approach (original test) if you need to replace images programmatically."
+            "This test cannot be migrated with current notion-client SDK. "
+            "File upload functionality not yet implemented in SDK. "
+            "Use token_v2 approach or wait for SDK update."
         )
 
     def _download_file(self, source, path):

@@ -62,10 +62,7 @@ class NotionHandlerTest(unittest.TestCase):
         ''', block_text)
 
     def test_parse_notion_page_with_channel_short_code(self):
-        main_page = NotionReader.read_main_page()
-        self.assertIsNotNone(main_page)
-
-        test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown ShortCode")
+        test_page = NotionReader.read_page_with_title("NotionDown ShortCode")
         self.assertIsNotNone(test_page)
 
         notion_page = NotionPage()
@@ -73,10 +70,7 @@ class NotionHandlerTest(unittest.TestCase):
         self.assertIsNotNone(notion_page)
 
     def test_parse_notion_page_with_pull_quote(self):
-        main_page = NotionReader.read_main_page()
-        self.assertIsNotNone(main_page)
-
-        test_page = Utils.find_one(main_page.children, lambda it: it and str(it.title) == "NotionDown Pullquote Blocks")
+        test_page = NotionReader.read_page_with_title("NotionDown Pullquote Blocks")
         self.assertIsNotNone(test_page)
 
         notion_page = NotionPage()

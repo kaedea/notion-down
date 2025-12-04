@@ -584,6 +584,9 @@ class HexoWriter(NotionPageWriter):
                     front_matter[key] = [front_matter[key]]
 
         if front_matter['title']:
+            # Ensure title is a string (it might be a list from properties)
+            if isinstance(front_matter['title'], list):
+                front_matter['title'] = str(front_matter['title'])
             front_matter['title'] = self._polish_text(front_matter['title'])
 
         # Write front matter

@@ -26,7 +26,7 @@ class NotionWriterHexoIntegrationTest(unittest.TestCase):
     def test_write_page_with_hexo_channel_2(self):
         Config.set_writer('Hexo')
         NotionWriter.clean_output()
-        notion_page = NotionReader.handle_page_with_title("Hexo page - elements showcase")
+        notion_page = NotionReader.handle_page_with_title("Hexo page - Elements Showcase")
         self.assertIsNotNone(notion_page)
         NotionWriter.handle_page(notion_page)
 

@@ -125,7 +125,7 @@ class ArgsParser:
 
         # 2. Load default values (lowest priority)
         for key in DEFAULT_ARGS.keys():
-            if DEFAULT_ARGS[key]:
+            if key in DEFAULT_ARGS:
                 Config.set(key, DEFAULT_ARGS[key])
 
         # 3. load configs from SysEnv parameters

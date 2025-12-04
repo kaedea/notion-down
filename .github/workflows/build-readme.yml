@@ -27,6 +27,9 @@ jobs:
           pip install requests
       
       - name: Run tests to generate README
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_TOKEN_BLOG_URL: ${{ secrets.NOTION_TOKEN_BLOG_URL }}
         run: |
           python -m unittest tests.assemble.notion_ci_test.NotionCiTest.test_generate_read_me
       

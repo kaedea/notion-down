@@ -6,6 +6,9 @@ on:
       - ci/build-readme
   workflow_dispatch:
 
+permissions:
+  contents: write  # Required to push to deploy/readme branch
+
 jobs:
   build-readme:
     runs-on: ubuntu-latest
@@ -56,7 +59,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: deploy/readme
-          token: ${{ secrets.GH_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -97,8 +100,8 @@ jobs:
               echo "not modified"
           else
               echo "has modified, try git push"
-              git config user.name "Kaede"
-              git config user.email "kidhaibara@gmail.com"
+              git config user.name "github-actions[bot]"
+              git config user.email "github-actions[bot]@users.noreply.github.com"
               git add .
               git status
               git commit -m "Update README via GitHub Actions - ${{ github.run_number }}"

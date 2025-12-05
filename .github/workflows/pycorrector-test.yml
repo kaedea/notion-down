@@ -25,7 +25,7 @@ jobs:
           pip install pangu
           pip install python-slugify
           pip install requests
-          pip install pycorrector
+          pip install pycorrector torch
           pip install https://github.com/kpu/kenlm/archive/master.zip
       
       - name: Run pycorrector tests

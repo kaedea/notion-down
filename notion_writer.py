@@ -118,8 +118,10 @@ class NotionWriter:
         for notion_page in notion_pages:
             file_outputs = NotionWriter.handle_page(notion_page)
             for channel in file_outputs.keys():
-                if channel not in dir_outputs and file_outputs[channel].has_output():
-                    dir_outputs[channel] = file_outputs[channel]
+                # Check if file_outputs[channel] is NotionDirOutput (not empty dict)
+                if isinstance(file_outputs[channel], NotionDirOutput):
+                    if channel not in dir_outputs and file_outputs[channel].has_output():
+                        dir_outputs[channel] = file_outputs[channel]
 
         return dir_outputs
 

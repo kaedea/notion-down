@@ -36,10 +36,11 @@ def start():
 
 if __name__ == '__main__':
     Config.parse_configs()
-    Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
     Config.set_download_image(True)
     Config.set_writer('Hexo')
-    Config.set_page_titles_match(["^(Hexo page -)"])
+    # For debug
+    # Config.set_blog_url("https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34")
+    # Config.set_page_titles_match(["^(Hexo page -)"])
 
     print("")
     print("Run with configs:")

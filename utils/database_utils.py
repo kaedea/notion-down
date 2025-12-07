@@ -11,7 +11,7 @@ class DatabaseColumnOrderingUtils:
     def parse_column_weights(description_text: str) -> Optional[Dict[str, int]]:
         """Parse column weight configuration from database description text.
         
-        The configuration format is: column-order: Name=10, Age=9, Email=8
+        Format: property-order: Name=10, Age=9, Email=8
         This configuration should be on a single line in the description.
         
         Args:
@@ -21,7 +21,7 @@ class DatabaseColumnOrderingUtils:
             dict: {column_name: weight} or None if no configuration found
             
         Examples:
-            >>> text = "Some description\\n\\ncolumn-order: Name=100, Email=90\\n\\nMore text"
+            >>> text = "Some description\n\nproperty-order: Name=100, Email=90\n\nMore text"
             >>> DatabaseColumnOrderingUtils.parse_column_weights(text)
             {'Name': 100, 'Email': 90}
             
@@ -32,10 +32,10 @@ class DatabaseColumnOrderingUtils:
         if not description_text:
             return None
         
-        # Match format: column-order: Name=10, Age=9, ...
+        # Match format: property-order: Name=10, Age=9, ...
         # The pattern matches from start of line (or after newline) to end of line
         # This ensures we only parse one line, not the entire description
-        match = re.search(r'(?:^|\n)\s*column-order:\s*(.+?)(?:\n|$)', description_text, re.IGNORECASE | re.MULTILINE)
+        match = re.search(r'(?:^|\n)\s*property-order:\s*(.+?)(?:\n|$)', description_text, re.IGNORECASE | re.MULTILINE)
         if not match:
             return None
         

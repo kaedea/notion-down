@@ -129,14 +129,14 @@ class TestDatabaseParsing(unittest.TestCase):
         # Import the shared utility class
         from utils.database_utils import DatabaseColumnOrderingUtils
         
-        # Test 1: Valid column-order configuration
-        description_text_1 = "This is a test database.\n\ncolumn-order: Name=100, Email=90, Status=80\n\nOther notes..."
+        # Test 1: Valid property-order configuration
+        description_text_1 = "This is a test database.\n\nproperty-order: Name=100, Email=90, Status=80\n\nOther notes..."
         weights_1 = DatabaseColumnOrderingUtils.parse_column_weights(description_text_1)
         print(f"Test 1 - Parsed weights: {weights_1}")
         self.assertIsNotNone(weights_1)
         self.assertEqual(weights_1, {'Name': 100, 'Email': 90, 'Status': 80})
         
-        # Test 2: No column-order configuration
+        # Test 2: No property-order configuration
         description_text_2 = "Just a regular description"
         weights_2 = DatabaseColumnOrderingUtils.parse_column_weights(description_text_2)
         print(f"Test 2 - No config, weights: {weights_2}")
@@ -147,7 +147,7 @@ class TestDatabaseParsing(unittest.TestCase):
         print(f"Test 3 - Empty description, weights: {weights_3}")
         self.assertIsNone(weights_3)
         
-        # Test 4: Multi-line description with column-order on one line
+        # Test 4: Multi-line description with property-order on one line
         description_text_4 = """This is a database for user management.
         
 It contains the following information:
@@ -155,7 +155,7 @@ It contains the following information:
 - Email addresses
 - Status flags
 
-column-order: Name=100, Email=90, Status=80, CreatedAt=70
+property-order: Name=100, Email=90, Status=80, CreatedAt=70
 
 Please note that this database is updated daily.
 Additional notes and documentation can go here."""
@@ -189,11 +189,11 @@ Additional notes and documentation can go here."""
         self.assertEqual(sorted_6[0], 'C')
         self.assertEqual(sorted_6[1], 'A')
         
-        # Test 7: Column-order in middle of line (should NOT match)
-        description_text_7 = "Some text column-order: Name=10 more text on same line"
+        # Test 7: property-order in middle of line (should NOT match)
+        description_text_7 = "Some text property-order: Name=10 more text on same line"
         weights_7 = DatabaseColumnOrderingUtils.parse_column_weights(description_text_7)
         print(f"Test 7 - Inline config (should NOT match): {weights_7}")
-        # Should NOT match because column-order must be at start of line
+        # Should NOT match because property-order must be at start of line
         self.assertIsNone(weights_7)
         
         print("✓ All column ordering tests passed")

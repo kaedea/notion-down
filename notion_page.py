@@ -1056,15 +1056,27 @@ class NotionPage:
             # Use httpx directly to avoid potential issues with notion-client query method
             import httpx
             
-            token = NotionReader.get_client()._client._auth
+            token = Config.notion_token()
             headers_http = {
                 "Authorization": f"Bearer {token}",
                 "Notion-Version": "2022-06-28",
                 "Content-Type": "application/json"
             }
             
+            url = f"https://api.notion.com/v1/databases/{db_id}/query"
+            
             # Use the client's internal http client to respect SSL settings
-            response = client.client.post(url, headers=headers_http, json={})
+            if hasattr(client, 'client') and client.client:
+                # Use the existing client's httpx client (respects SSL settings)
+                response = client.client.post(url, headers=headers_http, json={})
+            else:
+                # Fallback: create new httpx client
+                if ignore_ssl:
+                    http_client_req = httpx.Client(verify=False)
+                else:
+                    http_client_req = httpx.Client()
+                response = http_client_req.post(url, headers=headers_http, json={})
+            
             response.raise_for_status()
             results = response.json().get('results', [])
             
@@ -1074,28 +1086,10 @@ class NotionPage:
                 headers = list(first_row_props.keys())
             
             # Apply column ordering
-            if headers:
-                if column_weights:
-                    # Use weighted ordering if configured
-                    headers = self._sort_columns_by_weight(headers, column_weights)
-                else:
-                    # Fallback: title column first (matches Notion UI)
-                    title_col = None
-                    other_cols = []
-                    for h in headers:
-                        # Check if this is the title column
-                        if results and h in results[0].get('properties', {}):
-                            prop = results[0]['properties'][h]
-                            if prop.get('type') == 'title' or prop.get('id') == 'title':
-                                title_col = h
-                            else:
-                                other_cols.append(h)
-                        else:
-                            other_cols.append(h)
-                    
-                    # Rebuild headers with title first
-                    if title_col:
-                        headers = [title_col] + other_cols
+            if headers and column_weights:
+                # Only apply weighted ordering if explicitly configured
+                headers = self._sort_columns_by_weight(headers, column_weights)
+            # Otherwise, preserve the original order from Notion API
             
             rows = []
             for page in results:

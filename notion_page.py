@@ -1094,10 +1094,10 @@ class NotionPage:
         prop_type = prop_value.get('type')
         
         if prop_type == 'title':
-            return NotionUtils.get_plain_text(prop_value.get('title', []))
+            return NotionUtils.get_markdown_text(prop_value.get('title', []))
         
         elif prop_type == 'rich_text':
-            return NotionUtils.get_plain_text(prop_value.get('rich_text', []))
+            return NotionUtils.get_markdown_text(prop_value.get('rich_text', []))
         
         elif prop_type == 'number':
             return str(prop_value.get('number', ''))

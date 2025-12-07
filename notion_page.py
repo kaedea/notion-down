@@ -1065,17 +1065,27 @@ class NotionPage:
             
             url = f"https://api.notion.com/v1/databases/{db_id}/query"
             
+            # Query with sorting by created_time to ensure consistent row order
+            query_body = {
+                "sorts": [
+                    {
+                        "timestamp": "created_time",
+                        "direction": "ascending"
+                    }
+                ]
+            }
+            
             # Use the client's internal http client to respect SSL settings
             if hasattr(client, 'client') and client.client:
                 # Use the existing client's httpx client (respects SSL settings)
-                response = client.client.post(url, headers=headers_http, json={})
+                response = client.client.post(url, headers=headers_http, json=query_body)
             else:
                 # Fallback: create new httpx client
                 if ignore_ssl:
                     http_client_req = httpx.Client(verify=False)
                 else:
                     http_client_req = httpx.Client()
-                response = http_client_req.post(url, headers=headers_http, json={})
+                response = http_client_req.post(url, headers=headers_http, json=query_body)
             
             response.raise_for_status()
             results = response.json().get('results', [])

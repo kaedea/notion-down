@@ -1000,6 +1000,29 @@ class NotionPage:
         # We might want to link to it?
         pass
 
+    def _parse_column_weights(self, description_rich_text):
+        """Parse column weight configuration from database description.
+        
+        This is a wrapper around DatabaseColumnOrderingUtils.parse_column_weights
+        that handles the rich text to plain text conversion.
+        """
+        if not description_rich_text:
+            return None
+        
+        from utils.notion_utils import NotionUtils
+        from utils.database_utils import DatabaseColumnOrderingUtils
+        
+        text = NotionUtils.get_plain_text(description_rich_text)
+        return DatabaseColumnOrderingUtils.parse_column_weights(text)
+    
+    def _sort_columns_by_weight(self, headers, weights):
+        """Sort columns based on weight configuration.
+        
+        This is a wrapper around DatabaseColumnOrderingUtils.sort_columns_by_weight.
+        """
+        from utils.database_utils import DatabaseColumnOrderingUtils
+        return DatabaseColumnOrderingUtils.sort_columns_by_weight(headers, weights)
+
     def _parse_collection(self, page_blocks: typing.List[PageBaseBlock], block):
         db_id = None
         if block.get('type') == 'child_database':
@@ -1017,23 +1040,25 @@ class NotionPage:
             if ignore_ssl:
                 import httpx
                 http_client = httpx.Client(verify=False)
-                client = Client(auth=Config.notion_token(), client=http_client)
-
-            # 1. Retrieve Database Schema (for headers)
+            from notion_reader import NotionReader
+            client = NotionReader.get_client()
+            
+            # Retrieve database schema and description
             database = client.databases.retrieve(database_id=db_id)
             properties = database.get('properties', {})
-            # Sort properties? Notion API doesn't guarantee order, but usually we want them.
-            # Let's just use keys for now.
             headers = list(properties.keys())
             
-            # 2. Query Database Rows
-            # Use httpx directly if client.databases.query is missing or problematic
-            # But we can try client.request first? No, test showed client.request failed with 400.
-            # So we use client.client.post (httpx)
+            # Parse column weight configuration from description
+            description = database.get('description', [])
+            column_weights = self._parse_column_weights(description)
             
-            url = f"https://api.notion.com/v1/databases/{db_id}/query"
+            # Query database for rows
+            # Use httpx directly to avoid potential issues with notion-client query method
+            import httpx
+            
+            token = NotionReader.get_client()._client._auth
             headers_http = {
-                "Authorization": f"Bearer {Config.notion_token()}",
+                "Authorization": f"Bearer {token}",
                 "Notion-Version": "2022-06-28",
                 "Content-Type": "application/json"
             }
@@ -1048,24 +1073,29 @@ class NotionPage:
                 first_row_props = results[0].get('properties', {})
                 headers = list(first_row_props.keys())
             
-            # Reorder headers: title column should be first (matches Notion UI)
+            # Apply column ordering
             if headers:
-                title_col = None
-                other_cols = []
-                for h in headers:
-                    # Check if this is the title column
-                    if results and h in results[0].get('properties', {}):
-                        prop = results[0]['properties'][h]
-                        if prop.get('type') == 'title' or prop.get('id') == 'title':
-                            title_col = h
+                if column_weights:
+                    # Use weighted ordering if configured
+                    headers = self._sort_columns_by_weight(headers, column_weights)
+                else:
+                    # Fallback: title column first (matches Notion UI)
+                    title_col = None
+                    other_cols = []
+                    for h in headers:
+                        # Check if this is the title column
+                        if results and h in results[0].get('properties', {}):
+                            prop = results[0]['properties'][h]
+                            if prop.get('type') == 'title' or prop.get('id') == 'title':
+                                title_col = h
+                            else:
+                                other_cols.append(h)
                         else:
                             other_cols.append(h)
-                    else:
-                        other_cols.append(h)
-                
-                # Rebuild headers with title first
-                if title_col:
-                    headers = [title_col] + other_cols
+                    
+                    # Rebuild headers with title first
+                    if title_col:
+                        headers = [title_col] + other_cols
             
             rows = []
             for page in results:

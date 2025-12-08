@@ -1,0 +1,110 @@
+name: Build and Publish README
+
+on:
+  push:
+    branches:
+      - ci/build-readme
+  workflow_dispatch:
+
+permissions:
+  contents: write  # Required to push to deploy/readme branch
+
+jobs:
+  build-readme:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+      
+      - name: Install dependencies
+        run: |
+          pip install notion-client
+          pip install pangu
+          pip install python-slugify
+          pip install requests
+      
+      - name: Run tests to generate README
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_TOKEN_BLOG_URL: ${{ secrets.NOTION_TOKEN_BLOG_URL }}
+        run: |
+          python -m unittest tests.assemble.notion_ci_test.NotionCiTest.test_generate_read_me
+      
+      - name: Dump outputs
+        run: |
+          echo "Generated MD file:"
+          cat "$(find ~/work/notion-down/notion-down/build -name "*.md" -type f | head -1)"
+          echo ""
+          echo "---"
+          pwd && ls -l
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: readme-build
+          path: ./build
+
+  publish-github-readme:
+    needs: build-readme
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: deploy/readme
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: readme-build
+          path: ./build
+      
+      - name: Copy generated files
+        run: |
+          pwd && ls -l
+          echo "---"
+          
+          ls -l ./build/NotionDown
+          
+          # Copy assets files
+          if [ -d ./build/NotionDown/assets/ ]; then
+              echo "copy assets files"
+              cp -rv ./build/NotionDown/assets/. ./assets
+          else
+              echo "No assets files"
+          fi
+          
+          # Copy MD file
+          echo "mv $(find ./build -name "*.md" -type f | head -1) ./README.md"
+          mv $(find ./build -name "*.md" -type f | head -1) ./README.md
+          cat ./README.md
+      
+      - name: Commit and push changes
+        run: |
+          pwd
+          echo ""
+          echo "---"
+          
+          # Check for modifications
+          has_modified="$(git diff HEAD --name-only --diff-filter=ACMR --ignore-space-at-eol -M100%)"
+          
+          if [ -z "$has_modified" ]; then
+              echo "not modified"
+          else
+              echo "has modified, try git push"
+              git config user.name "github-actions[bot]"
+              git config user.email "github-actions[bot]@users.noreply.github.com"
+              git add .
+              git status
+              git commit -m "Update README via GitHub Actions - ${{ github.run_number }}"
+              git status
+              git push origin deploy/readme
+          fi

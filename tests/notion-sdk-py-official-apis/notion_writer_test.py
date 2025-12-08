@@ -58,7 +58,7 @@ class NotionHandlerTest(unittest.TestCase):
     def test_handle_write_markdown_notion_down_solution_showcase_page(self):
         NotionWriter.clean_output()
 
-        md_page = NotionReader.handle_page_with_title("MarkDown Test Page - NotionDown")
+        md_page = NotionReader.handle_page_with_title("Hexo page -  NotionDown")
         self.assertIsNotNone(md_page)
 
         NotionWriter.handle_page(md_page)

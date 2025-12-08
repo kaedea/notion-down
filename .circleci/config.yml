@@ -57,12 +57,12 @@ jobs:
       - run:
           name: pip install
           command: |
-            pip install notion
+            pip install notion-client
             pip install pangu
       - run:
           name: Run tests
           command: |
-            python -m unittest test.notion_ci_test.NotionCiTest.test_generate_read_me
+            python -m unittest tests.assemble.notion_ci_test.NotionCiTest.test_generate_read_me
       - run:
           name: Dump outputs
           command: |
@@ -152,7 +152,7 @@ jobs:
       - run:
           name: pip install
           command: |
-            pip install notion
+            pip install notion-client
             pip install pangu
             pip install pycorrector
             pip install https://github.com/kpu/kenlm/archive/master.zip
@@ -160,7 +160,7 @@ jobs:
       - run:
           name: Run tests
           command: |
-            python -m unittest test.corrects_test.CorrectsApiTest.test_pycorrector_spelling_inspect_writer_r2
+            python -m unittest tests.corrects_test.CorrectsApiTest.test_pycorrector_spelling_inspect_writer_r2
 
       - store_artifacts:
           path: ~/spell-inspect/build/SpellInspect
@@ -180,7 +180,7 @@ jobs:
       - run:
           name: pip install
           command: |
-            pip install notion
+            pip install notion-client
             pip install pangu
       - run:
           name: Run tests

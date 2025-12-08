@@ -132,6 +132,60 @@ class Utils:
     def is_unittest():
         return 'unittest' in sys.modules.keys()
 
+    @staticmethod
+    def escape_yaml_string(value):
+        """
+        Escape YAML string values to prevent parsing errors.
+        Wraps strings in quotes if they contain special characters.
+        
+        Args:
+            value: The value to escape (will be converted to string)
+            
+        Returns:
+            str: Properly escaped YAML string value
+            
+        Examples:
+            >>> Utils.escape_yaml_string("simple")
+            'simple'
+            >>> Utils.escape_yaml_string("title: with colon")
+            '"title: with colon"'
+            >>> Utils.escape_yaml_string('has "quotes"')
+            '"has \\"quotes\\""'
+        """
+        if not value:
+            return '""'
+        
+        value_str = str(value)
+        
+        # Characters that require quoting in YAML
+        special_chars = [':', '#', '@', '`', '"', "'", '!', '%', '&', '*', '{', '}', '[', ']', '|', '>', '<', '?', '-', ',']
+        
+        # Check if value needs quoting
+        needs_quoting = False
+        
+        # Check for special characters
+        for char in special_chars:
+            if char in value_str:
+                needs_quoting = True
+                break
+        
+        # Check if starts/ends with whitespace
+        if value_str != value_str.strip():
+            needs_quoting = True
+        
+        # Check if it looks like a number or boolean
+        if value_str.lower() in ['true', 'false', 'yes', 'no', 'on', 'off', 'null', '~']:
+            needs_quoting = True
+        
+        if not needs_quoting:
+            return value_str
+        
+        # Escape double quotes and backslashes
+        escaped = value_str.replace('\\', '\\\\').replace('"', '\\"')
+        
+        # Wrap in double quotes
+        return '"{}"'.format(escaped)
+
 
 class FileUtils:
     @staticmethod

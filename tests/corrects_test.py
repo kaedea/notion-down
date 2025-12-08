@@ -48,7 +48,7 @@ class CorrectsApiTest(unittest.TestCase):
         Config.set_page_titles([
             "NotionDown Spelling Inspect",
             "MarkDown Test Page - SPA",
-            "MarkDown Test Page - NotionDown",
+            "Hexo page -  NotionDown",
         ])
 
         md_pages = NotionReader.handle_post()
@@ -79,12 +79,12 @@ class CorrectsApiTest(unittest.TestCase):
 
     def test_pycorrector_spelling_inspect_writer(self):
         md_page = self._get_test_page()
-        Config.set_writer(['SpellInspect'])
+        Config.set_writer('SpellInspect')
         NotionWriter.clean_output()
         NotionWriter.handle_page(md_page)
 
     def test_pycorrector_spelling_inspect_writer_r2(self):
         md_pages = self._get_test_pages()
-        Config.set_writer(['SpellInspect'])
+        Config.set_writer('SpellInspect')
         NotionWriter.clean_output()
         NotionWriter.handle_pages(md_pages)

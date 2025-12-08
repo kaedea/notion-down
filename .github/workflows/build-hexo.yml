@@ -1,0 +1,158 @@
+name: Build and Deploy Hexo Blog
+
+on:
+  push:
+    branches:
+      - ci/build-hexo
+  workflow_dispatch:
+
+jobs:
+  build-hexo:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+      
+      - name: Install Python dependencies
+        run: |
+          pip install notion-client
+          pip install pangu
+          pip install python-slugify
+          pip install requests
+      
+      - name: Parse Notion pages for Hexo
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        run: |
+          PYTHONPATH=./ python jobs/parse_sample_posts_for_hexo/main.py \
+              --blog_url "https://www.notion.so/kaedea/Noton-Down-Sample-440de7dca89840b6b3bab13d2aa92a34" \
+              --channels "Hexo" \
+              --download_image true \
+              --page_titles_match "^(Hexo page -)"
+      
+      - name: Dump outputs
+        run: |
+          echo "Generated MD file:"
+          cat "$(find ./build -name "*.md" -type f | head -1)"
+          echo ""
+          echo "---"
+          pwd && ls -l
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hexo-build
+          path: ./build
+
+  build-hexo-generate:
+    needs: build-hexo
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: hexo-build
+          path: ./build
+      
+      - name: Checkout Hexo source repo
+        uses: actions/checkout@v4
+        with:
+          repository: kaedea/notion-down-hexo-showcase
+          token: ${{ secrets.GH_TOKEN }}
+          path: notion-down-hexo-showcase
+      
+      - name: Copy Notion pages to Hexo source
+        run: |
+          cp -rv ./build/Hexo/. notion-down-hexo-showcase/hexo-blog/source
+          set +e
+          ls -l notion-down-hexo-showcase/hexo-blog/source
+          ls -l notion-down-hexo-showcase/hexo-blog/source/assets
+          ls -l notion-down-hexo-showcase/hexo-blog/source/_drafts
+          ls -l notion-down-hexo-showcase/hexo-blog/source/_posts
+          set -e
+      
+      - name: Commit and push posts
+        working-directory: notion-down-hexo-showcase
+        run: |
+          pwd && ls -l
+          git config --global user.email "kidhaibara@gmail.com"
+          git config --global user.name "Kaede Akatsuki"
+          git add .
+          git status
+          git commit -m "GitHub Actions update posts - ${{ github.run_number }}" || echo "No changes to commit"
+          git push origin master
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install Hexo CLI
+        run: npm install -g hexo-cli
+      
+      - name: Install Hexo dependencies
+        working-directory: notion-down-hexo-showcase/hexo-blog
+        run: npm install
+      
+      - name: Generate static website
+        working-directory: notion-down-hexo-showcase/hexo-blog
+        run: |
+          pwd && ls -l
+          hexo clean
+          hexo generate
+          cat public/index.html
+      
+      - name: Upload Hexo public artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hexo-public
+          path: notion-down-hexo-showcase/hexo-blog/public
+
+  publish-github-hexo:
+    needs: build-hexo-generate
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Hexo showcase repo
+        uses: actions/checkout@v4
+        with:
+          repository: kaedea/notion-down-hexo-showcase
+          token: ${{ secrets.GH_TOKEN }}
+          path: notion-down-hexo-showcase
+      
+      - name: Download Hexo public artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: hexo-public
+          path: hexo-public
+      
+      - name: Collect Hexo dist
+        working-directory: notion-down-hexo-showcase
+        run: |
+          pwd && ls -l
+          rm -rf docs
+          mv ../hexo-public docs
+          ls -l docs
+          echo "Configure CNAME"
+          if [ -f "docs/CNAME" ]; then
+              rm docs/CNAME
+          fi
+          echo "hexo.kaedea.com" > docs/CNAME
+      
+      - name: Commit and push Hexo dist
+        working-directory: notion-down-hexo-showcase
+        run: |
+          pwd && ls -l
+          git config --global user.email "kidhaibara@gmail.com"
+          git config --global user.name "Kaede Akatsuki"
+          git add .
+          git status
+          git commit -m "GitHub Actions deploy - ${{ github.run_number }}"
+          git push origin master

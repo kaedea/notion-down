@@ -103,7 +103,7 @@ class Config:
 
     @staticmethod
     def notion_down_version():
-        return "0.2.2"
+        return "1.0.0"
 
     @staticmethod
     def notion_down_revision():

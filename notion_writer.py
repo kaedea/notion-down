@@ -610,9 +610,10 @@ class HexoWriter(NotionPageWriter):
                 continue
             if type(front_matter[key]) is list:
                 lines.append('{}:'.format(key))
-                lines.append("\n".join([' - {}'.format(it) for it in front_matter[key]]))
+                lines.append("\n".join([' - {}'.format(Utils.escape_yaml_string(it)) for it in front_matter[key]]))
             else:
-                lines.append('{}: {}'.format(key, front_matter[key]))
+                # Properly escape YAML string values
+                lines.append('{}: {}'.format(key, Utils.escape_yaml_string(front_matter[key])))
 
         lines.append('---\n')
         return lines

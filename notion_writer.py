@@ -536,19 +536,20 @@ class HexoWriter(NotionPageWriter):
             return []
 
         # Define front_matter fields with their expected types
-        # 'string' fields will join list values with ', '
+        # 'string' fields will join list values with ', ' and convert to string
         # 'list' fields will remain as lists
+        # 'auto' fields will preserve their original type (bool, int, float, string)
         front_matter_schema = {
             'layout': 'string',
             'title': 'string',
             'date': 'string',
             'updated': 'string',
-            'comments': 'string',
+            'comments': 'auto',  # Can be boolean or string
             'tags': 'list',
             'categories': 'list',
             'permalink': 'string',
             'texcerptags': 'string',
-            'disableNunjucks': 'string',
+            'disableNunjucks': 'auto',  # Can be boolean or string
             'lang': 'string',
         }
         
@@ -558,7 +559,8 @@ class HexoWriter(NotionPageWriter):
             symbol = "hexo."
             if str(key).startswith(symbol) and len(str(key)) > len(symbol):
                 hexo_key = str(key)[str(key).find(symbol) + len(symbol):]
-                front_matter[hexo_key] = notion_page.properties[key]
+                # Parse the value to appropriate type (bool, int, float, or string)
+                front_matter[hexo_key] = Utils.parse_value_type(notion_page.properties[key])
 
         # NotionDown page properties to hexo front matter mapping
         #
@@ -581,7 +583,8 @@ class HexoWriter(NotionPageWriter):
         for key in notion_page.properties.keys():
             if key in mapping:
                 if not front_matter[mapping[key]]:
-                    front_matter[mapping[key]] = notion_page.properties[key]
+                    # Parse the value to appropriate type for mapped properties too
+                    front_matter[mapping[key]] = Utils.parse_value_type(notion_page.properties[key])
 
         # Type normalization based on schema
         for key, expected_type in front_matter_schema.items():
@@ -599,6 +602,12 @@ class HexoWriter(NotionPageWriter):
                     front_matter[key] = ', '.join(str(item) for item in front_matter[key])
                 else:
                     front_matter[key] = str(front_matter[key])
+            elif expected_type == 'auto':
+                # Preserve original type, but handle lists by joining them
+                if isinstance(front_matter[key], list):
+                    # Join list with comma separator and keep as string
+                    front_matter[key] = ', '.join(str(item) for item in front_matter[key])
+                # For non-list values, preserve the original type (bool, int, float, str)
 
         if front_matter['title']:
             front_matter['title'] = self._polish_text(front_matter['title'])
@@ -610,10 +619,10 @@ class HexoWriter(NotionPageWriter):
                 continue
             if type(front_matter[key]) is list:
                 lines.append('{}:'.format(key))
-                lines.append("\n".join([' - {}'.format(Utils.escape_yaml_string(it)) for it in front_matter[key]]))
+                lines.append("\n".join([' - {}'.format(Utils.format_yaml_value(it)) for it in front_matter[key]]))
             else:
-                # Properly escape YAML string values
-                lines.append('{}: {}'.format(key, Utils.escape_yaml_string(front_matter[key])))
+                # Properly format YAML values preserving their types
+                lines.append('{}: {}'.format(key, Utils.format_yaml_value(front_matter[key])))
 
         lines.append('---\n')
         return lines

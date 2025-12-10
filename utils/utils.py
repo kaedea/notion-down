@@ -186,6 +186,90 @@ class Utils:
         # Wrap in double quotes
         return '"{}"'.format(escaped)
 
+    @staticmethod
+    def format_yaml_value(value):
+        """
+        Format a value for YAML output, preserving proper types.
+        
+        Args:
+            value: The value to format (can be any type)
+            
+        Returns:
+            str: Properly formatted YAML value
+            
+        Examples:
+            >>> Utils.format_yaml_value(True)
+            'true'
+            >>> Utils.format_yaml_value(False)
+            'false'
+            >>> Utils.format_yaml_value(42)
+            '42'
+            >>> Utils.format_yaml_value("simple")
+            'simple'
+            >>> Utils.format_yaml_value("title: with colon")
+            '"title: with colon"'
+        """
+        if value is None:
+            return 'null'
+        elif isinstance(value, bool):
+            return 'true' if value else 'false'
+        elif isinstance(value, (int, float)):
+            return str(value)
+        elif isinstance(value, str):
+            # Only escape strings, preserving their string nature
+            return Utils.escape_yaml_string(value)
+        else:
+            # For other types, convert to string and escape
+            return Utils.escape_yaml_string(str(value))
+
+    @staticmethod
+    def parse_value_type(value):
+        """
+        Parse a string value and try to convert it to appropriate type (bool, int, float, or keep as string).
+        
+        Args:
+            value: The value to parse (usually a string from Notion properties)
+            
+        Returns:
+            The value converted to appropriate type
+            
+        Examples:
+            >>> Utils.parse_value_type("true")
+            True
+            >>> Utils.parse_value_type("false")
+            False
+            >>> Utils.parse_value_type("42")
+            42
+            >>> Utils.parse_value_type("3.14")
+            3.14
+            >>> Utils.parse_value_type("hello")
+            'hello'
+        """
+        if not isinstance(value, str):
+            return value
+        
+        # Try to parse as boolean
+        if value.lower() in ['true', 'yes', 'on']:
+            return True
+        elif value.lower() in ['false', 'no', 'off']:
+            return False
+        
+        # Try to parse as integer
+        try:
+            if '.' not in value and 'e' not in value.lower():
+                return int(value)
+        except ValueError:
+            pass
+        
+        # Try to parse as float
+        try:
+            return float(value)
+        except ValueError:
+            pass
+        
+        # Return as string if no conversion is possible
+        return value
+
 
 class FileUtils:
     @staticmethod

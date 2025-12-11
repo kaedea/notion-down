@@ -127,3 +127,27 @@ class NotionHandlerTest(unittest.TestCase):
         NotionWriter.handle_page(md_page)
         pass
 
+    def test_handle_write_project_notion_down_page(self):
+        NotionWriter.clean_output()
+
+        # Save old url
+        old_url = Config.blog_url()
+        Config.set_blog_url("https://kaedea.notion.site/Project-NotionDown-dda29ab66f1d494cbcbeaa9f9e404c01")
+
+        try:
+            # Note: The page title in Notion might be "Project NotionDown" or something similar.
+            # Based on previous inspection, it seems to work.
+            md_page = NotionReader.handle_page_with_title("Project NotionDown")
+            # If title is not exact, we might need to adjust or read main page directly.
+            # But the requirement is to test parsing this page.
+            if not md_page:
+                 # Fallback to reading main page if title search fails (e.g. if it's the root page)
+                 main_page_dict = NotionReader.read_main_page()
+                 md_page = NotionReader.handle_page(main_page_dict)
+
+            self.assertIsNotNone(md_page)
+            NotionWriter.handle_page(md_page)
+        finally:
+            Config.set_blog_url(old_url)
+        pass
+

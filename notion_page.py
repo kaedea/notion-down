@@ -279,7 +279,7 @@ class PageNumberedListBlock(PageTextBlock):
         self.level = 0
 
     def write_block(self):
-        return '{}1. {}'.format("  " * self.level, self.text)
+        return '{}1. {}'.format(" " * 4 * self.level, self.text)
 
 
 class PageBulletedListBlock(PageTextBlock):
@@ -290,7 +290,7 @@ class PageBulletedListBlock(PageTextBlock):
         self.level = 0
 
     def write_block(self):
-        return '{}- {}'.format("  " * self.level, self.text)
+        return '{} - {}'.format(" " * 4 * self.level, self.text)
 
 
 class PageQuoteBlock(PageTextBlock):

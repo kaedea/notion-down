@@ -1,4 +1,5 @@
 import json
+import re
 import os
 from pathlib import Path
 
@@ -315,6 +316,14 @@ class NotionPageWriter:
     def _polish_text(self, text):
         if Utils.check_module_installed("pangu"):
             import pangu
+            # return pangu.spacing_text(text)
+            # Pangu will strip leading whitespace, which breaks nested list.
+            match = re.match(r'^(\s*)(.*)', text, re.DOTALL)
+            if match:
+                indent = match.group(1)
+                content = match.group(2)
+                polished = pangu.spacing_text(content)
+                return indent + polished
             return pangu.spacing_text(text)
         else:
             return text

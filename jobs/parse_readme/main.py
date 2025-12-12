@@ -13,30 +13,20 @@ def start():
     channel = Config.writer() or 'default'
     NotionWriter.clean_output()
 
-    main_page = NotionReader.read_main_page()
-    # Official API: read_main_page returns dict, not block with children.
-    # We use read_all_pages to get all subpages recursively (or just use _read_post_pages logic)
-    # But read_all_pages filters by config.
-    # Here we want specific pages.
-    # Let's use read_all_pages but we need to ensure config doesn't filter them out?
-    # Config is set in __main__.
-    # But here we want specific titles.
-    # Let's use NotionReader._read_post_pages() which reads all from main page, then we filter.
-    # Wait, _read_post_pages() applies config filter!
-    # If we want ALL pages to filter manually, we might need to temporarily set config or use internal method.
-    # Actually, _read_post_pages calls _recurse_read_page.
-    # Let's just use _recurse_read_page manually or set Config.page_titles to ['all'] temporarily?
-    # But Config is global.
-    # Let's just use NotionReader.read_all_pages() and assume Config is set to 'all' (default) or we set it.
-    # In __main__, Config.parse_configs() is called. Default is 'all'.
-    # So read_all_pages() should return all pages.
-    
-    all_pages = NotionReader.read_all_pages()
-    source_pages = Utils.find(all_pages, lambda it: NotionReader._get_page_title(it) in [
+    all_pages = []
+    target_titles = [
         "NotionDown README",
         "NotionDown GetTokenV2",
         "NotionDown Custom Config",
-    ])
+    ]
+    
+    source_pages = []
+    for title in target_titles:
+        page = NotionReader.read_page_with_title(title)
+        if page:
+             source_pages.append(page)
+        else:
+            print(f"Warning: Page not found for title: {title}")
 
     for source_page in source_pages:
         md_page = NotionReader._parse_page(source_page)

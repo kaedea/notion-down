@@ -1,0 +1,54 @@
+name: Check PR
+
+on:
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  check-jobs:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+      
+      - name: Install Python dependencies
+        run: |
+          pip install notion-client
+          pip install pangu
+          pip install python-slugify
+          pip install requests
+      
+      - name: Run parse_readme
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        run: PYTHONPATH=./ python jobs/parse_readme/main.py
+      
+      - name: Run parse_sample_posts
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        run: PYTHONPATH=./ python jobs/parse_sample_posts/main.py
+      
+      - name: Run parse_sample_posts_for_hexo
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        run: PYTHONPATH=./ python jobs/parse_sample_posts_for_hexo/main.py
+      
+      - name: Lock PR on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          echo "Job failed, locking PR..."
+          gh pr lock ${{ github.event.pull_request.number }} --comment "PR check failed. This PR is now locked."

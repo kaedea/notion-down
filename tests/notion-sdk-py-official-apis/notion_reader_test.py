@@ -125,3 +125,26 @@ class NotionHandlerTest(unittest.TestCase):
         test_pages = NotionReader.read_all_pages()
         self.assertTrue(len(test_pages) > 0)
 
+    def test_filter_descendants(self):
+        # Mock pages
+        root = {'id': 'root', 'parent': {'type': 'workspace'}}
+        child1 = {'id': 'c1', 'parent': {'type': 'page_id', 'page_id': 'root'}}
+        child2 = {'id': 'c2', 'parent': {'type': 'page_id', 'page_id': 'root'}}
+        grandchild1 = {'id': 'gc1', 'parent': {'type': 'page_id', 'page_id': 'c1'}}
+        outsider = {'id': 'other', 'parent': {'type': 'workspace'}}
+        outsider_child = {'id': 'oc1', 'parent': {'type': 'page_id', 'page_id': 'other'}}
+        
+        all_pages = [root, child1, child2, grandchild1, outsider, outsider_child]
+        
+        # Test filtering
+        descendants = NotionReader._filter_descendants(all_pages, 'root')
+        ids = [p['id'] for p in descendants]
+        
+        self.assertIn('root', ids)
+        self.assertIn('c1', ids)
+        self.assertIn('c2', ids)
+        self.assertIn('gc1', ids)
+        self.assertNotIn('other', ids)
+        self.assertNotIn('oc1', ids)
+        self.assertEqual(len(ids), 4)
+

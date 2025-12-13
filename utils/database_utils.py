@@ -90,3 +90,58 @@ class DatabaseColumnOrderingUtils:
         sorted_headers = sorted(headers, key=get_weight, reverse=True)
         
         return sorted_headers
+
+    @staticmethod
+    def get_database_sorts(properties: Dict) -> List[Dict]:
+        """Determine database row sorting configuration.
+        
+        Priority:
+        1. Number property with description == 'order'
+        2. Number property with name == 'Order' (case-insensitive)
+        3. Created time (default)
+        
+        Args:
+            properties: Database properties schema from Notion API
+            
+        Returns:
+            List of sort objects for Notion API query
+        """
+        # Default sort
+        sorts = [
+            {
+                "timestamp": "created_time",
+                "direction": "ascending"
+            }
+        ]
+        
+        if not properties:
+            return sorts
+            
+        candidate_prop = None
+        # Priority level: 0=None, 1=Name Match, 2=Description Match
+        priority = 0
+        
+        for name, prop in properties.items():
+            if prop.get('type') == 'number':
+                # Check description (Highest priority)
+                description = prop.get('description', '')
+                if description and description.lower() == 'order':
+                    candidate_prop = name
+                    priority = 2
+                    break
+                
+                # Check name (Secondary priority)
+                # Matches 'Order' (case-insensitive)
+                if priority < 1 and name.lower() == 'order':
+                    candidate_prop = name
+                    priority = 1
+        
+        if candidate_prop:
+            sorts = [
+                {
+                    "property": candidate_prop,
+                    "direction": "ascending"
+                }
+            ]
+            
+        return sorts

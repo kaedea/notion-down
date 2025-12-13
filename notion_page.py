@@ -1039,23 +1039,32 @@ class NotionPage:
             ignore_ssl = os.environ.get('NOTION_IGNORE_SSL', 'false').lower() == 'true'
             if ignore_ssl:
                 import httpx
-                http_client = httpx.Client(verify=False)
+            
             from notion_reader import NotionReader
             client = NotionReader.get_client()
             
             # Retrieve database schema and description
             database = client.databases.retrieve(database_id=db_id)
             properties = database.get('properties', {})
-            headers = list(properties.keys())
             
             # Parse column weight configuration from description
             description = database.get('description', [])
             column_weights = self._parse_column_weights(description)
             
-            # Query database for rows
-            # Use httpx directly to avoid potential issues with notion-client query method
-            import httpx
+            # Prepare HTTP client
+            http_client_req = None
+            should_close_client = False
             
+            if ignore_ssl:
+                # Priority: if SSL ignore is requested, use our own client
+                http_client_req = httpx.Client(verify=False)
+                should_close_client = True
+            elif hasattr(client, 'client') and client.client:
+                http_client_req = client.client
+            else:
+                http_client_req = httpx.Client()
+                should_close_client = True
+
             token = Config.notion_token()
             headers_http = {
                 "Authorization": f"Bearer {token}",
@@ -1064,32 +1073,43 @@ class NotionPage:
             }
             
             url = f"https://api.notion.com/v1/databases/{db_id}/query"
+
+            # Determine sorting logic using utility class
+            from utils.database_utils import DatabaseColumnOrderingUtils
+            sorts = DatabaseColumnOrderingUtils.get_database_sorts(properties)
+        
+            # If properties are empty (common with Inline Databases), we miss schema info for sorting.
+            # Perform a pre-query to infer schema from the first row to check for 'Order' column.
+            is_default_sort = len(sorts) == 1 and sorts[0].get('timestamp') == 'created_time'
             
-            # Query with sorting by created_time to ensure consistent row order
+            if not properties and is_default_sort:
+                # Pre-query one row to check schema
+                pre_query_body = {
+                    "page_size": 1,
+                    "sorts": sorts # Default sort
+                }
+                try:
+                    pre_response = http_client_req.post(url, headers=headers_http, json=pre_query_body)
+                    pre_response.raise_for_status()
+                    pre_results = pre_response.json().get('results', [])
+                    
+                    if pre_results:
+                        # Infer properties from row data
+                        inferred_props = pre_results[0].get('properties', {})
+                        sorts = DatabaseColumnOrderingUtils.get_database_sorts(inferred_props)
+                except Exception as e:
+                    print(f"Failed to infer schema for sorting: {e}")
+
             query_body = {
-                "sorts": [
-                    {
-                        "timestamp": "created_time",
-                        "direction": "ascending"
-                    }
-                ]
+                "sorts": sorts
             }
             
-            # Use the client's internal http client to respect SSL settings
-            if hasattr(client, 'client') and client.client:
-                # Use the existing client's httpx client (respects SSL settings)
-                response = client.client.post(url, headers=headers_http, json=query_body)
-            else:
-                # Fallback: create new httpx client
-                if ignore_ssl:
-                    http_client_req = httpx.Client(verify=False)
-                else:
-                    http_client_req = httpx.Client()
-                response = http_client_req.post(url, headers=headers_http, json=query_body)
+            response = http_client_req.post(url, headers=headers_http, json=query_body)
             
             response.raise_for_status()
             results = response.json().get('results', [])
             
+            headers = list(properties.keys()) if properties else []
             if not headers and results:
                 # Infer headers from the first row if schema properties are empty
                 first_row_props = results[0].get('properties', {})
@@ -1097,24 +1117,24 @@ class NotionPage:
             
             # Apply column ordering
             if headers and column_weights:
-                # Only apply weighted ordering if explicitly configured
                 headers = self._sort_columns_by_weight(headers, column_weights)
-            # Otherwise, preserve the original order from Notion API
             
             rows = []
             for page in results:
                 row_data = []
                 page_props = page.get('properties', {})
                 for header in headers:
-                    prop = page_props.get(header, {})
-                    row_data.append(self._parse_property_value(prop))
+                    if header in page_props:
+                        row_data.append(self._parse_property_value(page_props[header]))
+                    else:
+                        row_data.append("")
                 rows.append(row_data)
             
             page_block = PageTableBlock()
             page_block.id = block.get('id')
             page_block.set_data(headers, rows)
             page_blocks.append(page_block)
-            
+
         except Exception as e:
             print(f"Failed to parse database {db_id}: {e}")
             page_block = PageBaseBlock()
@@ -1122,6 +1142,9 @@ class NotionPage:
             page_block.type = 'collection_view_error'
             page_block.text = f"Error parsing database: {e}"
             page_blocks.append(page_block)
+        finally:
+            if should_close_client and http_client_req:
+                http_client_req.close()
 
     def _parse_property_value(self, prop_value):
         """Parse various property types to string"""

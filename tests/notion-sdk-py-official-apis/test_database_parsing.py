@@ -248,5 +248,57 @@ Additional notes and documentation can go here."""
 
         print("✓ All row sorting tests passed")
 
+    def test_page_order_configuration(self):
+        """Test parsing of page-order configuration."""
+        print("\n[Test] Page Order Configuration")
+        from utils.database_utils import DatabaseColumnOrderingUtils
+
+        # Test 1: Simple page-order
+        desc_1 = "Some text\npage-order: Order1, Created\nMore text"
+        sorts_1 = DatabaseColumnOrderingUtils.parse_page_order(desc_1)
+        print(f"Test 1 - Simple: {sorts_1}")
+        self.assertEqual(len(sorts_1), 2)
+        self.assertEqual(sorts_1[0]['property'], 'Order1')
+        self.assertEqual(sorts_1[1]['timestamp'], 'created_time')
+
+        # Test 2: Multi-line and case insensitive
+        desc_2 = "page-order: Priority, Name, CREATED"
+        sorts_2 = DatabaseColumnOrderingUtils.parse_page_order(desc_2)
+        print(f"Test 2 - Multi keys: {sorts_2}")
+        self.assertEqual(len(sorts_2), 3)
+        self.assertEqual(sorts_2[0]['property'], 'Priority')
+        self.assertEqual(sorts_2[2]['timestamp'], 'created_time')
+
+        # Test 3: No config
+        desc_3 = "Just description"
+        sorts_3 = DatabaseColumnOrderingUtils.parse_page_order(desc_3)
+        self.assertIsNone(sorts_3)
+        
+        print("✓ All page-order tests passed")
+
+    def test_column_hiding(self):
+        """Test hiding columns via negative weights."""
+        print("\n[Test] Column Hiding")
+        from utils.database_utils import DatabaseColumnOrderingUtils
+
+        headers = ['Title', 'Tags', 'Secret', 'Date']
+        weights = {
+            'Title': 100,
+            'Secret': -1,  # Should be hidden
+            'Tags': 50
+        }
+        
+        sorted_headers = DatabaseColumnOrderingUtils.sort_columns_by_weight(headers, weights)
+        print(f"Original: {headers}")
+        print(f"Weights: {weights}")
+        print(f"Result: {sorted_headers}")
+        
+        self.assertNotIn('Secret', sorted_headers)
+        self.assertEqual(sorted_headers[0], 'Title')
+        self.assertEqual(sorted_headers[1], 'Tags')
+        self.assertIn('Date', sorted_headers) # Default weight 0
+        
+        print("✓ Column hiding tests passed")
+
 if __name__ == '__main__':
     unittest.main()

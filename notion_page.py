@@ -1050,6 +1050,8 @@ class NotionPage:
             # Parse column weight configuration from description
             description = database.get('description', [])
             column_weights = self._parse_column_weights(description)
+            if column_weights:
+                print(f"[Database Parsing] Found property-order config: {column_weights}")
             
             # Prepare HTTP client
             http_client_req = None
@@ -1076,13 +1078,25 @@ class NotionPage:
 
             # Determine sorting logic using utility class
             from utils.database_utils import DatabaseColumnOrderingUtils
-            sorts = DatabaseColumnOrderingUtils.get_database_sorts(properties)
-        
-            # If properties are empty (common with Inline Databases), we miss schema info for sorting.
-            # Perform a pre-query to infer schema from the first row to check for 'Order' column.
-            is_default_sort = len(sorts) == 1 and sorts[0].get('timestamp') == 'created_time'
+            
+            # Check for page-order configuration in description first
+            description_text = NotionUtils.get_plain_text(description)
+            page_order_sorts = DatabaseColumnOrderingUtils.parse_page_order(description_text)
+            
+            if page_order_sorts:
+                print(f"[Database Parsing] Found page-order config: {page_order_sorts}")
+                sorts = page_order_sorts
+                # Bypassing pre-query if page-order is configured
+                is_default_sort = False
+            else:
+                sorts = DatabaseColumnOrderingUtils.get_database_sorts(properties)
+                print(f"[Database Parsing] Using schema-based/default sorts: {sorts}")
+                # If properties are empty (common with Inline Databases), we miss schema info for sorting.
+                # Perform a pre-query to infer schema from the first row to check for 'Order' column.
+                is_default_sort = len(sorts) == 1 and sorts[0].get('timestamp') == 'created_time'
             
             if not properties and is_default_sort:
+                print(f"[Database Parsing] Schema properties empty & default sort detected. Attempting Pre-query inference...")
                 # Pre-query one row to check schema
                 pre_query_body = {
                     "page_size": 1,
@@ -1096,9 +1110,14 @@ class NotionPage:
                     if pre_results:
                         # Infer properties from row data
                         inferred_props = pre_results[0].get('properties', {})
+                        print(f"[Database Parsing] Inferred properties from Pre-query: {list(inferred_props.keys())}")
+                        # Re-calculate sorts with inferred properties
                         sorts = DatabaseColumnOrderingUtils.get_database_sorts(inferred_props)
+                        print(f"[Database Parsing] Recalculated sorts after inference: {sorts}")
+                    else:
+                        print("[Database Parsing] Pre-query returned no results. Cannot infer schema.")
                 except Exception as e:
-                    print(f"Failed to infer schema for sorting: {e}")
+                    print(f"[Database Parsing] Failed to infer schema for sorting: {e}")
 
             query_body = {
                 "sorts": sorts
@@ -1108,16 +1127,22 @@ class NotionPage:
             
             response.raise_for_status()
             results = response.json().get('results', [])
+            print(f"[Database Parsing] Query returned {len(results)} rows.")
             
             headers = list(properties.keys()) if properties else []
             if not headers and results:
                 # Infer headers from the first row if schema properties are empty
                 first_row_props = results[0].get('properties', {})
                 headers = list(first_row_props.keys())
+                print(f"[Database Parsing] Inferred headers from first row: {headers}")
             
             # Apply column ordering
             if headers and column_weights:
+                # Only apply weighted ordering if explicitly configured
                 headers = self._sort_columns_by_weight(headers, column_weights)
+                print(f"[Database Parsing] Applied column weights. Final headers: {headers}")
+            elif headers:
+                 print(f"[Database Parsing] No column weights config. Using default headers: {headers}")
             
             rows = []
             for page in results:

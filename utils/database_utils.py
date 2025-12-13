@@ -58,37 +58,82 @@ class DatabaseColumnOrderingUtils:
         return weights if weights else None
     
     @staticmethod
-    def sort_columns_by_weight(headers: List[str], weights: Optional[Dict[str, int]]) -> List[str]:
-        """Sort columns based on weight configuration.
+    def parse_page_order(description_text: str) -> Optional[List[Dict[str, str]]]:
+        """
+        Parses page-order configuration from description text.
+        Format: page-order: Order1, Order2, Created
+        Returned format: Notion API sorts parameter
+        """
+        if not description_text:
+            return None
+            
+        pattern = r'(?:^|\n)\s*page-order:\s*(.+?)(?:\n|$)'
+        match = re.search(pattern, description_text, re.IGNORECASE | re.MULTILINE)
         
-        Columns with higher weights appear first. Columns not in the weights dict
-        get a default weight of 0. Stable sort is used to preserve original order
-        for columns with the same weight.
+        if not match:
+            return None
+            
+        config_line = match.group(1).strip()
+        if not config_line:
+            return None
+            
+        sorts = []
+        parts = [p.strip() for p in config_line.split(',')]
+        
+        for part in parts:
+            if not part:
+                continue
+                
+            if part.lower() == 'created':
+                sorts.append({
+                    "timestamp": "created_time",
+                    "direction": "ascending"
+                })
+            else:
+                sorts.append({
+                    "property": part,
+                    "direction": "ascending"
+                })
+                
+        return sorts if sorts else None
+
+    @staticmethod
+    def sort_columns_by_weight(headers: List[str], weights: Optional[Dict[str, int]]) -> List[str]:
+        """
+        Sorts the headers based on the weights.
+        
+        If weights is provided, headers are sorted descending by weight.
+        Headers not in weights get a default weight of 0.
+        Negative weights mean the column should be hidden (removed).
         
         Args:
             headers: List of column names
-            weights: dict of {column_name: weight}, or None
+            weights: dict of {column_name: weight}
             
         Returns:
-            Sorted list of column names (higher weight first)
+            Sorted and filtered list of column names
             
-        Examples:
-            >>> headers = ['ID', 'Status', 'Name', 'Age', 'Email']
-            >>> weights = {'Name': 100, 'Email': 90, 'Status': 80}
-            >>> DatabaseColumnOrderingUtils.sort_columns_by_weight(headers, weights)
-            ['Name', 'Email', 'Status', 'ID', 'Age']
+        Example: 
+            >>> headers = ['Title', 'Tags', 'Secret']
+            >>> weights = {'Title': 100, 'Secret': -1}
+            >>> result = sort_columns_by_weight(headers, weights)
+            ['Title', 'Tags']
         """
         if not weights:
             return headers
+
+        # Default weight for unassigned headers is 0
+        def get_weight(header):
+            return weights.get(header, 0)
         
-        # Assign weight to each column (default 0 for unspecified)
-        def get_weight(col_name: str) -> int:
-            return weights.get(col_name, 0)
-        
-        # Sort by weight descending (higher weight = earlier position)
-        # Use stable sort to preserve original order for same-weight columns
-        sorted_headers = sorted(headers, key=get_weight, reverse=True)
-        
+        # Filter out headers with negative weights
+        visible_headers = [
+            h for h in headers 
+            if get_weight(h) >= 0
+        ]
+
+        # Use a stable sort to keep relative order of items with same weight
+        sorted_headers = sorted(visible_headers, key=get_weight, reverse=True)
         return sorted_headers
 
     @staticmethod

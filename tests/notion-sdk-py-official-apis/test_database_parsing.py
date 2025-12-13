@@ -198,5 +198,107 @@ Additional notes and documentation can go here."""
         
         print("✓ All column ordering tests passed")
 
+    def test_database_row_sorting(self):
+        """Test database row sorting logic priority."""
+        print("\n[Test] Database Row Sorting Priority")
+        
+        from utils.database_utils import DatabaseColumnOrderingUtils
+        
+        # Test 1: Default sorting (Created Time)
+        props_1 = {}
+        sorts_1 = DatabaseColumnOrderingUtils.get_database_sorts(props_1)
+        print(f"Test 1 - Default: {sorts_1}")
+        self.assertEqual(sorts_1[0]['timestamp'], 'created_time')
+        
+        # Test 2: Priority 2 - Name == 'Order'
+        props_2 = {
+            'Name': {'type': 'title'},
+            'Order': {'type': 'number'},
+            'Age': {'type': 'number'}
+        }
+        sorts_2 = DatabaseColumnOrderingUtils.get_database_sorts(props_2)
+        print(f"Test 2 - Name 'Order': {sorts_2}")
+        self.assertEqual(sorts_2[0]['property'], 'Order')
+        
+        # Test 3: Priority 1 - Description == 'order'
+        props_3 = {
+            'Name': {'type': 'title'},
+            'CustomSort': {'type': 'number', 'description': 'order'},
+            'Order': {'type': 'number'} # Should be ignored because CustomSort has higher priority
+        }
+        sorts_3 = DatabaseColumnOrderingUtils.get_database_sorts(props_3)
+        print(f"Test 3 - Description 'order': {sorts_3}")
+        self.assertEqual(sorts_3[0]['property'], 'CustomSort')
+        
+        # Test 4: Description check is case-insensitive? 
+        # API usually returns description as is. Our logic does .lower() == 'order'.
+        props_4 = {
+            'MySort': {'type': 'number', 'description': 'ORDER'}
+        }
+        sorts_4 = DatabaseColumnOrderingUtils.get_database_sorts(props_4)
+        print(f"Test 4 - Case-insensitive Desc: {sorts_4}")
+        self.assertEqual(sorts_4[0]['property'], 'MySort')
+        
+        # Test 5: Empty properties (simulating inline database issue)
+        # Should fallback to created_time
+        props_5 = {}
+        sorts_5 = DatabaseColumnOrderingUtils.get_database_sorts(props_5)
+        print(f"Test 5 - Empty properties: {sorts_5}")
+        self.assertEqual(sorts_5[0]['timestamp'], 'created_time')
+
+        print("✓ All row sorting tests passed")
+
+    def test_page_order_configuration(self):
+        """Test parsing of page-order configuration."""
+        print("\n[Test] Page Order Configuration")
+        from utils.database_utils import DatabaseColumnOrderingUtils
+
+        # Test 1: Simple page-order
+        desc_1 = "Some text\npage-order: Order1, Created\nMore text"
+        sorts_1 = DatabaseColumnOrderingUtils.parse_page_order(desc_1)
+        print(f"Test 1 - Simple: {sorts_1}")
+        self.assertEqual(len(sorts_1), 2)
+        self.assertEqual(sorts_1[0]['property'], 'Order1')
+        self.assertEqual(sorts_1[1]['timestamp'], 'created_time')
+
+        # Test 2: Multi-line and case insensitive
+        desc_2 = "page-order: Priority, Name, CREATED"
+        sorts_2 = DatabaseColumnOrderingUtils.parse_page_order(desc_2)
+        print(f"Test 2 - Multi keys: {sorts_2}")
+        self.assertEqual(len(sorts_2), 3)
+        self.assertEqual(sorts_2[0]['property'], 'Priority')
+        self.assertEqual(sorts_2[2]['timestamp'], 'created_time')
+
+        # Test 3: No config
+        desc_3 = "Just description"
+        sorts_3 = DatabaseColumnOrderingUtils.parse_page_order(desc_3)
+        self.assertIsNone(sorts_3)
+        
+        print("✓ All page-order tests passed")
+
+    def test_column_hiding(self):
+        """Test hiding columns via negative weights."""
+        print("\n[Test] Column Hiding")
+        from utils.database_utils import DatabaseColumnOrderingUtils
+
+        headers = ['Title', 'Tags', 'Secret', 'Date']
+        weights = {
+            'Title': 100,
+            'Secret': -1,  # Should be hidden
+            'Tags': 50
+        }
+        
+        sorted_headers = DatabaseColumnOrderingUtils.sort_columns_by_weight(headers, weights)
+        print(f"Original: {headers}")
+        print(f"Weights: {weights}")
+        print(f"Result: {sorted_headers}")
+        
+        self.assertNotIn('Secret', sorted_headers)
+        self.assertEqual(sorted_headers[0], 'Title')
+        self.assertEqual(sorted_headers[1], 'Tags')
+        self.assertIn('Date', sorted_headers) # Default weight 0
+        
+        print("✓ Column hiding tests passed")
+
 if __name__ == '__main__':
     unittest.main()

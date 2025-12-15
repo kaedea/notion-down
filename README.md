@@ -4,7 +4,7 @@
 [🇨🇳](https://www.kaedea.com/2021/05/01/devops/project-notion-down/) [🇯🇵](https://www.kaedea.com/2021/05/01/devops/project-notion-down-jp/)
 
 <!-- ColumnList BGN -->
-![](https://circleci.com/gh/kaedea/notion-down.svg?style=shield&circle-token=9f4dc656e94d8deccd362e52400c96e709c7e8b3&keep-url-source=true)
+![](https://github.com/kaedea/notion-down/actions/workflows/check-pr.yml/badge.svg)
 
 <!-- ColumnList END -->
 
@@ -60,23 +60,24 @@ What can NotionDown do now:
      - ~~HEXO generate~~
      - HEXO tags plugin
  - PyPI Publish
+     - WIP
  - Notion APIs
-     - ~~notion-py (3rd party)~~
-     - notion-sdk (official)
+     - ~~notion-py (3rd party)~~, as legacy mechanism, see **Support of Legacy APIs (token_v2)** part at bottom.
+     - ~~notion-sdk (official)~~, current mechanism
 
 ## Hot It Works
 
 ![NotionDown Workflows](/assets/notiondown_workflows_notiondown.png)
 
-NotionDown read Notion pages data using [notion-py](https://github.com/jamalex/notion-py), and then write pages into MD files.
+NotionDown read Notion pages data using [notion-sdk-py](https://github.com/ramnes/notion-sdk-py), and then write pages into MD files.
 
 ### Basic usage
 
-> notion-down >> Notion APIs (notion-py) >> Notion pages data >> generating MD files
+> notion-down >> Notion APIs (notion-sdk-py) >> Notion pages data >> generating MD files
 
 ### Advanced usage
 
-> WebHook >> notion-down >> Notion APIs (notion-py) >> Notion pages data >> generating MD files >> Copy into Hexo source >> generating webpages >> push to GitHub pages
+> WebHook >> notion-down >> Notion APIs (notion-sdk-py) >> Notion pages data >> generating MD files >> Copy into Hexo source >> generating webpages >> push to GitHub pages
 
 ## Getting Started
 
@@ -84,11 +85,12 @@ NotionDown read Notion pages data using [notion-py](https://github.com/jamalex/n
 
 To get started with NotionDown, you should:
 
-1. Prepare your Notion username(email) and password, or directly use `notion_token_v2`.
+1. Prepare your Notion [Integration Token](https://developers.notion.com/docs/getting-started).
 1. Prepare `public notion blog_url` as root post for NotionDown to get the pages you want to handle.
 1. Run `notion-down/main.py` with your configs.
 
-Check [here](https://github.com/kaedea/notion-down/blob/master/dist/parse_readme/notiondown_gettokenv2.md) to get `notion_token_v2`. 
+Check [here](https://developers.notion.com/docs/getting-started) to get `notion_token`. 
+(For supported of legacy APIs with token_v2 & notion-py, see branch [archive/token-v2-support](https://github.com/kaedea/notion-down/tree/archive/token-v2-support).)
 
 Duplicate [NotionDown Posts Template](https://www.notion.so/kaedea/NotionDown-Posts-Template-f77f3322915a4ab48caa0f2e76e9d733) to your own notion and take it as `blog_url` (or you can just use your existing blog post url). Note that, for now the root page should be public  as well as placed in root path of notion workspace.
 
@@ -101,9 +103,7 @@ Basically just run `notion-down/main.py` :
 # Run with cli cmd
 PYTHONPATH=./ python main.py \
     --blog_url <Notion Post Url> \
-    --token_v2 <token_v2>
-    --username <username>  # Only when token_v2 is not presented
-    --password <password>  # Only when token_v2 is not presented
+    --notion_token <notion_token>
 
 # or
 PYTHONPATH=./ python main.py \
@@ -119,8 +119,13 @@ For custom configurations in details, see [Custom Configurations](https://github
 Also check the following procedures as showcase usages for NotionDown.
 
 ### CI Build Script
+See GitHub Actions building scripts at `/.github/workflows`.
 
-See building script at `/.circleci/config.yaml`.
+- `build-readme.yml`: GitHub Actions workflow that generating README for this repo.
+- `build-hexo.yml`: GitHub Actions workflow that generating Hexo posts for https://github.com/kaedea/notion-down-hexo-showcase.
+- `pycorrector-test.yml`: GitHub Actions workflow that that executing spelling check for the test posts.
+
+Also see building script at `/.circleci/config.yaml`.
 
  - `test-build-readme`: CircleCI jobs generating README for this repo. 
  - `test-build-hexo`: CircleCI jobs generating Hexo posts for [https://github.com/kaedea/notion-down-hexo-showcase](https://github.com/kaedea/notion-down-hexo-showcase).
@@ -138,6 +143,10 @@ See the usage showcase jobs at [/jobs](/jobs), and jobs outputs at [/dist](/dist
 ### UnitTest Examples
 
 See unittest cases at `test/`.
+
+
+## Support of Legacy APIs (token_v2)
+The lastest APIs of notion-down has been migrated form `3rd-party token_v2` to `official integration token`. For supported of legacy APIs with token_v2 & notion-py, see branch [archive/token-v2-support](https://github.com/kaedea/notion-down/tree/archive/token-v2-support). 
 
 
 ---

@@ -6,6 +6,10 @@ on:
       - feature/spell-inspect
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   build-pycorrector-test:
     runs-on: ubuntu-latest
@@ -40,3 +44,14 @@ jobs:
         with:
           name: spell-inspect-results
           path: ./build/SpellInspect
+
+  cleanup-artifacts:
+    needs: [build-pycorrector-test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete build artifacts
+        uses: geekyeggo/delete-artifact@v2
+        with:
+          name: spell-inspect-results
+          failOnError: false

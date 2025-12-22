@@ -6,6 +6,10 @@ on:
       - ci/build-hexo
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   build-hexo:
     runs-on: ubuntu-latest
@@ -156,3 +160,20 @@ jobs:
           git status
           git commit -m "GitHub Actions deploy - ${{ github.run_number }}"
           git push origin master
+  
+  cleanup-artifacts:
+    needs: [publish-github-hexo]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete build artifacts (hexo-build)
+        uses: geekyeggo/delete-artifact@v2
+        with:
+          name: hexo-build
+          failOnError: false
+
+      - name: Delete build artifacts (hexo-public)
+        uses: geekyeggo/delete-artifact@v2
+        with:
+          name: hexo-public
+          failOnError: false

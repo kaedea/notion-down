@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write  # Required to push to deploy/readme branch
+  actions: write
 
 jobs:
   build-readme:
@@ -108,3 +109,14 @@ jobs:
               git status
               git push origin deploy/readme
           fi
+  
+  cleanup-artifacts:
+    needs: [publish-github-readme]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete build artifacts
+        uses: geekyeggo/delete-artifact@v2
+        with:
+          name: readme-build
+          failOnError: false

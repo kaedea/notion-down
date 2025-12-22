@@ -10,7 +10,7 @@ permissions:
   contents: write  # Required to push to deploy/readme branch
 
 jobs:
-  build-readme:
+  build-and-deploy-readme:
     runs-on: ubuntu-latest
     
     steps:
@@ -36,41 +36,31 @@ jobs:
         run: |
           python -m unittest tests.assemble.notion_ci_test.NotionCiTest.test_generate_read_me
       
-      - name: Dump outputs
+      - name: Dump outputs and stash build
         run: |
           echo "Generated MD file:"
           cat "$(find ~/work/notion-down/notion-down/build -name "*.md" -type f | head -1)"
           echo ""
           echo "---"
-          pwd && ls -l
+          
+          # Stash build artifacts to a temp location outside of the checkout
+          mkdir -p ../temp_build
+          cp -r ./build ../temp_build/
+          echo "Stashed artifacts to ../temp_build/build"
+          ls -l ../temp_build/build
       
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: readme-build
-          path: ./build
-
-  publish-github-readme:
-    needs: build-readme
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
+      - name: Switch to deploy branch
         uses: actions/checkout@v4
         with:
           ref: deploy/readme
           token: ${{ secrets.GITHUB_TOKEN }}
+          clean: true
       
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: readme-build
-          path: ./build
-      
-      - name: Copy generated files
+      - name: Restore artifacts and deploy
         run: |
-          pwd && ls -l
-          echo "---"
+          echo "Restoring artifacts..."
+          mkdir -p build
+          cp -r ../temp_build/build/* ./build/
           
           ls -l ./build/NotionDown
           
@@ -86,11 +76,10 @@ jobs:
           echo "mv $(find ./build -name "*.md" -type f | head -1) ./README.md"
           mv $(find ./build -name "*.md" -type f | head -1) ./README.md
           cat ./README.md
-      
-      - name: Commit and push changes
-        run: |
-          pwd
-          echo ""
+          
+          # Cleanup build dir
+          rm -rf build
+          
           echo "---"
           
           # Check for modifications

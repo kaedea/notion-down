@@ -8,9 +8,10 @@ on:
 
 permissions:
   contents: write  # Required to push to deploy/readme branch
+  actions: write
 
 jobs:
-  build-and-deploy-readme:
+  build-readme:
     runs-on: ubuntu-latest
     
     steps:
@@ -36,31 +37,41 @@ jobs:
         run: |
           python -m unittest tests.assemble.notion_ci_test.NotionCiTest.test_generate_read_me
       
-      - name: Dump outputs and stash build
+      - name: Dump outputs
         run: |
           echo "Generated MD file:"
           cat "$(find ~/work/notion-down/notion-down/build -name "*.md" -type f | head -1)"
           echo ""
           echo "---"
-          
-          # Stash build artifacts to a temp location outside of the checkout
-          mkdir -p ../temp_build
-          cp -r ./build ../temp_build/
-          echo "Stashed artifacts to ../temp_build/build"
-          ls -l ../temp_build/build
+          pwd && ls -l
       
-      - name: Switch to deploy branch
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: readme-build
+          path: ./build
+
+  publish-github-readme:
+    needs: build-readme
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           ref: deploy/readme
           token: ${{ secrets.GITHUB_TOKEN }}
-          clean: true
       
-      - name: Restore artifacts and deploy
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: readme-build
+          path: ./build
+      
+      - name: Copy generated files
         run: |
-          echo "Restoring artifacts..."
-          mkdir -p build
-          cp -r ../temp_build/build/* ./build/
+          pwd && ls -l
+          echo "---"
           
           ls -l ./build/NotionDown
           
@@ -76,10 +87,11 @@ jobs:
           echo "mv $(find ./build -name "*.md" -type f | head -1) ./README.md"
           mv $(find ./build -name "*.md" -type f | head -1) ./README.md
           cat ./README.md
-          
-          # Cleanup build dir
-          rm -rf build
-          
+      
+      - name: Commit and push changes
+        run: |
+          pwd
+          echo ""
           echo "---"
           
           # Check for modifications
@@ -97,3 +109,14 @@ jobs:
               git status
               git push origin deploy/readme
           fi
+  
+  cleanup-artifacts:
+    needs: [publish-github-readme]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete build artifacts
+        uses: geekyeggo/delete-artifact@v2
+        with:
+          name: readme-build
+          failOnError: false

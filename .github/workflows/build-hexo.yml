@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-hexo:
+  build-and-deploy-hexo:
     runs-on: ubuntu-latest
     
     steps:
@@ -44,30 +44,16 @@ jobs:
           echo "---"
           pwd && ls -l
       
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: hexo-build
-          path: ./build
-
-  build-hexo-generate:
-    needs: build-hexo
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: hexo-build
-          path: ./build
-      
-      - name: Checkout Hexo source repo
+      # Prepare Hexo Showcase Repo
+      - name: Checkout Hexo showcase repo
         uses: actions/checkout@v4
         with:
           repository: kaedea/notion-down-hexo-showcase
           token: ${{ secrets.GH_TOKEN }}
           path: notion-down-hexo-showcase
+          fetch-depth: 0 # Full history for commits
       
+      # 1. Update Source and Push
       - name: Copy Notion pages to Hexo source
         run: |
           cp -rv ./build/Hexo/. notion-down-hexo-showcase/hexo-blog/source
@@ -86,9 +72,15 @@ jobs:
           git config --global user.name "Kaede Akatsuki"
           git add .
           git status
-          git commit -m "GitHub Actions update posts - ${{ github.run_number }}" || echo "No changes to commit"
-          git push origin master
+          
+          if git diff-index --quiet HEAD --; then
+            echo "No changes to commit"
+          else
+            git commit -m "GitHub Actions update posts - ${{ github.run_number }}"
+            git push origin master
+          fi
       
+      # 2. Build Static Site
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -109,36 +101,14 @@ jobs:
           hexo generate
           cat public/index.html
       
-      - name: Upload Hexo public artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: hexo-public
-          path: notion-down-hexo-showcase/hexo-blog/public
-
-  publish-github-hexo:
-    needs: build-hexo-generate
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout Hexo showcase repo
-        uses: actions/checkout@v4
-        with:
-          repository: kaedea/notion-down-hexo-showcase
-          token: ${{ secrets.GH_TOKEN }}
-          path: notion-down-hexo-showcase
-      
-      - name: Download Hexo public artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: hexo-public
-          path: hexo-public
-      
+      # 3. Deploy Static Site (Move public -> docs)
       - name: Collect Hexo dist
         working-directory: notion-down-hexo-showcase
         run: |
           pwd && ls -l
           rm -rf docs
-          mv ../hexo-public docs
+          # Move public from hexo-blog subdirectory to root docs directory
+          mv hexo-blog/public docs
           ls -l docs
           echo "Configure CNAME"
           if [ -f "docs/CNAME" ]; then
@@ -150,9 +120,12 @@ jobs:
         working-directory: notion-down-hexo-showcase
         run: |
           pwd && ls -l
-          git config --global user.email "kidhaibara@gmail.com"
-          git config --global user.name "Kaede Akatsuki"
           git add .
           git status
-          git commit -m "GitHub Actions deploy - ${{ github.run_number }}"
-          git push origin master
+          
+          if git diff-index --quiet HEAD --; then
+            echo "No changes to commit"
+          else
+            git commit -m "GitHub Actions deploy - ${{ github.run_number }}"
+            git push origin master
+          fi
